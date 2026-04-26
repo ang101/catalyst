@@ -1,4 +1,4 @@
-# Catalyst: Autonomous ML Paper Reproduction on ZeroClaw
+# Catalyst: Autonomous AI Paper Reproduction on ZeroClaw
 
 Catalyst is infrastructure for autonomously reproducing ML/AI research papers on CPU-only hardware. It runs on [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw), a Rust-based agent runtime, using MCP tool servers for paper fetching, PDF extraction, repo discovery, and experiment execution, with Claude Code handling the LLM-heavy reasoning phases (requirements extraction, planning, debugging, report generation).
 
