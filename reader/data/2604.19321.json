@@ -1,0 +1,390 @@
+{
+  "classification": {
+    "case": "A",
+    "reasoning": "The paper has two clear results tables varying adaptation strategy across multiple models and reporting MMLU-Math accuracy. The main table shows 8 strategies on Qwen3-8B-Base, and the appendix table shows 5 strategies across 4 additional models, providing well-structured ablation-style comparisons with >10 quantitative data points.",
+    "tables_found": 3,
+    "ablation_tables_found": 2,
+    "estimated_data_points": 28,
+    "is_theoretical": false
+  },
+  "extraction": {
+    "paper": {
+      "title": "RDP LoRA: Geometry-Driven Identification for Parameter-Efficient Adaptation in Large Language Models",
+      "authors": [
+        "Yusuf \u00c7elebi",
+        "Ya\u011f\u0131z Asker",
+        "\u00d6zay Ezerceli",
+        "Mahmoud ElHussieni",
+        "Selva Ta\u015f",
+        "Reyhan Bayraktar",
+        "Fatma Bet\u00fcl Terzio\u011flu"
+      ],
+      "year": 2026,
+      "arxiv_id": ""
+    },
+    "main_claims": [
+      "Adapting only 13 RDP-selected layers of Qwen3-8B-Base with LoRA achieves 81.67% on MMLU-Math, significantly outperforming full 36-layer LoRA adaptation at 79.32%.",
+      "Geometry-selected sparse LoRA consistently outperforms random sparse LoRA with the same number of adapted layers, demonstrating that RDP captures a structurally meaningful signal for layer selection.",
+      "Layer identity matters more than the number of adapted layers or capacity allocation strategy, as uniform capacity on geometrically selected layers outperforms weighted capacity variants.",
+      "The geometry-based layer selection method generalizes across model scales and architectures, matching or exceeding Full LoRA on Qwen3-14B and DeepSeek-LLM-7B with fewer parameters."
+    ],
+    "variables": [
+      {
+        "name": "method",
+        "label": "Adaptation Strategy",
+        "type": "categorical",
+        "values": [
+          "No Adaptation",
+          "Full LoRA",
+          "Geometry-Selected Sparse LoRA",
+          "Geometry-Weighted Sparse LoRA",
+          "Reduced Geometry-Weighted Sparse LoRA",
+          "Inverse Geometry Selection",
+          "Random Sparse LoRA",
+          "Reasoning-Band LoRA"
+        ],
+        "unit": null
+      },
+      {
+        "name": "model",
+        "label": "Base Model",
+        "type": "categorical",
+        "values": [
+          "Qwen3-8B-Base",
+          "Qwen3-4B-Base",
+          "Qwen3-14B-Base",
+          "Gemma-7B",
+          "DeepSeek-LLM-7B-Base"
+        ],
+        "unit": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "mmlu_math_accuracy",
+        "label": "MMLU-Math Accuracy (%)",
+        "higher_is_better": true
+      }
+    ],
+    "data_points": [
+      {
+        "variable_values": {
+          "method": "No Adaptation",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 74.25
+        },
+        "source_cell": "Table 2, No Adaptation (Base) row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, no fine-tuning"
+      },
+      {
+        "variable_values": {
+          "method": "Random Sparse LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 75.56
+        },
+        "source_cell": "Table 2, Random Sparse LoRA (Top-K) row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, K=13 random layers"
+      },
+      {
+        "variable_values": {
+          "method": "Reasoning-Band LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 78.1
+        },
+        "source_cell": "Table 2, Reasoning-Band LoRA row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, all reasoning band layers"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Weighted Sparse LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 78.2
+        },
+        "source_cell": "Table 2, Geometry-Weighted Sparse LoRA row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, K=13 geometry-selected layers with importance-weighted capacity"
+      },
+      {
+        "variable_values": {
+          "method": "Inverse Geometry Selection",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 78.48
+        },
+        "source_cell": "Table 2, Inverse Geometry Selection row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, complement of top-K pivot layers"
+      },
+      {
+        "variable_values": {
+          "method": "Reduced Geometry-Weighted Sparse LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 79.23
+        },
+        "source_cell": "Table 2, Reduced Geometry-Weighted Sparse LoRA row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, K=13 geometry-selected layers with reduced importance-weighted capacity"
+      },
+      {
+        "variable_values": {
+          "method": "Full LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 79.32
+        },
+        "source_cell": "Table 2, Full LoRA row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, all 36 layers adapted, rank 32 alpha 64"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Selected Sparse LoRA",
+          "model": "Qwen3-8B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 81.67
+        },
+        "source_cell": "Table 2, Geometry-Selected Sparse LoRA (Top-K) row, MMLU-Math Accuracy column",
+        "context": "Qwen3-8B-Base on MMLU-Math, K=13 RDP-selected layers, rank 32 alpha 64"
+      },
+      {
+        "variable_values": {
+          "method": "No Adaptation",
+          "model": "Qwen3-4B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 69.45
+        },
+        "source_cell": "Appendix Table, No Adaptation row, Qwen3-4B-Base column",
+        "context": "Qwen3-4B-Base on MMLU-Math, no fine-tuning"
+      },
+      {
+        "variable_values": {
+          "method": "Full LoRA",
+          "model": "Qwen3-4B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 70.3
+        },
+        "source_cell": "Appendix Table, Full LoRA row, Qwen3-4B-Base column",
+        "context": "Qwen3-4B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Selected Sparse LoRA",
+          "model": "Qwen3-4B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 70.11
+        },
+        "source_cell": "Appendix Table, Geometry-Selected row, Qwen3-4B-Base column",
+        "context": "Qwen3-4B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Weighted Sparse LoRA",
+          "model": "Qwen3-4B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 69.64
+        },
+        "source_cell": "Appendix Table, Geometry-Weighted row, Qwen3-4B-Base column",
+        "context": "Qwen3-4B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Random Sparse LoRA",
+          "model": "Qwen3-4B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 70.02
+        },
+        "source_cell": "Appendix Table, Random Sparse row, Qwen3-4B-Base column",
+        "context": "Qwen3-4B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "No Adaptation",
+          "model": "Qwen3-14B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 81.11
+        },
+        "source_cell": "Appendix Table, No Adaptation row, Qwen3-14B-Base column",
+        "context": "Qwen3-14B-Base on MMLU-Math, no fine-tuning"
+      },
+      {
+        "variable_values": {
+          "method": "Full LoRA",
+          "model": "Qwen3-14B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 81.95
+        },
+        "source_cell": "Appendix Table, Full LoRA row, Qwen3-14B-Base column",
+        "context": "Qwen3-14B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Selected Sparse LoRA",
+          "model": "Qwen3-14B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 81.86
+        },
+        "source_cell": "Appendix Table, Geometry-Selected row, Qwen3-14B-Base column",
+        "context": "Qwen3-14B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Weighted Sparse LoRA",
+          "model": "Qwen3-14B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 82.61
+        },
+        "source_cell": "Appendix Table, Geometry-Weighted row, Qwen3-14B-Base column",
+        "context": "Qwen3-14B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Random Sparse LoRA",
+          "model": "Qwen3-14B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 81.5
+        },
+        "source_cell": "Appendix Table, Random Sparse row, Qwen3-14B-Base column",
+        "context": "Qwen3-14B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "No Adaptation",
+          "model": "Gemma-7B"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 45.58
+        },
+        "source_cell": "Appendix Table, No Adaptation row, Gemma-7B column",
+        "context": "Gemma-7B on MMLU-Math, no fine-tuning"
+      },
+      {
+        "variable_values": {
+          "method": "Full LoRA",
+          "model": "Gemma-7B"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 49.62
+        },
+        "source_cell": "Appendix Table, Full LoRA row, Gemma-7B column",
+        "context": "Gemma-7B on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Selected Sparse LoRA",
+          "model": "Gemma-7B"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 45.39
+        },
+        "source_cell": "Appendix Table, Geometry-Selected row, Gemma-7B column",
+        "context": "Gemma-7B on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Weighted Sparse LoRA",
+          "model": "Gemma-7B"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 48.68
+        },
+        "source_cell": "Appendix Table, Geometry-Weighted row, Gemma-7B column",
+        "context": "Gemma-7B on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Random Sparse LoRA",
+          "model": "Gemma-7B"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 47.09
+        },
+        "source_cell": "Appendix Table, Random Sparse row, Gemma-7B column",
+        "context": "Gemma-7B on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "No Adaptation",
+          "model": "DeepSeek-LLM-7B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 31.67
+        },
+        "source_cell": "Appendix Table, No Adaptation row, DeepSeek-LLM-7B-Base column",
+        "context": "DeepSeek-LLM-7B-Base on MMLU-Math, no fine-tuning"
+      },
+      {
+        "variable_values": {
+          "method": "Full LoRA",
+          "model": "DeepSeek-LLM-7B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 32.05
+        },
+        "source_cell": "Appendix Table, Full LoRA row, DeepSeek-LLM-7B-Base column",
+        "context": "DeepSeek-LLM-7B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Selected Sparse LoRA",
+          "model": "DeepSeek-LLM-7B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 32.05
+        },
+        "source_cell": "Appendix Table, Geometry-Selected row, DeepSeek-LLM-7B-Base column",
+        "context": "DeepSeek-LLM-7B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Geometry-Weighted Sparse LoRA",
+          "model": "DeepSeek-LLM-7B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 32.99
+        },
+        "source_cell": "Appendix Table, Geometry-Weighted row, DeepSeek-LLM-7B-Base column",
+        "context": "DeepSeek-LLM-7B-Base on MMLU-Math"
+      },
+      {
+        "variable_values": {
+          "method": "Random Sparse LoRA",
+          "model": "DeepSeek-LLM-7B-Base"
+        },
+        "metric_values": {
+          "mmlu_math_accuracy": 31.86
+        },
+        "source_cell": "Appendix Table, Random Sparse row, DeepSeek-LLM-7B-Base column",
+        "context": "DeepSeek-LLM-7B-Base on MMLU-Math"
+      }
+    ],
+    "context_descriptors": {
+      "model": [
+        "Qwen3-8B-Base",
+        "Qwen3-4B-Base",
+        "Qwen3-14B-Base",
+        "Gemma-7B",
+        "DeepSeek-LLM-7B-Base"
+      ]
+    }
+  },
+  "extracted_at": "2026-04-26T22:29:14Z"
+}

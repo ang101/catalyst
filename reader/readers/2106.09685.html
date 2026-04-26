@@ -19,10 +19,9 @@ a { color: #2563eb; }
 .controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }
 .control-group { flex: 1 1 180px; min-width: 150px; }
 .control-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.slider { width: 100%; }
-.slider-value { font-size: 20px; font-weight: 700; color: #2563eb; text-align: center; }
-.slider-ticks { font-size: 10px; color: #9ca3af; text-align: center; }
 .dropdown, select { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+.option-hint { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+select option.no-data { color: #d1d5db; }
 .result-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }
 .result-value { font-size: 36px; font-weight: 700; margin: 8px 0; }
 .result-meta { font-size: 13px; color: #6b7280; }
@@ -61,36 +60,43 @@ th { background: #f9fafb; font-weight: 600; }
 <h2>Explore the results</h2>
 <div class="controls" id="controls">
         <div class="control-group">
-            <label>LoRA Rank r</label>
-            <input type="range" id="slider_rank" min="0" max="10" value="0" class="slider" data-var="rank">
-            <div class="slider-value" id="val_rank">1</div>
-            <div class="slider-ticks">1 2 4 8 16 32 64 128 256 512 1024</div>
-        </div>
-        <div class="control-group">
-            <label>Number of Training Examples</label>
-            <input type="range" id="slider_num_train_examples" min="0" max="2" value="0" class="slider" data-var="num_train_examples">
-            <div class="slider-value" id="val_num_train_examples">100</div>
-            <div class="slider-ticks">100 1000 10000</div>
-        </div>
-        <div class="control-group">
             <label>Adaptation Method</label>
-            <select id="dd_method" class="dropdown" data-var="method"><option value="FT">FT</option><option value="BitFit">BitFit</option><option value="AdapterD">AdapterD</option><option value="AdapterH">AdapterH</option><option value="AdapterL">AdapterL</option><option value="AdapterP">AdapterP</option><option value="PreEmbed">PreEmbed</option><option value="PreLayer">PreLayer</option><option value="FT_Top2">FT_Top2</option><option value="LoRA">LoRA</option><option value="LoRA+PE">LoRA+PE</option><option value="LoRA+PL">LoRA+PL</option></select>
+            <select id="dd_method" class="dropdown" data-var="method"><option value="AdapterD">AdapterD</option><option value="AdapterH">AdapterH</option><option value="AdapterL">AdapterL</option><option value="AdapterP">AdapterP</option><option value="BitFit">BitFit</option><option value="FT" selected>FT</option><option value="FT_Top2">FT_Top2</option><option value="LoRA">LoRA</option><option value="LoRA+PE">LoRA+PE</option><option value="LoRA+PL">LoRA+PL</option><option value="PreEmbed">PreEmbed</option><option value="PreLayer">PreLayer</option></select>
+            <div class="option-hint" id="hint_method"></div>
         </div>
         <div class="control-group">
             <label>Pre-trained Model</label>
-            <select id="dd_model" class="dropdown" data-var="model"><option value="RoBERTa_base">RoBERTa_base</option><option value="RoBERTa_large">RoBERTa_large</option><option value="DeBERTa_XXL">DeBERTa_XXL</option><option value="GPT-2_M">GPT-2_M</option><option value="GPT-2_L">GPT-2_L</option><option value="GPT-3_175B">GPT-3_175B</option></select>
+            <select id="dd_model" class="dropdown" data-var="model"><option value="DeBERTa_XXL">DeBERTa_XXL</option><option value="GPT-2_L">GPT-2_L</option><option value="GPT-2_M">GPT-2_M</option><option value="GPT-3_175B">GPT-3_175B</option><option value="RoBERTa_base" selected>RoBERTa_base</option><option value="RoBERTa_large">RoBERTa_large</option></select>
+            <div class="option-hint" id="hint_model"></div>
+        </div>
+        <div class="control-group">
+            <label>LoRA Rank r</label>
+            <select id="dd_rank" class="dropdown" data-var="rank"><option value="1">1</option><option value="2">2</option><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option><option value="64">64</option><option value="128">128</option><option value="256">256</option><option value="512">512</option><option value="1024">1024</option></select>
+            <div class="option-hint" id="hint_rank"></div>
+        </div>
+        <div class="control-group">
+            <label>Trainable Parameters</label>
+            <select id="dd_trainable_params" class="dropdown" data-var="trainable_params"><option value="0.1M">0.1M</option><option value="0.35M">0.35M</option><option value="0.37M">0.37M</option><option value="0.3M">0.3M</option><option value="0.4M">0.4M</option><option value="0.77M">0.77M</option><option value="0.88M">0.88M</option><option value="0.8M">0.8M</option><option value="0.9M">0.9M</option><option value="1.7M">1.7M</option><option value="10.1M">10.1M</option><option value="11.09M">11.09M</option><option value="11M">11M</option><option value="125.0M" selected>125.0M</option><option value="14.2M">14.2M</option><option value="1500.0M">1500.0M</option><option value="151.1M">151.1M</option><option value="175255.8M">175255.8M</option><option value="18.8M">18.8M</option><option value="20.2M">20.2M</option><option value="21.2M">21.2M</option><option value="23.0M">23.0M</option><option value="23M">23M</option><option value="24M">24M</option><option value="25.19M">25.19M</option><option value="3.0M">3.0M</option><option value="3.2M">3.2M</option><option value="301.9M">301.9M</option><option value="302.1M">302.1M</option><option value="304.4M">304.4M</option><option value="354.92M">354.92M</option><option value="355.0M">355.0M</option><option value="37.7M">37.7M</option><option value="37.8M">37.8M</option><option value="4.7M">4.7M</option><option value="40.1M">40.1M</option><option value="44.1M">44.1M</option><option value="5.1M">5.1M</option><option value="52.8M">52.8M</option><option value="6.0M">6.0M</option><option value="6.4M">6.4M</option><option value="603.8M">603.8M</option><option value="7.1M">7.1M</option><option value="76.1M">76.1M</option><option value="77.9M">77.9M</option><option value="774.03M">774.03M</option><option value="9.4M">9.4M</option></select>
+            <div class="option-hint" id="hint_trainable_params"></div>
         </div>
         <div class="control-group">
             <label>Weight Matrices Adapted</label>
-            <select id="dd_weight_type" class="dropdown" data-var="weight_type"><option value="Wq">Wq</option><option value="Wk">Wk</option><option value="Wv">Wv</option><option value="Wo">Wo</option><option value="Wq,Wk">Wq,Wk</option><option value="Wq,Wv">Wq,Wv</option><option value="Wq,Wk,Wv,Wo">Wq,Wk,Wv,Wo</option></select>
+            <select id="dd_weight_type" class="dropdown" data-var="weight_type"><option value="Wk">Wk</option><option value="Wo">Wo</option><option value="Wq">Wq</option><option value="Wq,Wk">Wq,Wk</option><option value="Wq,Wk,Wv,Wo">Wq,Wk,Wv,Wo</option><option value="Wq,Wv">Wq,Wv</option><option value="Wv">Wv</option></select>
+            <div class="option-hint" id="hint_weight_type"></div>
+        </div>
+        <div class="control-group">
+            <label>Number of Training Examples</label>
+            <select id="dd_num_train_examples" class="dropdown" data-var="num_train_examples"><option value="100">100</option><option value="1000">1000</option><option value="10000">10000</option><option value="full">full</option></select>
+            <div class="option-hint" id="hint_num_train_examples"></div>
         </div>
             <div class="control-group">
                 <label>Task</label>
-                <select id="ctx_task" class="ctx-dropdown" data-ctx="task"><option value="GLUE">GLUE</option><option value="E2E_NLG">E2E_NLG</option><option value="WikiSQL">WikiSQL</option><option value="MNLI">MNLI</option><option value="SAMSum">SAMSum</option><option value="DART">DART</option><option value="WebNLG">WebNLG</option></select>
+                <select id="ctx_task" class="ctx-dropdown" data-ctx="task"><option value="GLUE" selected>GLUE</option><option value="E2E_NLG">E2E_NLG</option><option value="WikiSQL">WikiSQL</option><option value="MNLI">MNLI</option><option value="SAMSum">SAMSum</option><option value="DART">DART</option><option value="WebNLG">WebNLG</option></select>
+                <div class="option-hint" id="hint_ctx_task"></div>
             </div>
     <div class="control-group">
         <label>Metric</label>
-        <select id="metric_select"><option value="mnli">MNLI Accuracy</option><option value="sst2">SST-2 Accuracy</option><option value="mrpc">MRPC Accuracy</option><option value="cola">CoLA (Matthew&#x27;s Corr)</option><option value="qnli">QNLI Accuracy</option><option value="qqp">QQP Accuracy</option><option value="rte">RTE Accuracy</option><option value="stsb">STS-B (Pearson Corr)</option><option value="glue_avg">GLUE Average</option><option value="bleu">BLEU Score</option><option value="nist">NIST Score</option><option value="met">METEOR Score</option><option value="rouge_l">ROUGE-L</option><option value="cider">CIDEr Score</option><option value="ter">TER Score</option><option value="wikisql_acc">WikiSQL Accuracy</option><option value="mnli_acc">MultiNLI Accuracy</option><option value="r1">ROUGE-1</option><option value="r2">ROUGE-2</option><option value="rl">ROUGE-L (SAMSum)</option><option value="val_loss">Validation Loss</option></select>
+        <select id="metric_select"><option value="mnli">MNLI Accuracy</option><option value="sst2">SST-2 Accuracy</option><option value="mrpc">MRPC Accuracy</option><option value="cola">CoLA (Matthew&#x27;s Corr)</option><option value="qnli">QNLI Accuracy</option><option value="qqp">QQP Accuracy</option><option value="rte">RTE Accuracy</option><option value="stsb">STS-B (Pearson Corr)</option><option value="glue_avg">GLUE Average</option><option value="bleu">BLEU Score</option><option value="nist">NIST Score</option><option value="met">METEOR Score</option><option value="rouge_l">ROUGE-L</option><option value="cider">CIDEr Score</option><option value="ter">TER Score</option><option value="wikisql_acc">WikiSQL Accuracy</option><option value="mnli_acc" selected>MultiNLI Accuracy</option><option value="r1">ROUGE-1</option><option value="r2">ROUGE-2</option><option value="rl">ROUGE-L (SAMSum)</option><option value="val_loss">Validation Loss</option></select>
     </div></div>
 
 <div class="result-panel">
@@ -126,60 +132,28 @@ const dataPoints = DATA.data_points || [];
 const variables = DATA.variables || [];
 const metrics = DATA.metrics || [];
 
-// Build lookup: slider var -> sorted numeric values
-const sliderVars = {};
-document.querySelectorAll('.slider').forEach(s => {
-    const varName = s.dataset.var;
-    const v = variables.find(x => x.name === varName);
-    if (v) {
-        const nums = v.values.filter(x => typeof x === 'number' || (typeof x === 'string' && !isNaN(Number(x)) && x !== 'full')).map(Number).sort((a,b) => a-b);
-        sliderVars[varName] = nums;
-        s.max = nums.length - 1;
-        s.value = 0;
-    }
-});
-
 function getCurrentSelection() {
     const sel = {};
-    // Sliders
-    document.querySelectorAll('.slider').forEach(s => {
-        const varName = s.dataset.var;
-        const nums = sliderVars[varName];
-        if (nums) {
-            sel[varName] = nums[parseInt(s.value)];
-            document.getElementById('val_' + varName).textContent = sel[varName];
-        }
-    });
-    // Dropdowns
-    document.querySelectorAll('.dropdown').forEach(d => {
-        sel[d.dataset.var] = d.value;
-    });
-    // Context
-    document.querySelectorAll('.ctx-dropdown').forEach(d => {
-        sel['_ctx_' + d.dataset.ctx] = d.value;
-    });
-    // Metric
+    document.querySelectorAll('.dropdown').forEach(d => { sel[d.dataset.var] = d.value; });
+    document.querySelectorAll('.ctx-dropdown').forEach(d => { sel['_ctx_' + d.dataset.ctx] = d.value; });
     sel._metric = document.getElementById('metric_select').value;
     return sel;
 }
 
 function matchDP(dp, sel) {
-    // Check context match
     for (const [k, v] of Object.entries(sel)) {
         if (k.startsWith('_')) continue;
         const dpVal = dp.variable_values[k];
         if (dpVal === undefined) continue;
         if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
     }
-    // Check context descriptors
     for (const [k, v] of Object.entries(sel)) {
         if (!k.startsWith('_ctx_')) continue;
         const ctxName = k.slice(5);
-        if (dp.context && !dp.context.toLowerCase().includes(v.toLowerCase().replace(/_/g, ' ').replace(/_/g, '-'))) {
-            // Fuzzy context match
-            const words = v.toLowerCase().split('_');
+        if (dp.context) {
+            const words = v.toLowerCase().replace(/_/g, ' ').split(/\s+/);
             const ctx = dp.context.toLowerCase();
-            if (!words.some(w => ctx.includes(w))) return false;
+            if (!words.some(w => w.length > 1 && ctx.includes(w))) return false;
         }
     }
     return true;
@@ -187,63 +161,67 @@ function matchDP(dp, sel) {
 
 function getProvenance(sel) {
     const metricName = sel._metric;
-
-    // 1. Exact match
-    const exact = dataPoints.filter(dp => {
-        if (!matchDP(dp, sel)) return false;
-        return dp.metric_values && dp.metric_values[metricName] !== undefined;
-    });
+    const exact = dataPoints.filter(dp => matchDP(dp, sel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
     if (exact.length > 0) {
-        const dp = exact[0];
-        return {
-            type: 'PAPER',
-            value: dp.metric_values[metricName],
-            source: dp.source_cell || 'Paper table'
-        };
+        return { type: 'PAPER', value: exact[0].metric_values[metricName], source: exact[0].source_cell || 'Paper table' };
     }
-
-    // 2. Check for interpolation on slider variables
-    for (const sv of Object.keys(sliderVars)) {
-        const currentVal = sel[sv];
-        const nums = sliderVars[sv];
-        if (nums.includes(currentVal)) continue; // exact value exists, no interp needed on this var
-
-        // Find bracketing points
-        const lower = nums.filter(n => n < currentVal).pop();
-        const upper = nums.find(n => n > currentVal);
+    // Try interpolation on numeric variables
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const curVal = Number(sel[v.name]);
+        if (isNaN(curVal)) continue;
+        const allNums = v.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+        const lower = allNums.filter(n => n < curVal).pop();
+        const upper = allNums.find(n => n > curVal);
         if (lower === undefined || upper === undefined) continue;
-
-        // Check if both endpoints have data
-        const selLower = { ...sel, [sv]: lower };
-        const selUpper = { ...sel, [sv]: upper };
-        const dpLower = dataPoints.find(dp => matchDP(dp, selLower) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-        const dpUpper = dataPoints.find(dp => matchDP(dp, selUpper) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-
-        if (dpLower && dpUpper) {
-            const vl = dpLower.metric_values[metricName];
-            const vu = dpUpper.metric_values[metricName];
-            const frac = (currentVal - lower) / (upper - lower);
-            const interp = Math.round((vl + frac * (vu - vl)) * 100) / 100;
-            return {
-                type: 'INTERP',
-                value: interp,
-                source: `Interpolated between ${sv}=${lower} (${vl}) and ${sv}=${upper} (${vu})`
-            };
+        const selL = { ...sel, [v.name]: String(lower) };
+        const selU = { ...sel, [v.name]: String(upper) };
+        const dpL = dataPoints.find(dp => matchDP(dp, selL) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpU = dataPoints.find(dp => matchDP(dp, selU) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        if (dpL && dpU) {
+            const vl = dpL.metric_values[metricName], vu = dpU.metric_values[metricName];
+            const frac = (curVal - lower) / (upper - lower);
+            return { type: 'INTERP', value: Math.round((vl + frac * (vu - vl)) * 100) / 100,
+                      source: `Interpolated between ${v.name}=${lower} (${vl}) and ${v.name}=${upper} (${vu})` };
         }
     }
-
-    // 3. N/A
     return { type: 'N/A', value: null, source: 'Not characterized in paper' };
 }
 
 function makeBadgeHTML(prov) {
-    if (prov.type === 'PAPER') {
-        return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
-    } else if (prov.type === 'INTERP') {
-        return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
-    } else {
-        return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
-    }
+    if (prov.type === 'PAPER') return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    if (prov.type === 'INTERP') return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+}
+
+// Gray out options that lead to N/A given current other selections
+function updateOptionHints() {
+    const sel = getCurrentSelection();
+    const metricName = sel._metric;
+    document.querySelectorAll('.dropdown').forEach(dd => {
+        const varName = dd.dataset.var;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, [varName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_' + varName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+    document.querySelectorAll('.ctx-dropdown').forEach(dd => {
+        const ctxName = dd.dataset.ctx;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, ['_ctx_' + ctxName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_ctx_' + ctxName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
 }
 
 let chart = null;
@@ -252,106 +230,54 @@ function updateChart(sel) {
     const canvas = document.getElementById('sweepChart');
     const noChart = document.getElementById('noChart');
     const metricName = sel._metric;
-
-    // Find a slider variable with data
-    const svName = Object.keys(sliderVars)[0];
-    if (!svName) {
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        return;
+    // Find a numeric variable to sweep
+    let sweepVar = null;
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const nums = v.values.map(Number).filter(n => !isNaN(n));
+        if (nums.length >= 3) { sweepVar = v; break; }
     }
-    const nums = sliderVars[svName];
-
-    // Collect data points for each value of the slider var
+    if (!sweepVar) { canvas.style.display = 'none'; noChart.style.display = ''; return; }
+    const nums = sweepVar.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
     const chartData = [];
     for (const val of nums) {
-        const testSel = { ...sel, [svName]: val };
+        const testSel = { ...sel, [sweepVar.name]: String(val) };
         const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
-        if (dp) {
-            chartData.push({ x: val, y: dp.metric_values[metricName] });
-        }
+        if (dp) chartData.push({ x: val, y: dp.metric_values[metricName] });
     }
-
     if (chartData.length < 2) {
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        if (chart) { chart.destroy(); chart = null; }
-        return;
+        canvas.style.display = 'none'; noChart.style.display = '';
+        if (chart) { chart.destroy(); chart = null; } return;
     }
-
-    canvas.style.display = '';
-    noChart.style.display = 'none';
-
-    const currentVal = sel[svName];
+    canvas.style.display = ''; noChart.style.display = 'none';
     const metricLabel = (metrics.find(m => m.name === metricName) || {}).label || metricName;
-    const varLabel = (variables.find(v => v.name === svName) || {}).label || svName;
-
+    const varLabel = sweepVar.label || sweepVar.name;
+    const currentVal = Number(sel[sweepVar.name]);
     if (chart) chart.destroy();
     chart = new Chart(canvas, {
         type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: metricLabel + ' (paper)',
-                    data: chartData,
-                    backgroundColor: '#22c55e',
-                    borderColor: '#16a34a',
-                    pointRadius: 7,
-                    pointHoverRadius: 9,
-                    showLine: true,
-                    borderWidth: 2,
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: { display: true, text: metricLabel + ' vs ' + varLabel },
-                annotation: undefined
-            },
-            scales: {
-                x: {
-                    type: 'logarithmic',
-                    title: { display: true, text: varLabel },
-                    ticks: { callback: v => v }
-                },
-                y: {
-                    title: { display: true, text: metricLabel }
+        data: { datasets: [{ label: metricLabel + ' (paper)', data: chartData, backgroundColor: '#22c55e', borderColor: '#16a34a', pointRadius: 7, showLine: true, borderWidth: 2, tension: 0.1 }] },
+        options: { responsive: true, plugins: { title: { display: true, text: metricLabel + ' vs ' + varLabel } },
+            scales: { x: { type: 'logarithmic', title: { display: true, text: varLabel }, ticks: { callback: v => v } }, y: { title: { display: true, text: metricLabel } } } },
+        plugins: [{ id: 'vline', afterDraw(ch) {
+            const xs = ch.scales.x, ys = ch.scales.y;
+            if (!isNaN(currentVal)) {
+                const x = xs.getPixelForValue(currentVal);
+                if (x >= xs.left && x <= xs.right) {
+                    const c = ch.ctx; c.save(); c.beginPath(); c.moveTo(x, ys.top); c.lineTo(x, ys.bottom);
+                    c.strokeStyle = '#2563eb'; c.lineWidth = 2; c.setLineDash([6,4]); c.stroke(); c.restore();
                 }
             }
-        },
-        plugins: [{
-            id: 'verticalLine',
-            afterDraw(chart) {
-                const xScale = chart.scales.x;
-                const yScale = chart.scales.y;
-                const x = xScale.getPixelForValue(currentVal);
-                if (x >= xScale.left && x <= xScale.right) {
-                    const ctx = chart.ctx;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x, yScale.top);
-                    ctx.lineTo(x, yScale.bottom);
-                    ctx.strokeStyle = '#2563eb';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6, 4]);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            }
-        }]
+        } }]
     });
 }
 
 function update() {
     const sel = getCurrentSelection();
     const prov = getProvenance(sel);
-
     document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
     const metricObj = metrics.find(m => m.name === sel._metric);
     const metricLabel = metricObj ? metricObj.label : sel._metric;
-
     if (prov.value !== null) {
         document.getElementById('result-value').textContent = prov.value;
         document.getElementById('result-meta').textContent = metricLabel;
@@ -359,17 +285,14 @@ function update() {
         document.getElementById('result-value').textContent = '—';
         document.getElementById('result-meta').textContent = 'Not characterized';
     }
-
+    updateOptionHints();
     updateChart(sel);
 }
 
-// Attach listeners
-document.querySelectorAll('.slider, .dropdown, .ctx-dropdown, #metric_select').forEach(el => {
-    el.addEventListener('input', update);
+document.querySelectorAll('.dropdown, .ctx-dropdown, #metric_select').forEach(el => {
     el.addEventListener('change', update);
 });
 
-// Initial render
 update();
 </script>
 </body>

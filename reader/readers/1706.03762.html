@@ -19,10 +19,9 @@ a { color: #2563eb; }
 .controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }
 .control-group { flex: 1 1 180px; min-width: 150px; }
 .control-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.slider { width: 100%; }
-.slider-value { font-size: 20px; font-weight: 700; color: #2563eb; text-align: center; }
-.slider-ticks { font-size: 10px; color: #9ca3af; text-align: center; }
 .dropdown, select { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+.option-hint { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+select option.no-data { color: #d1d5db; }
 .result-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }
 .result-value { font-size: 36px; font-weight: 700; margin: 8px 0; }
 .result-meta { font-size: 13px; color: #6b7280; }
@@ -61,36 +60,38 @@ th { background: #f9fafb; font-weight: 600; }
 <h2>Explore the results</h2>
 <div class="controls" id="controls">
         <div class="control-group">
+            <label>Model / Method</label>
+            <select id="dd_method" class="dropdown" data-var="method"><option value="ConvS2S">ConvS2S</option><option value="ConvS2S Ensemble">ConvS2S Ensemble</option><option value="Deep-Att + PosUnk">Deep-Att + PosUnk</option><option value="GNMT + RL" selected>GNMT + RL</option><option value="GNMT + RL Ensemble">GNMT + RL Ensemble</option><option value="MoE">MoE</option><option value="Transformer (base model)">Transformer (base model)</option><option value="Transformer (big)">Transformer (big)</option></select>
+            <div class="option-hint" id="hint_method"></div>
+        </div>
+        <div class="control-group">
             <label>Number of Attention Heads h</label>
-            <input type="range" id="slider_num_heads" min="0" max="4" value="0" class="slider" data-var="num_heads">
-            <div class="slider-value" id="val_num_heads">1</div>
-            <div class="slider-ticks">1 16 32 4 8</div>
+            <select id="dd_num_heads" class="dropdown" data-var="num_heads"><option value="1">1</option><option value="16">16</option><option value="32">32</option><option value="4">4</option></select>
+            <div class="option-hint" id="hint_num_heads"></div>
         </div>
         <div class="control-group">
             <label>Attention Key Dimension dk</label>
-            <input type="range" id="slider_d_k" min="0" max="3" value="0" class="slider" data-var="d_k">
-            <div class="slider-value" id="val_d_k">128</div>
-            <div class="slider-ticks">128 16 32 64</div>
+            <select id="dd_d_k" class="dropdown" data-var="d_k"><option value="128">128</option><option value="16">16</option><option value="32">32</option></select>
+            <div class="option-hint" id="hint_d_k"></div>
         </div>
         <div class="control-group">
-            <label>Model / Method</label>
-            <select id="dd_method" class="dropdown" data-var="method"><option value="Deep-Att + PosUnk">Deep-Att + PosUnk</option><option value="GNMT + RL">GNMT + RL</option><option value="ConvS2S">ConvS2S</option><option value="MoE">MoE</option><option value="GNMT + RL Ensemble">GNMT + RL Ensemble</option><option value="ConvS2S Ensemble">ConvS2S Ensemble</option><option value="Transformer (base model)">Transformer (base model)</option><option value="Transformer (big)">Transformer (big)</option></select>
+            <label>Attention Value Dimension dv</label>
+            <select id="dd_d_v" class="dropdown" data-var="d_v"><option value="128">128</option><option value="16">16</option><option value="32">32</option></select>
+            <div class="option-hint" id="hint_d_v"></div>
         </div>
         <div class="control-group">
-            <label>Positional Encoding Type</label>
-            <select id="dd_positional_encoding" class="dropdown" data-var="positional_encoding"><option value="sinusoidal">sinusoidal</option><option value="learned">learned</option></select>
+            <label>Number of Layers N</label>
+            <select id="dd_N" class="dropdown" data-var="N"><option value="4">4</option><option value="8">8</option></select>
+            <div class="option-hint" id="hint_N"></div>
         </div>
         <div class="control-group">
-            <label>Parsing Method</label>
-            <select id="dd_parsing_method" class="dropdown" data-var="parsing_method"><option value="Petrov et al. (2006)">Petrov et al. (2006)</option><option value="Zhu et al. (2013)">Zhu et al. (2013)</option><option value="Dyer et al. (2016)">Dyer et al. (2016)</option><option value="Transformer (4 layers)">Transformer (4 layers)</option><option value="Huang &amp; Harper (2009)">Huang &amp; Harper (2009)</option><option value="McClosky et al. (2006)">McClosky et al. (2006)</option><option value="Vinyals &amp; Kaiser et al. (2014)">Vinyals &amp; Kaiser et al. (2014)</option><option value="Luong et al. (2015)">Luong et al. (2015)</option></select>
-        </div>
-        <div class="control-group">
-            <label>Parsing Training Setting</label>
-            <select id="dd_parsing_setting" class="dropdown" data-var="parsing_setting"><option value="WSJ only, discriminative">WSJ only, discriminative</option><option value="semi-supervised">semi-supervised</option><option value="multi-task">multi-task</option><option value="generative">generative</option></select>
+            <label>Model Dimension dmodel</label>
+            <select id="dd_d_model" class="dropdown" data-var="d_model"><option value="1024">1024</option><option value="256">256</option></select>
+            <div class="option-hint" id="hint_d_model"></div>
         </div>
     <div class="control-group">
         <label>Metric</label>
-        <select id="metric_select"><option value="bleu_en_de">BLEU Score (EN-DE)</option><option value="bleu_en_fr">BLEU Score (EN-FR)</option><option value="train_flops_en_de">Training FLOPs (EN-DE)</option><option value="train_flops_en_fr">Training FLOPs (EN-FR)</option><option value="ppl_dev">Perplexity (dev)</option><option value="bleu_dev">BLEU Score (dev, newstest2013)</option><option value="params_M">Number of Parameters (millions)</option><option value="f1_wsj23">F1 Score (WSJ Section 23)</option></select>
+        <select id="metric_select"><option value="bleu_en_de">BLEU Score (EN-DE)</option><option value="bleu_en_fr">BLEU Score (EN-FR)</option><option value="train_flops_en_de">Training FLOPs (EN-DE)</option><option value="train_flops_en_fr">Training FLOPs (EN-FR)</option><option value="ppl_dev" selected>Perplexity (dev)</option><option value="bleu_dev">BLEU Score (dev, newstest2013)</option><option value="params_M">Number of Parameters (millions)</option><option value="f1_wsj23">F1 Score (WSJ Section 23)</option></select>
     </div></div>
 
 <div class="result-panel">
@@ -126,60 +127,28 @@ const dataPoints = DATA.data_points || [];
 const variables = DATA.variables || [];
 const metrics = DATA.metrics || [];
 
-// Build lookup: slider var -> sorted numeric values
-const sliderVars = {};
-document.querySelectorAll('.slider').forEach(s => {
-    const varName = s.dataset.var;
-    const v = variables.find(x => x.name === varName);
-    if (v) {
-        const nums = v.values.filter(x => typeof x === 'number' || (typeof x === 'string' && !isNaN(Number(x)) && x !== 'full')).map(Number).sort((a,b) => a-b);
-        sliderVars[varName] = nums;
-        s.max = nums.length - 1;
-        s.value = 0;
-    }
-});
-
 function getCurrentSelection() {
     const sel = {};
-    // Sliders
-    document.querySelectorAll('.slider').forEach(s => {
-        const varName = s.dataset.var;
-        const nums = sliderVars[varName];
-        if (nums) {
-            sel[varName] = nums[parseInt(s.value)];
-            document.getElementById('val_' + varName).textContent = sel[varName];
-        }
-    });
-    // Dropdowns
-    document.querySelectorAll('.dropdown').forEach(d => {
-        sel[d.dataset.var] = d.value;
-    });
-    // Context
-    document.querySelectorAll('.ctx-dropdown').forEach(d => {
-        sel['_ctx_' + d.dataset.ctx] = d.value;
-    });
-    // Metric
+    document.querySelectorAll('.dropdown').forEach(d => { sel[d.dataset.var] = d.value; });
+    document.querySelectorAll('.ctx-dropdown').forEach(d => { sel['_ctx_' + d.dataset.ctx] = d.value; });
     sel._metric = document.getElementById('metric_select').value;
     return sel;
 }
 
 function matchDP(dp, sel) {
-    // Check context match
     for (const [k, v] of Object.entries(sel)) {
         if (k.startsWith('_')) continue;
         const dpVal = dp.variable_values[k];
         if (dpVal === undefined) continue;
         if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
     }
-    // Check context descriptors
     for (const [k, v] of Object.entries(sel)) {
         if (!k.startsWith('_ctx_')) continue;
         const ctxName = k.slice(5);
-        if (dp.context && !dp.context.toLowerCase().includes(v.toLowerCase().replace(/_/g, ' ').replace(/_/g, '-'))) {
-            // Fuzzy context match
-            const words = v.toLowerCase().split('_');
+        if (dp.context) {
+            const words = v.toLowerCase().replace(/_/g, ' ').split(/\s+/);
             const ctx = dp.context.toLowerCase();
-            if (!words.some(w => ctx.includes(w))) return false;
+            if (!words.some(w => w.length > 1 && ctx.includes(w))) return false;
         }
     }
     return true;
@@ -187,63 +156,67 @@ function matchDP(dp, sel) {
 
 function getProvenance(sel) {
     const metricName = sel._metric;
-
-    // 1. Exact match
-    const exact = dataPoints.filter(dp => {
-        if (!matchDP(dp, sel)) return false;
-        return dp.metric_values && dp.metric_values[metricName] !== undefined;
-    });
+    const exact = dataPoints.filter(dp => matchDP(dp, sel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
     if (exact.length > 0) {
-        const dp = exact[0];
-        return {
-            type: 'PAPER',
-            value: dp.metric_values[metricName],
-            source: dp.source_cell || 'Paper table'
-        };
+        return { type: 'PAPER', value: exact[0].metric_values[metricName], source: exact[0].source_cell || 'Paper table' };
     }
-
-    // 2. Check for interpolation on slider variables
-    for (const sv of Object.keys(sliderVars)) {
-        const currentVal = sel[sv];
-        const nums = sliderVars[sv];
-        if (nums.includes(currentVal)) continue; // exact value exists, no interp needed on this var
-
-        // Find bracketing points
-        const lower = nums.filter(n => n < currentVal).pop();
-        const upper = nums.find(n => n > currentVal);
+    // Try interpolation on numeric variables
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const curVal = Number(sel[v.name]);
+        if (isNaN(curVal)) continue;
+        const allNums = v.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+        const lower = allNums.filter(n => n < curVal).pop();
+        const upper = allNums.find(n => n > curVal);
         if (lower === undefined || upper === undefined) continue;
-
-        // Check if both endpoints have data
-        const selLower = { ...sel, [sv]: lower };
-        const selUpper = { ...sel, [sv]: upper };
-        const dpLower = dataPoints.find(dp => matchDP(dp, selLower) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-        const dpUpper = dataPoints.find(dp => matchDP(dp, selUpper) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-
-        if (dpLower && dpUpper) {
-            const vl = dpLower.metric_values[metricName];
-            const vu = dpUpper.metric_values[metricName];
-            const frac = (currentVal - lower) / (upper - lower);
-            const interp = Math.round((vl + frac * (vu - vl)) * 100) / 100;
-            return {
-                type: 'INTERP',
-                value: interp,
-                source: `Interpolated between ${sv}=${lower} (${vl}) and ${sv}=${upper} (${vu})`
-            };
+        const selL = { ...sel, [v.name]: String(lower) };
+        const selU = { ...sel, [v.name]: String(upper) };
+        const dpL = dataPoints.find(dp => matchDP(dp, selL) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpU = dataPoints.find(dp => matchDP(dp, selU) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        if (dpL && dpU) {
+            const vl = dpL.metric_values[metricName], vu = dpU.metric_values[metricName];
+            const frac = (curVal - lower) / (upper - lower);
+            return { type: 'INTERP', value: Math.round((vl + frac * (vu - vl)) * 100) / 100,
+                      source: `Interpolated between ${v.name}=${lower} (${vl}) and ${v.name}=${upper} (${vu})` };
         }
     }
-
-    // 3. N/A
     return { type: 'N/A', value: null, source: 'Not characterized in paper' };
 }
 
 function makeBadgeHTML(prov) {
-    if (prov.type === 'PAPER') {
-        return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
-    } else if (prov.type === 'INTERP') {
-        return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
-    } else {
-        return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
-    }
+    if (prov.type === 'PAPER') return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    if (prov.type === 'INTERP') return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+}
+
+// Gray out options that lead to N/A given current other selections
+function updateOptionHints() {
+    const sel = getCurrentSelection();
+    const metricName = sel._metric;
+    document.querySelectorAll('.dropdown').forEach(dd => {
+        const varName = dd.dataset.var;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, [varName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_' + varName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+    document.querySelectorAll('.ctx-dropdown').forEach(dd => {
+        const ctxName = dd.dataset.ctx;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, ['_ctx_' + ctxName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_ctx_' + ctxName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
 }
 
 let chart = null;
@@ -252,106 +225,54 @@ function updateChart(sel) {
     const canvas = document.getElementById('sweepChart');
     const noChart = document.getElementById('noChart');
     const metricName = sel._metric;
-
-    // Find a slider variable with data
-    const svName = Object.keys(sliderVars)[0];
-    if (!svName) {
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        return;
+    // Find a numeric variable to sweep
+    let sweepVar = null;
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const nums = v.values.map(Number).filter(n => !isNaN(n));
+        if (nums.length >= 3) { sweepVar = v; break; }
     }
-    const nums = sliderVars[svName];
-
-    // Collect data points for each value of the slider var
+    if (!sweepVar) { canvas.style.display = 'none'; noChart.style.display = ''; return; }
+    const nums = sweepVar.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
     const chartData = [];
     for (const val of nums) {
-        const testSel = { ...sel, [svName]: val };
+        const testSel = { ...sel, [sweepVar.name]: String(val) };
         const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
-        if (dp) {
-            chartData.push({ x: val, y: dp.metric_values[metricName] });
-        }
+        if (dp) chartData.push({ x: val, y: dp.metric_values[metricName] });
     }
-
     if (chartData.length < 2) {
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        if (chart) { chart.destroy(); chart = null; }
-        return;
+        canvas.style.display = 'none'; noChart.style.display = '';
+        if (chart) { chart.destroy(); chart = null; } return;
     }
-
-    canvas.style.display = '';
-    noChart.style.display = 'none';
-
-    const currentVal = sel[svName];
+    canvas.style.display = ''; noChart.style.display = 'none';
     const metricLabel = (metrics.find(m => m.name === metricName) || {}).label || metricName;
-    const varLabel = (variables.find(v => v.name === svName) || {}).label || svName;
-
+    const varLabel = sweepVar.label || sweepVar.name;
+    const currentVal = Number(sel[sweepVar.name]);
     if (chart) chart.destroy();
     chart = new Chart(canvas, {
         type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: metricLabel + ' (paper)',
-                    data: chartData,
-                    backgroundColor: '#22c55e',
-                    borderColor: '#16a34a',
-                    pointRadius: 7,
-                    pointHoverRadius: 9,
-                    showLine: true,
-                    borderWidth: 2,
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: { display: true, text: metricLabel + ' vs ' + varLabel },
-                annotation: undefined
-            },
-            scales: {
-                x: {
-                    type: 'logarithmic',
-                    title: { display: true, text: varLabel },
-                    ticks: { callback: v => v }
-                },
-                y: {
-                    title: { display: true, text: metricLabel }
+        data: { datasets: [{ label: metricLabel + ' (paper)', data: chartData, backgroundColor: '#22c55e', borderColor: '#16a34a', pointRadius: 7, showLine: true, borderWidth: 2, tension: 0.1 }] },
+        options: { responsive: true, plugins: { title: { display: true, text: metricLabel + ' vs ' + varLabel } },
+            scales: { x: { type: 'logarithmic', title: { display: true, text: varLabel }, ticks: { callback: v => v } }, y: { title: { display: true, text: metricLabel } } } },
+        plugins: [{ id: 'vline', afterDraw(ch) {
+            const xs = ch.scales.x, ys = ch.scales.y;
+            if (!isNaN(currentVal)) {
+                const x = xs.getPixelForValue(currentVal);
+                if (x >= xs.left && x <= xs.right) {
+                    const c = ch.ctx; c.save(); c.beginPath(); c.moveTo(x, ys.top); c.lineTo(x, ys.bottom);
+                    c.strokeStyle = '#2563eb'; c.lineWidth = 2; c.setLineDash([6,4]); c.stroke(); c.restore();
                 }
             }
-        },
-        plugins: [{
-            id: 'verticalLine',
-            afterDraw(chart) {
-                const xScale = chart.scales.x;
-                const yScale = chart.scales.y;
-                const x = xScale.getPixelForValue(currentVal);
-                if (x >= xScale.left && x <= xScale.right) {
-                    const ctx = chart.ctx;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x, yScale.top);
-                    ctx.lineTo(x, yScale.bottom);
-                    ctx.strokeStyle = '#2563eb';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6, 4]);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            }
-        }]
+        } }]
     });
 }
 
 function update() {
     const sel = getCurrentSelection();
     const prov = getProvenance(sel);
-
     document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
     const metricObj = metrics.find(m => m.name === sel._metric);
     const metricLabel = metricObj ? metricObj.label : sel._metric;
-
     if (prov.value !== null) {
         document.getElementById('result-value').textContent = prov.value;
         document.getElementById('result-meta').textContent = metricLabel;
@@ -359,17 +280,14 @@ function update() {
         document.getElementById('result-value').textContent = '—';
         document.getElementById('result-meta').textContent = 'Not characterized';
     }
-
+    updateOptionHints();
     updateChart(sel);
 }
 
-// Attach listeners
-document.querySelectorAll('.slider, .dropdown, .ctx-dropdown, #metric_select').forEach(el => {
-    el.addEventListener('input', update);
+document.querySelectorAll('.dropdown, .ctx-dropdown, #metric_select').forEach(el => {
     el.addEventListener('change', update);
 });
 
-// Initial render
 update();
 </script>
 </body>

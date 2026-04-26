@@ -1,6 +1,31 @@
 You are extracting structured quantitative data from a research paper for an interactive reader.
 
-Read the paper text below. Output a JSON object matching this schema:
+Read the paper text below. Output a JSON object matching the schema below.
+
+## CITATION SPECIFICITY REQUIREMENT
+
+source_cell must identify the value precisely enough that a reader can find it in the paper without ambiguity. This means:
+
+VALID examples:
+- "Table 6, row r=4, GLUE Average column"
+- "Table 2, GPT-2 Medium row, BLEU column"
+- "Table 1, BERT-base mean-pooling row, STS-B column"
+
+INVALID examples (rejected):
+- "Table 1, row 3"           (which row? what does row 3 measure?)
+- "Section 4.2, text"        (where in the section?)
+- "Section 3.1.2"            (no specific value)
+- "Table"                    (which table?)
+
+If a value is reported in prose rather than a table:
+- INVALID: "Section 4, text"
+- VALID: "Section 4 paragraph 2: 'BLEU score of 26.4'"
+
+If you cannot construct a precise source_cell that names both a table cell (with row label and column label) OR a specific sentence quotation, exclude the data point. Quality > quantity.
+
+For tables, use the row's actual label/identifier (e.g., the model name, the configuration name, the parameter value), NOT the row number. "row 3" is invalid; "GPT-2 Medium row" is valid.
+
+## Schema
 
 ```json
 {

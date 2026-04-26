@@ -52,47 +52,73 @@ def build_case_a(paper_data, extraction):
     claims = extraction.get("main_claims", [])
     ctx = extraction.get("context_descriptors", {})
 
-    # Find discrete/categorical variables suitable for controls
-    slider_vars = [v for v in variables if v["type"] == "discrete" and len(v["values"]) >= 3
-                   and all(isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','',1).isdigit()) for x in v["values"] if x != 'full')]
-    dropdown_vars = [v for v in variables if v["type"] == "categorical"]
+    # ALL variables rendered as dropdowns (discrete <=8 values or categorical)
+    # Continuous with many values: still dropdown but with paper-tested values only
+    all_vars = []
+    for v in variables:
+        vals = v["values"]
+        # Filter to values that actually appear in data_points
+        actual_vals = set()
+        for dp in data_points:
+            dv = dp.get("variable_values", {}).get(v["name"])
+            if dv is not None:
+                actual_vals.add(dv)
+        if actual_vals:
+            vals = sorted(actual_vals, key=lambda x: (isinstance(x, str), x))
+        all_vars.append({"name": v["name"], "label": v["label"], "type": v["type"], "values": vals})
+
+    # Find best default: data point with most metric values (richest row)
+    best_dp = max(data_points, key=lambda dp: len(dp.get("metric_values", {}))) if data_points else None
+
+    # Find best default metric: most common metric across data points
+    metric_counts = {}
+    for dp in data_points:
+        for mk in dp.get("metric_values", {}).keys():
+            metric_counts[mk] = metric_counts.get(mk, 0) + 1
+    best_metric = max(metric_counts, key=metric_counts.get) if metric_counts else (metrics[0]["name"] if metrics else "")
 
     data_json = json.dumps(extraction)
 
     controls_html = ""
-    # Build slider for each numeric variable
-    for sv in slider_vars[:2]:  # max 2 sliders
-        vals = sorted([x for x in sv["values"] if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','',1).isdigit())])
-        num_vals = [float(x) for x in vals]
+    # Build dropdown for each variable
+    for av in all_vars[:6]:  # max 6 controls
+        default_val = best_dp.get("variable_values", {}).get(av["name"], "") if best_dp else ""
+        opts = ""
+        for val in av["values"]:
+            selected = ' selected' if str(val) == str(default_val) else ''
+            opts += f'<option value="{esc(str(val))}"{selected}>{esc(str(val))}</option>'
         controls_html += f"""
         <div class="control-group">
-            <label>{esc(sv['label'])}</label>
-            <input type="range" id="slider_{sv['name']}" min="0" max="{len(num_vals)-1}" value="0" class="slider" data-var="{sv['name']}">
-            <div class="slider-value" id="val_{sv['name']}">{vals[0]}</div>
-            <div class="slider-ticks">{' '.join(str(v) for v in vals)}</div>
-        </div>"""
-
-    # Build dropdown for each categorical variable (max 4)
-    for dv in dropdown_vars[:4]:
-        opts = "".join(f'<option value="{esc(str(v))}">{esc(str(v))}</option>' for v in dv["values"])
-        controls_html += f"""
-        <div class="control-group">
-            <label>{esc(dv['label'])}</label>
-            <select id="dd_{dv['name']}" class="dropdown" data-var="{dv['name']}">{opts}</select>
+            <label>{esc(av['label'])}</label>
+            <select id="dd_{av['name']}" class="dropdown" data-var="{av['name']}">{opts}</select>
+            <div class="option-hint" id="hint_{av['name']}"></div>
         </div>"""
 
     # Context descriptor dropdowns
     for ctx_name, ctx_vals in ctx.items():
         if ctx_name not in [v["name"] for v in variables]:
-            opts = "".join(f'<option value="{esc(str(v))}">{esc(str(v))}</option>' for v in ctx_vals)
+            default_ctx = ""
+            if best_dp and best_dp.get("context"):
+                for cv in ctx_vals:
+                    if cv.lower().replace("_", " ") in best_dp["context"].lower().replace("_", " "):
+                        default_ctx = cv
+                        break
+            opts = ""
+            for val in ctx_vals:
+                selected = ' selected' if str(val) == str(default_ctx) else ''
+                opts += f'<option value="{esc(str(val))}"{selected}>{esc(str(val))}</option>'
             controls_html += f"""
             <div class="control-group">
                 <label>{esc(ctx_name.replace('_', ' ').title())}</label>
                 <select id="ctx_{ctx_name}" class="ctx-dropdown" data-ctx="{ctx_name}">{opts}</select>
+                <div class="option-hint" id="hint_ctx_{ctx_name}"></div>
             </div>"""
 
-    # Build metrics dropdown
-    met_opts = "".join(f'<option value="{esc(m["name"])}">{esc(m["label"])}</option>' for m in metrics)
+    # Build metrics dropdown with best default
+    met_opts = ""
+    for m in metrics:
+        selected = ' selected' if m["name"] == best_metric else ''
+        met_opts += f'<option value="{esc(m["name"])}"{selected}>{esc(m["label"])}</option>'
     controls_html += f"""
     <div class="control-group">
         <label>Metric</label>
@@ -130,10 +156,9 @@ a {{ color: #2563eb; }}
 .controls {{ display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }}
 .control-group {{ flex: 1 1 180px; min-width: 150px; }}
 .control-group label {{ display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }}
-.slider {{ width: 100%; }}
-.slider-value {{ font-size: 20px; font-weight: 700; color: #2563eb; text-align: center; }}
-.slider-ticks {{ font-size: 10px; color: #9ca3af; text-align: center; }}
 .dropdown, select {{ width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }}
+.option-hint {{ font-size: 10px; color: #9ca3af; margin-top: 2px; }}
+select option.no-data {{ color: #d1d5db; }}
 .result-panel {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }}
 .result-value {{ font-size: 36px; font-weight: 700; margin: 8px 0; }}
 .result-meta {{ font-size: 13px; color: #6b7280; }}
@@ -197,60 +222,28 @@ const dataPoints = DATA.data_points || [];
 const variables = DATA.variables || [];
 const metrics = DATA.metrics || [];
 
-// Build lookup: slider var -> sorted numeric values
-const sliderVars = {{}};
-document.querySelectorAll('.slider').forEach(s => {{
-    const varName = s.dataset.var;
-    const v = variables.find(x => x.name === varName);
-    if (v) {{
-        const nums = v.values.filter(x => typeof x === 'number' || (typeof x === 'string' && !isNaN(Number(x)) && x !== 'full')).map(Number).sort((a,b) => a-b);
-        sliderVars[varName] = nums;
-        s.max = nums.length - 1;
-        s.value = 0;
-    }}
-}});
-
 function getCurrentSelection() {{
     const sel = {{}};
-    // Sliders
-    document.querySelectorAll('.slider').forEach(s => {{
-        const varName = s.dataset.var;
-        const nums = sliderVars[varName];
-        if (nums) {{
-            sel[varName] = nums[parseInt(s.value)];
-            document.getElementById('val_' + varName).textContent = sel[varName];
-        }}
-    }});
-    // Dropdowns
-    document.querySelectorAll('.dropdown').forEach(d => {{
-        sel[d.dataset.var] = d.value;
-    }});
-    // Context
-    document.querySelectorAll('.ctx-dropdown').forEach(d => {{
-        sel['_ctx_' + d.dataset.ctx] = d.value;
-    }});
-    // Metric
+    document.querySelectorAll('.dropdown').forEach(d => {{ sel[d.dataset.var] = d.value; }});
+    document.querySelectorAll('.ctx-dropdown').forEach(d => {{ sel['_ctx_' + d.dataset.ctx] = d.value; }});
     sel._metric = document.getElementById('metric_select').value;
     return sel;
 }}
 
 function matchDP(dp, sel) {{
-    // Check context match
     for (const [k, v] of Object.entries(sel)) {{
         if (k.startsWith('_')) continue;
         const dpVal = dp.variable_values[k];
         if (dpVal === undefined) continue;
         if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
     }}
-    // Check context descriptors
     for (const [k, v] of Object.entries(sel)) {{
         if (!k.startsWith('_ctx_')) continue;
         const ctxName = k.slice(5);
-        if (dp.context && !dp.context.toLowerCase().includes(v.toLowerCase().replace(/_/g, ' ').replace(/_/g, '-'))) {{
-            // Fuzzy context match
-            const words = v.toLowerCase().split('_');
+        if (dp.context) {{
+            const words = v.toLowerCase().replace(/_/g, ' ').split(/\\s+/);
             const ctx = dp.context.toLowerCase();
-            if (!words.some(w => ctx.includes(w))) return false;
+            if (!words.some(w => w.length > 1 && ctx.includes(w))) return false;
         }}
     }}
     return true;
@@ -258,63 +251,67 @@ function matchDP(dp, sel) {{
 
 function getProvenance(sel) {{
     const metricName = sel._metric;
-
-    // 1. Exact match
-    const exact = dataPoints.filter(dp => {{
-        if (!matchDP(dp, sel)) return false;
-        return dp.metric_values && dp.metric_values[metricName] !== undefined;
-    }});
+    const exact = dataPoints.filter(dp => matchDP(dp, sel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
     if (exact.length > 0) {{
-        const dp = exact[0];
-        return {{
-            type: 'PAPER',
-            value: dp.metric_values[metricName],
-            source: dp.source_cell || 'Paper table'
-        }};
+        return {{ type: 'PAPER', value: exact[0].metric_values[metricName], source: exact[0].source_cell || 'Paper table' }};
     }}
-
-    // 2. Check for interpolation on slider variables
-    for (const sv of Object.keys(sliderVars)) {{
-        const currentVal = sel[sv];
-        const nums = sliderVars[sv];
-        if (nums.includes(currentVal)) continue; // exact value exists, no interp needed on this var
-
-        // Find bracketing points
-        const lower = nums.filter(n => n < currentVal).pop();
-        const upper = nums.find(n => n > currentVal);
+    // Try interpolation on numeric variables
+    for (const v of variables) {{
+        if (v.type !== 'discrete') continue;
+        const curVal = Number(sel[v.name]);
+        if (isNaN(curVal)) continue;
+        const allNums = v.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+        const lower = allNums.filter(n => n < curVal).pop();
+        const upper = allNums.find(n => n > curVal);
         if (lower === undefined || upper === undefined) continue;
-
-        // Check if both endpoints have data
-        const selLower = {{ ...sel, [sv]: lower }};
-        const selUpper = {{ ...sel, [sv]: upper }};
-        const dpLower = dataPoints.find(dp => matchDP(dp, selLower) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-        const dpUpper = dataPoints.find(dp => matchDP(dp, selUpper) && dp.metric_values && dp.metric_values[metricName] !== undefined);
-
-        if (dpLower && dpUpper) {{
-            const vl = dpLower.metric_values[metricName];
-            const vu = dpUpper.metric_values[metricName];
-            const frac = (currentVal - lower) / (upper - lower);
-            const interp = Math.round((vl + frac * (vu - vl)) * 100) / 100;
-            return {{
-                type: 'INTERP',
-                value: interp,
-                source: `Interpolated between ${{sv}}=${{lower}} (${{vl}}) and ${{sv}}=${{upper}} (${{vu}})`
-            }};
+        const selL = {{ ...sel, [v.name]: String(lower) }};
+        const selU = {{ ...sel, [v.name]: String(upper) }};
+        const dpL = dataPoints.find(dp => matchDP(dp, selL) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpU = dataPoints.find(dp => matchDP(dp, selU) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        if (dpL && dpU) {{
+            const vl = dpL.metric_values[metricName], vu = dpU.metric_values[metricName];
+            const frac = (curVal - lower) / (upper - lower);
+            return {{ type: 'INTERP', value: Math.round((vl + frac * (vu - vl)) * 100) / 100,
+                      source: `Interpolated between ${{v.name}}=${{lower}} (${{vl}}) and ${{v.name}}=${{upper}} (${{vu}})` }};
         }}
     }}
-
-    // 3. N/A
     return {{ type: 'N/A', value: null, source: 'Not characterized in paper' }};
 }}
 
 function makeBadgeHTML(prov) {{
-    if (prov.type === 'PAPER') {{
-        return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
-    }} else if (prov.type === 'INTERP') {{
-        return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
-    }} else {{
-        return '<span class="badge badge-na" title="System couldn\\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
-    }}
+    if (prov.type === 'PAPER') return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    if (prov.type === 'INTERP') return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    return '<span class="badge badge-na" title="System couldn\\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+}}
+
+// Gray out options that lead to N/A given current other selections
+function updateOptionHints() {{
+    const sel = getCurrentSelection();
+    const metricName = sel._metric;
+    document.querySelectorAll('.dropdown').forEach(dd => {{
+        const varName = dd.dataset.var;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {{
+            const testSel = {{ ...sel, [varName]: opt.value }};
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        }});
+        const hint = document.getElementById('hint_' + varName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    }});
+    document.querySelectorAll('.ctx-dropdown').forEach(dd => {{
+        const ctxName = dd.dataset.ctx;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {{
+            const testSel = {{ ...sel, ['_ctx_' + ctxName]: opt.value }};
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        }});
+        const hint = document.getElementById('hint_ctx_' + ctxName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    }});
 }}
 
 let chart = null;
@@ -323,124 +320,69 @@ function updateChart(sel) {{
     const canvas = document.getElementById('sweepChart');
     const noChart = document.getElementById('noChart');
     const metricName = sel._metric;
-
-    // Find a slider variable with data
-    const svName = Object.keys(sliderVars)[0];
-    if (!svName) {{
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        return;
+    // Find a numeric variable to sweep
+    let sweepVar = null;
+    for (const v of variables) {{
+        if (v.type !== 'discrete') continue;
+        const nums = v.values.map(Number).filter(n => !isNaN(n));
+        if (nums.length >= 3) {{ sweepVar = v; break; }}
     }}
-    const nums = sliderVars[svName];
-
-    // Collect data points for each value of the slider var
+    if (!sweepVar) {{ canvas.style.display = 'none'; noChart.style.display = ''; return; }}
+    const nums = sweepVar.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
     const chartData = [];
     for (const val of nums) {{
-        const testSel = {{ ...sel, [svName]: val }};
+        const testSel = {{ ...sel, [sweepVar.name]: String(val) }};
         const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
-        if (dp) {{
-            chartData.push({{ x: val, y: dp.metric_values[metricName] }});
-        }}
+        if (dp) chartData.push({{ x: val, y: dp.metric_values[metricName] }});
     }}
-
     if (chartData.length < 2) {{
-        canvas.style.display = 'none';
-        noChart.style.display = '';
-        if (chart) {{ chart.destroy(); chart = null; }}
-        return;
+        canvas.style.display = 'none'; noChart.style.display = '';
+        if (chart) {{ chart.destroy(); chart = null; }} return;
     }}
-
-    canvas.style.display = '';
-    noChart.style.display = 'none';
-
-    const currentVal = sel[svName];
+    canvas.style.display = ''; noChart.style.display = 'none';
     const metricLabel = (metrics.find(m => m.name === metricName) || {{}}).label || metricName;
-    const varLabel = (variables.find(v => v.name === svName) || {{}}).label || svName;
-
+    const varLabel = sweepVar.label || sweepVar.name;
+    const currentVal = Number(sel[sweepVar.name]);
     if (chart) chart.destroy();
     chart = new Chart(canvas, {{
         type: 'scatter',
-        data: {{
-            datasets: [
-                {{
-                    label: metricLabel + ' (paper)',
-                    data: chartData,
-                    backgroundColor: '#22c55e',
-                    borderColor: '#16a34a',
-                    pointRadius: 7,
-                    pointHoverRadius: 9,
-                    showLine: true,
-                    borderWidth: 2,
-                    tension: 0.1
-                }}
-            ]
-        }},
-        options: {{
-            responsive: true,
-            plugins: {{
-                title: {{ display: true, text: metricLabel + ' vs ' + varLabel }},
-                annotation: undefined
-            }},
-            scales: {{
-                x: {{
-                    type: 'logarithmic',
-                    title: {{ display: true, text: varLabel }},
-                    ticks: {{ callback: v => v }}
-                }},
-                y: {{
-                    title: {{ display: true, text: metricLabel }}
+        data: {{ datasets: [{{ label: metricLabel + ' (paper)', data: chartData, backgroundColor: '#22c55e', borderColor: '#16a34a', pointRadius: 7, showLine: true, borderWidth: 2, tension: 0.1 }}] }},
+        options: {{ responsive: true, plugins: {{ title: {{ display: true, text: metricLabel + ' vs ' + varLabel }} }},
+            scales: {{ x: {{ type: 'logarithmic', title: {{ display: true, text: varLabel }}, ticks: {{ callback: v => v }} }}, y: {{ title: {{ display: true, text: metricLabel }} }} }} }},
+        plugins: [{{ id: 'vline', afterDraw(ch) {{
+            const xs = ch.scales.x, ys = ch.scales.y;
+            if (!isNaN(currentVal)) {{
+                const x = xs.getPixelForValue(currentVal);
+                if (x >= xs.left && x <= xs.right) {{
+                    const c = ch.ctx; c.save(); c.beginPath(); c.moveTo(x, ys.top); c.lineTo(x, ys.bottom);
+                    c.strokeStyle = '#2563eb'; c.lineWidth = 2; c.setLineDash([6,4]); c.stroke(); c.restore();
                 }}
             }}
-        }},
-        plugins: [{{
-            id: 'verticalLine',
-            afterDraw(chart) {{
-                const xScale = chart.scales.x;
-                const yScale = chart.scales.y;
-                const x = xScale.getPixelForValue(currentVal);
-                if (x >= xScale.left && x <= xScale.right) {{
-                    const ctx = chart.ctx;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x, yScale.top);
-                    ctx.lineTo(x, yScale.bottom);
-                    ctx.strokeStyle = '#2563eb';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6, 4]);
-                    ctx.stroke();
-                    ctx.restore();
-                }}
-            }}
-        }}]
+        }} }}]
     }});
 }}
 
 function update() {{
     const sel = getCurrentSelection();
     const prov = getProvenance(sel);
-
     document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
     const metricObj = metrics.find(m => m.name === sel._metric);
     const metricLabel = metricObj ? metricObj.label : sel._metric;
-
     if (prov.value !== null) {{
         document.getElementById('result-value').textContent = prov.value;
         document.getElementById('result-meta').textContent = metricLabel;
     }} else {{
-        document.getElementById('result-value').textContent = '—';
+        document.getElementById('result-value').textContent = '\u2014';
         document.getElementById('result-meta').textContent = 'Not characterized';
     }}
-
+    updateOptionHints();
     updateChart(sel);
 }}
 
-// Attach listeners
-document.querySelectorAll('.slider, .dropdown, .ctx-dropdown, #metric_select').forEach(el => {{
-    el.addEventListener('input', update);
+document.querySelectorAll('.dropdown, .ctx-dropdown, #metric_select').forEach(el => {{
     el.addEventListener('change', update);
 }});
 
-// Initial render
 update();
 </script>
 </body>

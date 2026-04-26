@@ -1,10 +1,10 @@
 {
   "classification": {
     "case": "A",
-    "reasoning": "GPT-3 paper systematically varies model size (8 models from 125M to 175B parameters) and number of in-context examples (zero/one/few-shot) across dozens of NLP benchmarks, with extensive tables reporting metrics for each configuration. The master results table alone contains hundreds of data points across model sizes and settings.",
+    "reasoning": "GPT-3 paper systematically varies model size (8 models from 125M to 175B parameters) and number of in-context examples (zero/one/few-shot) across dozens of NLP benchmarks, reporting metrics for each combination. The master results table alone contains hundreds of data points across model sizes and settings.",
     "tables_found": 15,
-    "ablation_tables_found": 5,
-    "estimated_data_points": 200,
+    "ablation_tables_found": 6,
+    "estimated_data_points": 300,
     "is_theoretical": false
   },
   "extraction": {
@@ -47,101 +47,34 @@
       "arxiv_id": "2005.14165"
     },
     "main_claims": [
-      "Scaling language models to 175 billion parameters substantially improves zero-shot, one-shot, and few-shot performance on NLP benchmarks without any gradient updates or fine-tuning.",
-      "GPT-3 few-shot performance is sometimes competitive with or surpasses state-of-the-art fine-tuned models on certain tasks such as TriviaQA closed-book and translation into English.",
+      "Scaling language models to 175 billion parameters substantially improves few-shot, one-shot, and zero-shot task performance without any gradient updates or fine-tuning.",
+      "GPT-3 few-shot performance is sometimes competitive with or surpasses state-of-the-art fine-tuned models on certain benchmarks.",
       "The gap between zero-shot, one-shot, and few-shot performance generally grows with model capacity, suggesting larger models are more proficient in-context learners.",
-      "GPT-3 can generate synthetic news articles of approximately 200 words that human evaluators can only distinguish from real articles at near-chance accuracy (~52%).",
-      "GPT-3 struggles on comparison-style NLI tasks (WiC, ANLI) even in the few-shot setting, performing near random chance on some.",
-      "Cross-entropy loss and downstream task performance follow a smooth power-law trend as a function of model compute, extending over three orders of magnitude."
+      "Human evaluators can barely distinguish GPT-3 175B generated news articles from human-written articles, with detection accuracy near chance at approximately 52%.",
+      "GPT-3 struggles on tasks requiring comparison of two sentences or snippets, such as natural language inference and word-in-context tasks."
     ],
     "variables": [
       {
         "name": "method",
-        "label": "Method / Model",
+        "label": "Evaluation Method",
         "type": "categorical",
         "values": [
-          "GPT-3",
-          "RAG",
-          "T5-11B+SSM",
-          "T5-11B",
+          "Zero-Shot",
+          "One-Shot",
+          "Few-Shot",
+          "Fine-tuned T5-11B",
+          "Fine-tuned T5-11B+SSM",
+          "RAG Fine-tuned",
           "Fine-tuned SOTA",
           "Fine-tuned BERT-Large",
-          "Fine-tuned RoBERTa",
-          "ALUM"
-        ],
-        "unit": null
-      },
-      {
-        "name": "eval_setting",
-        "label": "Evaluation Setting",
-        "type": "categorical",
-        "values": [
-          "zero-shot",
-          "one-shot",
-          "few-shot"
-        ],
-        "unit": null
-      },
-      {
-        "name": "task",
-        "label": "Benchmark Task",
-        "type": "categorical",
-        "values": [
-          "NaturalQuestions",
-          "WebQuestions",
-          "TriviaQA",
-          "PTB",
-          "LAMBADA",
-          "LAMBADA (fill-in-blank)",
-          "HellaSwag",
-          "StoryCloze",
-          "Winograd",
-          "Winogrande",
-          "PIQA",
-          "ARC-Challenge",
-          "ARC-Easy",
-          "OpenBookQA",
-          "CoQA",
-          "QuAC",
-          "DROP",
-          "SQuAD2",
-          "RACE-h",
-          "RACE-m",
-          "BoolQ",
-          "CB",
-          "COPA",
-          "RTE",
-          "WiC",
-          "WSC",
-          "MultiRC",
-          "ReCoRD",
-          "SuperGLUE-avg",
-          "ANLI-R1",
-          "ANLI-R2",
-          "ANLI-R3",
-          "2D+",
-          "2D-",
-          "3D+",
-          "3D-",
-          "4D+",
-          "4D-",
-          "5D+",
-          "5D-",
-          "2Dx",
-          "1DC",
-          "CycledLetters",
-          "Anagrams1",
-          "Anagrams2",
-          "SymbolInsertion",
-          "ReversedWords",
-          "SAT-Analogies"
+          "Fine-tuned RoBERTa"
         ],
         "unit": null
       },
       {
         "name": "model_size",
         "label": "Model Size (parameters)",
-        "type": "discrete",
+        "type": "categorical",
         "values": [
           "125M",
           "350M",
@@ -153,12 +86,83 @@
           "175B"
         ],
         "unit": "parameters"
+      },
+      {
+        "name": "task",
+        "label": "Evaluation Task",
+        "type": "categorical",
+        "values": [
+          "PTB",
+          "LAMBADA",
+          "HellaSwag",
+          "StoryCloze",
+          "NaturalQuestions",
+          "TriviaQA",
+          "WebQuestions",
+          "Winograd",
+          "Winogrande",
+          "PIQA",
+          "ARC-Challenge",
+          "ARC-Easy",
+          "OpenBookQA",
+          "CoQA",
+          "DROP",
+          "SQuAD2",
+          "RACE-h",
+          "RACE-m",
+          "QuAC",
+          "BoolQ",
+          "CB",
+          "COPA",
+          "RTE",
+          "WiC",
+          "WSC",
+          "MultiRC",
+          "ReCoRD",
+          "ANLI-R1",
+          "ANLI-R2",
+          "ANLI-R3",
+          "SAT Analogies"
+        ],
+        "unit": null
+      },
+      {
+        "name": "translation_direction",
+        "label": "Translation Direction",
+        "type": "categorical",
+        "values": [
+          "Fr-En",
+          "En-Fr",
+          "De-En",
+          "En-De",
+          "Ro-En",
+          "En-Ro"
+        ],
+        "unit": null
+      },
+      {
+        "name": "arithmetic_task",
+        "label": "Arithmetic Task",
+        "type": "categorical",
+        "values": [
+          "2D+",
+          "2D-",
+          "3D+",
+          "3D-",
+          "4D+",
+          "4D-",
+          "5D+",
+          "5D-",
+          "2Dx",
+          "1DC"
+        ],
+        "unit": null
       }
     ],
     "metrics": [
       {
         "name": "accuracy",
-        "label": "Accuracy (%)",
+        "label": "Accuracy",
         "higher_is_better": true
       },
       {
@@ -177,1352 +181,842 @@
         "higher_is_better": true
       },
       {
-        "name": "human_detect_acc",
-        "label": "Human Detection Accuracy (%)",
+        "name": "em",
+        "label": "Exact Match",
+        "higher_is_better": true
+      },
+      {
+        "name": "human_accuracy",
+        "label": "Human Detection Accuracy",
         "higher_is_better": true
       }
     ],
     "data_points": [
       {
         "variable_values": {
-          "method": "RAG",
-          "task": "NaturalQuestions"
-        },
-        "metric_values": {
-          "accuracy": 44.5
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 1, column NQs",
-        "context": "RAG fine-tuned open-domain"
-      },
-      {
-        "variable_values": {
-          "method": "RAG",
-          "task": "WebQuestions"
-        },
-        "metric_values": {
-          "accuracy": 45.5
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 1, column WebQs",
-        "context": "RAG fine-tuned open-domain"
-      },
-      {
-        "variable_values": {
-          "method": "RAG",
-          "task": "TriviaQA"
-        },
-        "metric_values": {
-          "accuracy": 68.0
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 1, column TriviaQA",
-        "context": "RAG fine-tuned open-domain"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B+SSM",
-          "task": "NaturalQuestions"
-        },
-        "metric_values": {
-          "accuracy": 36.6
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 2, column NQs",
-        "context": "T5-11B+SSM fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B+SSM",
-          "task": "WebQuestions"
-        },
-        "metric_values": {
-          "accuracy": 44.7
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 2, column WebQs",
-        "context": "T5-11B+SSM fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B+SSM",
-          "task": "TriviaQA"
-        },
-        "metric_values": {
-          "accuracy": 60.5
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 2, column TriviaQA",
-        "context": "T5-11B+SSM fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B",
-          "task": "NaturalQuestions"
-        },
-        "metric_values": {
-          "accuracy": 34.5
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 3, column NQs",
-        "context": "T5-11B fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B",
-          "task": "WebQuestions"
-        },
-        "metric_values": {
-          "accuracy": 37.4
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 3, column WebQs",
-        "context": "T5-11B fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "T5-11B",
-          "task": "TriviaQA"
-        },
-        "metric_values": {
-          "accuracy": 50.1
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 3, column TriviaQA",
-        "context": "T5-11B fine-tuned closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "NaturalQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 14.6
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 4, column NQs",
-        "context": "GPT-3 175B zero-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "WebQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 14.4
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 4, column WebQs",
-        "context": "GPT-3 175B zero-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "TriviaQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 64.3
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 4, column TriviaQA",
-        "context": "GPT-3 175B zero-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "NaturalQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 23.0
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 5, column NQs",
-        "context": "GPT-3 175B one-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "WebQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 25.3
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 5, column WebQs",
-        "context": "GPT-3 175B one-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "TriviaQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 68.0
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 5, column TriviaQA",
-        "context": "GPT-3 175B one-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "NaturalQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 29.9
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 6, column NQs",
-        "context": "GPT-3 175B few-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "WebQuestions",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 41.5
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 6, column WebQs",
-        "context": "GPT-3 175B few-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "TriviaQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 71.2
-        },
-        "source_cell": "Table 3 (Closed Book QA), row 6, column TriviaQA",
-        "context": "GPT-3 175B few-shot closed-book"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "SuperGLUE-avg"
-        },
-        "metric_values": {
-          "accuracy": 89.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column Average",
-        "context": "SuperGLUE aggregate"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "SuperGLUE-avg"
-        },
-        "metric_values": {
-          "accuracy": 69.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column Average",
-        "context": "SuperGLUE aggregate"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "SuperGLUE-avg",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 71.8
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column Average",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "BoolQ"
-        },
-        "metric_values": {
-          "accuracy": 91.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column 2",
-        "context": "SuperGLUE BoolQ"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "BoolQ"
-        },
-        "metric_values": {
-          "accuracy": 77.4
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column 2",
-        "context": "SuperGLUE BoolQ"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "BoolQ",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 76.4
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column 2",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "CB"
-        },
-        "metric_values": {
-          "accuracy": 96.9
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column 3 (Accuracy)",
-        "context": "SuperGLUE CB accuracy"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "CB"
-        },
-        "metric_values": {
-          "accuracy": 83.6
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column 3 (Accuracy)",
-        "context": "SuperGLUE CB accuracy"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "CB",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 75.6
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column 3 (Accuracy)",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "CB"
-        },
-        "metric_values": {
-          "f1": 93.9
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column 4 (F1)",
-        "context": "SuperGLUE CB F1"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "CB"
-        },
-        "metric_values": {
-          "f1": 75.7
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column 4 (F1)",
-        "context": "SuperGLUE CB F1"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "CB",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "f1": 52.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column 4 (F1)",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "COPA"
-        },
-        "metric_values": {
-          "accuracy": 94.8
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column 5",
-        "context": "SuperGLUE COPA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "COPA"
-        },
-        "metric_values": {
-          "accuracy": 70.6
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column 5",
-        "context": "SuperGLUE COPA"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "COPA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 92.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column 5",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "RTE"
-        },
-        "metric_values": {
-          "accuracy": 92.5
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned SOTA, column 6",
-        "context": "SuperGLUE RTE"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned BERT-Large",
-          "task": "RTE"
-        },
-        "metric_values": {
-          "accuracy": 71.7
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row Fine-tuned BERT-Large, column 6",
-        "context": "SuperGLUE RTE"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "RTE",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 69.0
-        },
-        "source_cell": "Table (SuperGLUE Section 3.7), row GPT-3 Few-Shot, column 6",
-        "context": "GPT-3 175B few-shot, K=32"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
           "task": "PTB",
+          "method": "Zero-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "perplexity": 20.5
         },
-        "source_cell": "Section 3.1.1, text and Table (Language Modeling)",
-        "context": "Penn Tree Bank zero-shot perplexity, new SOTA by 15 points"
+        "source_cell": "Section 3.1.1 paragraph 1: 'Our largest model sets a new SOTA on PTB by a substantial margin of 15 points, achieving a perplexity of 20.50'",
+        "context": "GPT-3 175B zero-shot on Penn Tree Bank"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
           "task": "LAMBADA",
+          "method": "Zero-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 76.0
         },
-        "source_cell": "Section 3.1.2, text",
+        "source_cell": "Section 3.1.2 paragraph 1: 'in a zero-shot setting GPT-3 achieves 76% on LAMBADA, a gain of 8% over the previous state of the art'",
         "context": "GPT-3 175B zero-shot on LAMBADA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "LAMBADA (fill-in-blank)",
+          "task": "LAMBADA",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 86.4
         },
-        "source_cell": "Section 3.1.2, text",
-        "context": "GPT-3 175B few-shot with fill-in-the-blank format"
+        "source_cell": "Section 3.1.2 paragraph 2: 'GPT-3 achieves 86.4% accuracy in the few-shot setting'",
+        "context": "GPT-3 175B few-shot on LAMBADA with fill-in-the-blank format"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
           "task": "HellaSwag",
+          "method": "One-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 78.1
         },
-        "source_cell": "Section 3.1.3, text",
-        "context": "GPT-3 175B one-shot, SOTA is 85.6 (ALUM)"
+        "source_cell": "Section 3.1.3 paragraph 1: 'GPT-3 achieves 78.1% accuracy in the one-shot setting'",
+        "context": "GPT-3 175B on HellaSwag"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
           "task": "HellaSwag",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 79.3
         },
-        "source_cell": "Section 3.1.3, text",
-        "context": "GPT-3 175B few-shot"
+        "source_cell": "Section 3.1.3 paragraph 1: 'and 79.3% accuracy in the few-shot setting'",
+        "context": "GPT-3 175B on HellaSwag"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
           "task": "StoryCloze",
+          "method": "Zero-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 83.2
         },
-        "source_cell": "Section 3.1.4, text",
-        "context": "GPT-3 175B zero-shot, StoryCloze 2016"
+        "source_cell": "Section 3.1.4 paragraph 1: 'GPT-3 achieves 83.2% in the zero-shot setting'",
+        "context": "GPT-3 175B on StoryCloze 2016"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
           "task": "StoryCloze",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 87.7
         },
-        "source_cell": "Section 3.1.4, text",
-        "context": "GPT-3 175B few-shot, K=70"
+        "source_cell": "Section 3.1.4 paragraph 1: 'and 87.7% in the few-shot setting (with K=70)'",
+        "context": "GPT-3 175B on StoryCloze 2016"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "Winograd",
+          "task": "TriviaQA",
+          "method": "Zero-Shot",
           "model_size": "175B"
         },
         "metric_values": {
-          "accuracy": 88.3
+          "accuracy": 64.3
         },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B zero-shot, 273 Winograd schemas"
+        "source_cell": "Table 3, GPT-3 Zero-Shot row, TriviaQA column",
+        "context": "GPT-3 175B closed-book on TriviaQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "Winograd",
+          "task": "TriviaQA",
+          "method": "One-Shot",
           "model_size": "175B"
         },
         "metric_values": {
-          "accuracy": 89.7
+          "accuracy": 68.0
         },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B one-shot"
+        "source_cell": "Table 3, GPT-3 One-Shot row, TriviaQA column",
+        "context": "GPT-3 175B closed-book on TriviaQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "Winograd",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 88.6
-        },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B few-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "Winogrande",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 70.2
-        },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B zero-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "Winogrande",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 73.2
-        },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B one-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "Winogrande",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 77.7
-        },
-        "source_cell": "Section 3.5, text",
-        "context": "GPT-3 175B few-shot, fine-tuned RoBERTa=79%, SOTA=84.6% (T5)"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "PIQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 81.0
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B zero-shot, result flagged for potential contamination*"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "PIQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 80.5
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B one-shot, result flagged for potential contamination*"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "PIQA",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 82.8
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B few-shot on test server, prior SOTA fine-tuned RoBERTa=79.4%, flagged*"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "ARC-Challenge",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 51.4
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B zero-shot, fine-tuned RoBERTa=55.9%"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "ARC-Challenge",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 53.2
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B one-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "ARC-Challenge",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 51.5
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B few-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "ARC-Easy",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 68.8
-        },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B zero-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "ARC-Easy",
+          "task": "TriviaQA",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 71.2
         },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B one-shot"
+        "source_cell": "Table 3, GPT-3 Few-Shot row, TriviaQA column",
+        "context": "GPT-3 175B closed-book on TriviaQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
+          "task": "NaturalQuestions",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 14.6
+        },
+        "source_cell": "Table 3, GPT-3 Zero-Shot row, NQs column",
+        "context": "GPT-3 175B closed-book on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "NaturalQuestions",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 23.0
+        },
+        "source_cell": "Table 3, GPT-3 One-Shot row, NQs column",
+        "context": "GPT-3 175B closed-book on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "NaturalQuestions",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 29.9
+        },
+        "source_cell": "Table 3, GPT-3 Few-Shot row, NQs column",
+        "context": "GPT-3 175B closed-book on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 14.4
+        },
+        "source_cell": "Table 3, GPT-3 Zero-Shot row, WebQs column",
+        "context": "GPT-3 175B closed-book on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 25.3
+        },
+        "source_cell": "Table 3, GPT-3 One-Shot row, WebQs column",
+        "context": "GPT-3 175B closed-book on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 41.5
+        },
+        "source_cell": "Table 3, GPT-3 Few-Shot row, WebQs column",
+        "context": "GPT-3 175B closed-book on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "NaturalQuestions",
+          "method": "RAG Fine-tuned"
+        },
+        "metric_values": {
+          "accuracy": 44.5
+        },
+        "source_cell": "Table 3, RAG (Fine-tuned, Open-Domain) row, NQs column",
+        "context": "RAG fine-tuned open-domain on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "RAG Fine-tuned"
+        },
+        "metric_values": {
+          "accuracy": 45.5
+        },
+        "source_cell": "Table 3, RAG (Fine-tuned, Open-Domain) row, WebQs column",
+        "context": "RAG fine-tuned open-domain on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "TriviaQA",
+          "method": "RAG Fine-tuned"
+        },
+        "metric_values": {
+          "accuracy": 68.0
+        },
+        "source_cell": "Table 3, RAG (Fine-tuned, Open-Domain) row, TriviaQA column",
+        "context": "RAG fine-tuned open-domain on TriviaQA"
+      },
+      {
+        "variable_values": {
+          "task": "NaturalQuestions",
+          "method": "Fine-tuned T5-11B+SSM"
+        },
+        "metric_values": {
+          "accuracy": 36.6
+        },
+        "source_cell": "Table 3, T5-11B+SSM (Fine-tuned, Closed-Book) row, NQs column",
+        "context": "T5-11B+SSM fine-tuned closed-book on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "Fine-tuned T5-11B+SSM"
+        },
+        "metric_values": {
+          "accuracy": 44.7
+        },
+        "source_cell": "Table 3, T5-11B+SSM (Fine-tuned, Closed-Book) row, WebQs column",
+        "context": "T5-11B+SSM fine-tuned closed-book on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "TriviaQA",
+          "method": "Fine-tuned T5-11B+SSM"
+        },
+        "metric_values": {
+          "accuracy": 60.5
+        },
+        "source_cell": "Table 3, T5-11B+SSM (Fine-tuned, Closed-Book) row, TriviaQA column",
+        "context": "T5-11B+SSM fine-tuned closed-book on TriviaQA"
+      },
+      {
+        "variable_values": {
+          "task": "NaturalQuestions",
+          "method": "Fine-tuned T5-11B"
+        },
+        "metric_values": {
+          "accuracy": 34.5
+        },
+        "source_cell": "Table 3, T5-11B (Fine-tuned, Closed-Book) row, NQs column",
+        "context": "T5-11B fine-tuned closed-book on Natural Questions"
+      },
+      {
+        "variable_values": {
+          "task": "WebQuestions",
+          "method": "Fine-tuned T5-11B"
+        },
+        "metric_values": {
+          "accuracy": 37.4
+        },
+        "source_cell": "Table 3, T5-11B (Fine-tuned, Closed-Book) row, WebQs column",
+        "context": "T5-11B fine-tuned closed-book on WebQuestions"
+      },
+      {
+        "variable_values": {
+          "task": "TriviaQA",
+          "method": "Fine-tuned T5-11B"
+        },
+        "metric_values": {
+          "accuracy": 50.1
+        },
+        "source_cell": "Table 3, T5-11B (Fine-tuned, Closed-Book) row, TriviaQA column",
+        "context": "T5-11B fine-tuned closed-book on TriviaQA"
+      },
+      {
+        "variable_values": {
+          "task": "Winograd",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 88.3
+        },
+        "source_cell": "Section 3.4 paragraph 2: 'On Winograd GPT-3 achieves 88.3%, 89.7%, and 88.6% in the zero-shot, one-shot, and few-shot settings'",
+        "context": "GPT-3 175B on Winograd (273 schemas)"
+      },
+      {
+        "variable_values": {
+          "task": "Winograd",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 89.7
+        },
+        "source_cell": "Section 3.4 paragraph 2: 'On Winograd GPT-3 achieves 88.3%, 89.7%, and 88.6% in the zero-shot, one-shot, and few-shot settings'",
+        "context": "GPT-3 175B on Winograd (273 schemas)"
+      },
+      {
+        "variable_values": {
+          "task": "Winograd",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 88.6
+        },
+        "source_cell": "Section 3.4 paragraph 2: 'On Winograd GPT-3 achieves 88.3%, 89.7%, and 88.6% in the zero-shot, one-shot, and few-shot settings'",
+        "context": "GPT-3 175B on Winograd (273 schemas)"
+      },
+      {
+        "variable_values": {
+          "task": "Winogrande",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 70.2
+        },
+        "source_cell": "Section 3.4 paragraph 3: 'GPT-3 achieves 70.2% in the zero-shot setting'",
+        "context": "GPT-3 175B on Winogrande"
+      },
+      {
+        "variable_values": {
+          "task": "Winogrande",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 73.2
+        },
+        "source_cell": "Section 3.4 paragraph 3: '73.2% in the one-shot setting'",
+        "context": "GPT-3 175B on Winogrande"
+      },
+      {
+        "variable_values": {
+          "task": "Winogrande",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 77.7
+        },
+        "source_cell": "Section 3.4 paragraph 3: 'and 77.7% in the few-shot setting'",
+        "context": "GPT-3 175B on Winogrande"
+      },
+      {
+        "variable_values": {
+          "task": "PIQA",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 81.0
+        },
+        "source_cell": "Section 3.5 paragraph 1: 'GPT-3 achieves 81.0% accuracy zero-shot'",
+        "context": "GPT-3 175B on PIQA (potential contamination noted)"
+      },
+      {
+        "variable_values": {
+          "task": "PIQA",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 80.5
+        },
+        "source_cell": "Section 3.5 paragraph 1: '80.5% accuracy one-shot'",
+        "context": "GPT-3 175B on PIQA (potential contamination noted)"
+      },
+      {
+        "variable_values": {
+          "task": "PIQA",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 82.8
+        },
+        "source_cell": "Section 3.5 paragraph 1: 'and 82.8% accuracy few-shot (the last measured on PIQA's test server)'",
+        "context": "GPT-3 175B on PIQA (potential contamination noted)"
+      },
+      {
+        "variable_values": {
+          "task": "ARC-Challenge",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 51.4
+        },
+        "source_cell": "Section 3.5 paragraph 2: 'GPT-3 achieves 51.4% accuracy in the zero-shot setting'",
+        "context": "GPT-3 175B on ARC Challenge"
+      },
+      {
+        "variable_values": {
+          "task": "ARC-Challenge",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 53.2
+        },
+        "source_cell": "Section 3.5 paragraph 2: '53.2% in the one-shot setting'",
+        "context": "GPT-3 175B on ARC Challenge"
+      },
+      {
+        "variable_values": {
+          "task": "ARC-Challenge",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 51.5
+        },
+        "source_cell": "Section 3.5 paragraph 2: 'and 51.5% in the few-shot setting'",
+        "context": "GPT-3 175B on ARC Challenge"
+      },
+      {
+        "variable_values": {
           "task": "ARC-Easy",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 68.8
+        },
+        "source_cell": "Section 3.5 paragraph 2: 'GPT-3 achieves 68.8%, 71.2%, and 70.1%'",
+        "context": "GPT-3 175B on ARC Easy"
+      },
+      {
+        "variable_values": {
+          "task": "ARC-Easy",
+          "method": "One-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 71.2
+        },
+        "source_cell": "Section 3.5 paragraph 2: 'GPT-3 achieves 68.8%, 71.2%, and 70.1%'",
+        "context": "GPT-3 175B on ARC Easy"
+      },
+      {
+        "variable_values": {
+          "task": "ARC-Easy",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 70.1
         },
-        "source_cell": "Section 3.6, text",
-        "context": "GPT-3 175B few-shot"
+        "source_cell": "Section 3.5 paragraph 2: 'GPT-3 achieves 68.8%, 71.2%, and 70.1%'",
+        "context": "GPT-3 175B on ARC Easy"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
           "task": "CoQA",
+          "method": "Zero-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "f1": 81.5
         },
-        "source_cell": "Section 1 (Introduction), text",
-        "context": "GPT-3 175B zero-shot CoQA"
+        "source_cell": "Section 1 paragraph 6: 'GPT-3 achieves 81.5 F1 on CoQA in the zero-shot setting'",
+        "context": "GPT-3 175B on CoQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
           "task": "CoQA",
+          "method": "One-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "f1": 84.0
         },
-        "source_cell": "Section 1 (Introduction), text",
-        "context": "GPT-3 175B one-shot CoQA"
+        "source_cell": "Section 1 paragraph 6: '84.0 F1 on CoQA in the one-shot setting'",
+        "context": "GPT-3 175B on CoQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
           "task": "CoQA",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "f1": 85.0
         },
-        "source_cell": "Section 1 (Introduction), text",
-        "context": "GPT-3 175B few-shot CoQA"
+        "source_cell": "Section 1 paragraph 6: '85.0 F1 in the few-shot setting'",
+        "context": "GPT-3 175B on CoQA"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
           "task": "SQuAD2",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "f1": 69.8
         },
-        "source_cell": "Section 3.7 (Reading Comprehension), text",
-        "context": "GPT-3 175B few-shot, ~10 F1 improvement over zero-shot"
+        "source_cell": "Section 3.6 paragraph 2: 'improving by almost 10 F1 (to 69.8) compared to a zero-shot setting'",
+        "context": "GPT-3 175B on SQuAD 2.0"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "WSC",
+          "task": "SuperGLUE",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
-          "accuracy": 80.1
+          "accuracy": 71.8
         },
-        "source_cell": "Section 3.7 (SuperGLUE), text",
-        "context": "GPT-3 175B few-shot on SuperGLUE WSC variant"
+        "source_cell": "Table (SuperGLUE section), GPT-3 Few-Shot row, Average column",
+        "context": "GPT-3 175B few-shot SuperGLUE average (K=32)"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
+          "task": "SuperGLUE",
+          "method": "Fine-tuned BERT-Large"
+        },
+        "metric_values": {
+          "accuracy": 69.0
+        },
+        "source_cell": "Table (SuperGLUE section), Fine-tuned BERT-Large row, Average column",
+        "context": "Fine-tuned BERT-Large SuperGLUE average"
+      },
+      {
+        "variable_values": {
+          "task": "SuperGLUE",
+          "method": "Fine-tuned SOTA"
+        },
+        "metric_values": {
+          "accuracy": 89.0
+        },
+        "source_cell": "Table (SuperGLUE section), Fine-tuned SOTA row, Average column",
+        "context": "Fine-tuned SOTA SuperGLUE average"
+      },
+      {
+        "variable_values": {
+          "task": "BoolQ",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 76.4
+        },
+        "source_cell": "Table (SuperGLUE section), GPT-3 Few-Shot row, BoolQ column",
+        "context": "GPT-3 175B few-shot on BoolQ"
+      },
+      {
+        "variable_values": {
+          "task": "CB",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 75.6,
+          "f1": 52.0
+        },
+        "source_cell": "Table (SuperGLUE section), GPT-3 Few-Shot row, CB Accuracy and CB F1 columns",
+        "context": "GPT-3 175B few-shot on CB"
+      },
+      {
+        "variable_values": {
+          "task": "COPA",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 92.0
+        },
+        "source_cell": "Table (SuperGLUE section), GPT-3 Few-Shot row, Copa column",
+        "context": "GPT-3 175B few-shot on COPA"
+      },
+      {
+        "variable_values": {
+          "task": "RTE",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 69.0
+        },
+        "source_cell": "Table (SuperGLUE section), GPT-3 Few-Shot row, RTE column",
+        "context": "GPT-3 175B few-shot on RTE"
+      },
+      {
+        "variable_values": {
           "task": "WiC",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 49.4
         },
-        "source_cell": "Section 3.7 (SuperGLUE), text",
-        "context": "GPT-3 175B few-shot, near random chance, notable weak spot"
+        "source_cell": "Section 3.7 paragraph 2: 'WiC is a notable weak spot with few-shot performance at 49.4%'",
+        "context": "GPT-3 175B few-shot on WiC (near random chance)"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "2D+",
+          "task": "WSC",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
-          "accuracy": 100.0
+          "accuracy": 80.1
         },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, 2-digit addition"
+        "source_cell": "Section 3.7 paragraph 1: 'achieving 80.1% in the few-shot setting'",
+        "context": "GPT-3 175B few-shot on WSC (SuperGLUE version)"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "2D-",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 98.9
-        },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, 2-digit subtraction"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "3D+",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 80.2
-        },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, 3-digit addition"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "3D-",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 94.2
-        },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, 3-digit subtraction"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "2Dx",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 29.2
-        },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, 2-digit multiplication"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "1DC",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 21.3
-        },
-        "source_cell": "Section 3.9.1, text",
-        "context": "GPT-3 175B few-shot, single-digit composite operations"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "SymbolInsertion",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 66.9
-        },
-        "source_cell": "Section 3.9.2, text",
-        "context": "GPT-3 175B few-shot, random insertion removal"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "CycledLetters",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 38.6
-        },
-        "source_cell": "Section 3.9.2, text",
-        "context": "GPT-3 175B few-shot, cycle letters in word"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "Anagrams2",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 40.2
-        },
-        "source_cell": "Section 3.9.2, text",
-        "context": "GPT-3 175B few-shot, anagrams except first and last 2 chars"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "Anagrams1",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 15.1
-        },
-        "source_cell": "Section 3.9.2, text",
-        "context": "GPT-3 175B few-shot, anagrams except first and last char (harder)"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "zero-shot",
-          "task": "SAT-Analogies",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 53.7
-        },
-        "source_cell": "Section 3.9.3, text",
-        "context": "GPT-3 175B zero-shot, 374 SAT analogy problems, college avg=57%, chance=20%"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "one-shot",
-          "task": "SAT-Analogies",
-          "model_size": "175B"
-        },
-        "metric_values": {
-          "accuracy": 59.1
-        },
-        "source_cell": "Section 3.9.3, text",
-        "context": "GPT-3 175B one-shot"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "SAT-Analogies",
+          "task": "SAT Analogies",
+          "method": "Few-Shot",
           "model_size": "175B"
         },
         "metric_values": {
           "accuracy": 65.2
         },
-        "source_cell": "Section 3.9.3, text",
-        "context": "GPT-3 175B few-shot"
+        "source_cell": "Section 3.9.3 paragraph 1: 'GPT-3 achieves 65.2% in the few-shot setting'",
+        "context": "GPT-3 175B on 374 SAT analogy problems"
       },
       {
         "variable_values": {
-          "method": "GPT-3",
-          "model_size": "175B",
-          "task": "news-article-detection-200w"
-        },
-        "metric_values": {
-          "human_detect_acc": 52.0
-        },
-        "source_cell": "Section 3.9.4, text and Table (generation)",
-        "context": "Mean human accuracy detecting GPT-3 175B ~200 word articles, 50% is chance"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "model_size": "175B",
-          "task": "news-article-detection-500w"
-        },
-        "metric_values": {
-          "human_detect_acc": 52.0
-        },
-        "source_cell": "Section 3.9.4, text and Table (generation_long)",
-        "context": "Mean human accuracy detecting GPT-3 175B ~500 word articles, 50% is chance"
-      },
-      {
-        "variable_values": {
-          "method": "control-160M",
-          "model_size": "160M",
-          "task": "news-article-detection-200w"
-        },
-        "metric_values": {
-          "human_detect_acc": 86.0
-        },
-        "source_cell": "Section 3.9.4, text",
-        "context": "Mean human accuracy detecting intentionally bad control model ~200w articles"
-      },
-      {
-        "variable_values": {
-          "method": "control-160M",
-          "model_size": "160M",
-          "task": "news-article-detection-500w"
-        },
-        "metric_values": {
-          "human_detect_acc": 88.0
-        },
-        "source_cell": "Section 3.9.4, text and Table (generation_long)",
-        "context": "Mean human accuracy detecting intentionally bad control model ~500w articles"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "HellaSwag"
-        },
-        "metric_values": {
-          "accuracy": 85.6
-        },
-        "source_cell": "Appendix H Master Table, row HellaSwag, column Fine-tune SOTA",
-        "context": "ALUM fine-tuned multi-task model"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "LAMBADA"
-        },
-        "metric_values": {
-          "accuracy": 68.0
-        },
-        "source_cell": "Appendix H Master Table, row LAMBADA acc, column Fine-tune SOTA",
-        "context": "Previous SOTA on LAMBADA accuracy"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "StoryCloze"
-        },
-        "metric_values": {
-          "accuracy": 91.8
-        },
-        "source_cell": "Appendix H Master Table, row StoryCloze, column Fine-tune SOTA",
-        "context": "Fine-tuned BERT-based model SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "NaturalQuestions"
-        },
-        "metric_values": {
-          "accuracy": 44.5
-        },
-        "source_cell": "Appendix H Master Table, row NQs, column Fine-tune SOTA",
-        "context": "RAG open-domain fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "TriviaQA"
-        },
-        "metric_values": {
-          "accuracy": 68.0
-        },
-        "source_cell": "Appendix H Master Table, row TriviaQA, column Fine-tune SOTA",
-        "context": "RAG open-domain fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "WebQuestions"
-        },
-        "metric_values": {
-          "accuracy": 45.5
-        },
-        "source_cell": "Appendix H Master Table, row WebQs, column Fine-tune SOTA",
-        "context": "RAG open-domain fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "Winograd"
-        },
-        "metric_values": {
-          "accuracy": 93.8
-        },
-        "source_cell": "Appendix H Master Table, row Winograd, column Fine-tune SOTA",
-        "context": "Near human performance"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "Winogrande"
-        },
-        "metric_values": {
-          "accuracy": 84.6
-        },
-        "source_cell": "Appendix H Master Table, row Winogrande, column Fine-tune SOTA",
-        "context": "Fine-tuned T5"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "PIQA"
-        },
-        "metric_values": {
-          "accuracy": 77.1
-        },
-        "source_cell": "Appendix H Master Table, row PIQA, column Fine-tune SOTA",
-        "context": "Fine-tuned RoBERTa; text mentions 79.4%"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "ARC-Challenge"
-        },
-        "metric_values": {
-          "accuracy": 78.5
-        },
-        "source_cell": "Appendix H Master Table, row ARC Challenge, column Fine-tune SOTA",
-        "context": "UnifiedQA SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "ARC-Easy"
-        },
-        "metric_values": {
-          "accuracy": 92.0
-        },
-        "source_cell": "Appendix H Master Table, row ARC Easy, column Fine-tune SOTA",
-        "context": "UnifiedQA SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "OpenBookQA"
-        },
-        "metric_values": {
-          "accuracy": 87.2
-        },
-        "source_cell": "Appendix H Master Table, row OpenBookQA, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "QuAC"
-        },
-        "metric_values": {
-          "f1": 74.4
-        },
-        "source_cell": "Appendix H Master Table, row Quac, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "RACE-h"
-        },
-        "metric_values": {
-          "accuracy": 90.0
-        },
-        "source_cell": "Appendix H Master Table, row RACE-h, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "RACE-m"
-        },
-        "metric_values": {
-          "accuracy": 93.1
-        },
-        "source_cell": "Appendix H Master Table, row RACE-m, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "SQuAD2"
-        },
-        "metric_values": {
-          "accuracy": 90.7
-        },
-        "source_cell": "Appendix H Master Table, row SQuADv2 em, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA exact match"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "CoQA"
-        },
-        "metric_values": {
-          "f1": 90.7
-        },
-        "source_cell": "Appendix H Master Table, row CoQA, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA F1"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "DROP"
-        },
-        "metric_values": {
-          "f1": 89.1
-        },
-        "source_cell": "Appendix H Master Table, row DROP, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA with symbolic augmentation"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "WiC"
-        },
-        "metric_values": {
-          "accuracy": 76.1
-        },
-        "source_cell": "Appendix H Master Table, row WiC, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "WSC"
-        },
-        "metric_values": {
-          "accuracy": 93.8
-        },
-        "source_cell": "Appendix H Master Table, row WSC, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "ANLI-R1"
-        },
-        "metric_values": {
-          "accuracy": 73.8
-        },
-        "source_cell": "Appendix H Master Table, row ANLI R1, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "ANLI-R2"
-        },
-        "metric_values": {
-          "accuracy": 50.7
-        },
-        "source_cell": "Appendix H Master Table, row ANLI R2, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "ANLI-R3"
-        },
-        "metric_values": {
-          "accuracy": 48.3
-        },
-        "source_cell": "Appendix H Master Table, row ANLI R3, column Fine-tune SOTA",
-        "context": "Fine-tuned SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "Ro-En translation"
-        },
-        "metric_values": {
-          "bleu": 39.9
-        },
-        "source_cell": "Appendix H Master Table, row Ro\u2192En 16 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT16 Romanian to English supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "En-Ro translation"
-        },
-        "metric_values": {
-          "bleu": 38.5
-        },
-        "source_cell": "Appendix H Master Table, row En\u2192Ro 16 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT16 English to Romanian supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "Fr-En translation"
-        },
-        "metric_values": {
-          "bleu": 35.0
-        },
-        "source_cell": "Appendix H Master Table, row Fr\u2192En 14 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT14 French to English supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "En-Fr translation"
-        },
-        "metric_values": {
-          "bleu": 45.6
-        },
-        "source_cell": "Appendix H Master Table, row En\u2192Fr 14 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT14 English to French supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "De-En translation"
-        },
-        "metric_values": {
-          "bleu": 40.2
-        },
-        "source_cell": "Appendix H Master Table, row De\u2192En 16 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT16 German to English supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "Fine-tuned SOTA",
-          "task": "En-De translation"
-        },
-        "metric_values": {
-          "bleu": 41.2
-        },
-        "source_cell": "Appendix H Master Table, row En\u2192De 16 BLEU-mb, column Fine-tune SOTA",
-        "context": "WMT16 English to German supervised SOTA"
-      },
-      {
-        "variable_values": {
-          "method": "GPT-3",
-          "eval_setting": "few-shot",
-          "task": "ReCoRD",
+          "task": "SAT Analogies",
+          "method": "One-Shot",
           "model_size": "175B"
         },
         "metric_values": {
-          "accuracy": 90.2,
-          "f1": 91.1
+          "accuracy": 59.1
         },
-        "source_cell": "Appendix H Master Table, row ReCoRD, inferred from text stating near-SOTA",
-        "context": "GPT-3 175B few-shot, text says near-SOTA; SOTA acc=92.5, f1=93.3",
-        "notes": "Exact values not directly stated in text; paper says near-SOTA"
+        "source_cell": "Section 3.9.3 paragraph 1: '59.1% in the one-shot setting'",
+        "context": "GPT-3 175B on SAT analogies"
+      },
+      {
+        "variable_values": {
+          "task": "SAT Analogies",
+          "method": "Zero-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 53.7
+        },
+        "source_cell": "Section 3.9.3 paragraph 1: 'and 53.7% in the zero-shot setting'",
+        "context": "GPT-3 175B on SAT analogies"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "2D+",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 100.0
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: 'achieving 100% accuracy on 2 digit addition'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "2D-",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 98.9
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: '98.9% at 2 digit subtraction'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "3D+",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 80.2
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: '80.2% at 3 digit addition'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "3D-",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 94.2
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: 'and 94.2% at 3-digit subtraction'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "2Dx",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 29.2
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: 'GPT-3 also achieves 29.2% accuracy at 2 digit multiplication'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "arithmetic_task": "1DC",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 21.3
+        },
+        "source_cell": "Section 3.9.1 paragraph 2: 'GPT-3 achieves 21.3% accuracy at single digit combined operations'",
+        "context": "GPT-3 175B few-shot arithmetic"
+      },
+      {
+        "variable_values": {
+          "task": "news_detection",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "human_accuracy": 52.0
+        },
+        "source_cell": "Section 3.9.4 paragraph 3: 'mean human accuracy at detecting articles that were produced by the 175B parameter model was barely above chance at ~52%'",
+        "context": "Human detection of GPT-3 175B generated ~200 word news articles"
+      },
+      {
+        "variable_values": {
+          "task": "news_detection",
+          "model_size": "control_160M"
+        },
+        "metric_values": {
+          "human_accuracy": 86.0
+        },
+        "source_cell": "Section 3.9.4 paragraph 3: 'Mean human accuracy...at detecting that the intentionally bad articles were model generated was ~86%'",
+        "context": "Human detection of control model (160M, no context) generated news articles"
+      },
+      {
+        "variable_values": {
+          "task": "news_detection_long",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "human_accuracy": 52.0
+        },
+        "source_cell": "Section 3.9.4 paragraph 8: 'mean human accuracy at detecting the longer articles that were produced by GPT-3 175B was still barely above chance at ~52%'",
+        "context": "Human detection of GPT-3 175B generated ~500 word news articles"
+      },
+      {
+        "variable_values": {
+          "task": "news_detection_long",
+          "model_size": "control_160M"
+        },
+        "metric_values": {
+          "human_accuracy": 88.0
+        },
+        "source_cell": "Section 3.9.4 paragraph 8: 'mean human accuracy at detecting the intentionally bad longer articles from the control model was ~88%'",
+        "context": "Human detection of control model generated ~500 word news articles"
+      },
+      {
+        "variable_values": {
+          "task": "word_scramble_RI",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 66.9
+        },
+        "source_cell": "Section 3.9.2 paragraph 2: 'the full GPT-3 model achieving 66.9% on removing random insertions'",
+        "context": "GPT-3 175B few-shot symbol/random insertion removal"
+      },
+      {
+        "variable_values": {
+          "task": "word_scramble_CL",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 38.6
+        },
+        "source_cell": "Section 3.9.2 paragraph 2: '38.6% on cycling letters'",
+        "context": "GPT-3 175B few-shot cycle letters"
+      },
+      {
+        "variable_values": {
+          "task": "word_scramble_A2",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 40.2
+        },
+        "source_cell": "Section 3.9.2 paragraph 2: '40.2% on the easier anagram task'",
+        "context": "GPT-3 175B few-shot anagrams (first and last 2 fixed)"
+      },
+      {
+        "variable_values": {
+          "task": "word_scramble_A1",
+          "method": "Few-Shot",
+          "model_size": "175B"
+        },
+        "metric_values": {
+          "accuracy": 15.1
+        },
+        "source_cell": "Section 3.9.2 paragraph 2: 'and 15.1% on the more difficult anagram task (where only the first and last letters are held fixed)'",
+        "context": "GPT-3 175B few-shot anagrams (first and last fixed)"
       }
     ],
     "context_descriptors": {
@@ -1532,14 +1026,8 @@
         "HellaSwag",
         "StoryCloze",
         "NaturalQuestions",
-        "WebQuestions",
         "TriviaQA",
-        "Ro-En translation",
-        "En-Ro translation",
-        "Fr-En translation",
-        "En-Fr translation",
-        "De-En translation",
-        "En-De translation",
+        "WebQuestions",
         "Winograd",
         "Winogrande",
         "PIQA",
@@ -1547,11 +1035,11 @@
         "ARC-Easy",
         "OpenBookQA",
         "CoQA",
-        "QuAC",
         "DROP",
         "SQuAD2",
         "RACE-h",
         "RACE-m",
+        "QuAC",
         "BoolQ",
         "CB",
         "COPA",
@@ -1563,39 +1051,26 @@
         "ANLI-R1",
         "ANLI-R2",
         "ANLI-R3",
-        "2D+",
-        "2D-",
-        "3D+",
-        "3D-",
-        "4D+",
-        "4D-",
-        "5D+",
-        "5D-",
-        "2Dx",
-        "1DC",
-        "CycledLetters",
-        "Anagrams1",
-        "Anagrams2",
-        "SymbolInsertion",
-        "ReversedWords",
-        "SAT-Analogies"
+        "SAT Analogies"
       ],
-      "task_category": [
-        "Language Modeling",
-        "Cloze and Completion",
-        "Closed Book QA",
-        "Translation",
-        "Winograd-Style",
-        "Common Sense Reasoning",
-        "Reading Comprehension",
-        "SuperGLUE",
-        "NLI",
-        "Arithmetic",
-        "Word Scrambling",
-        "SAT Analogies",
-        "News Generation"
+      "method": [
+        "Zero-Shot",
+        "One-Shot",
+        "Few-Shot",
+        "Fine-tuned SOTA",
+        "Fine-tuned BERT-Large"
+      ],
+      "model_size": [
+        "125M",
+        "350M",
+        "760M",
+        "1.3B",
+        "2.7B",
+        "6.7B",
+        "13B",
+        "175B"
       ]
     }
   },
-  "extracted_at": "2026-04-26T21:56:25Z"
+  "extracted_at": "2026-04-26T22:22:09Z"
 }

@@ -47,7 +47,7 @@ h1 { font-size: 26px; margin-bottom: 4px; }
 <div class="container">
 
 <h1>Paper Reader Catalog</h1>
-<div class="subtitle">4 papers extracted &mdash; Generated 2026-04-26 21:56 UTC</div>
+<div class="subtitle">5 papers extracted &mdash; Generated 2026-04-26 22:40 UTC</div>
 
 <div class="legend">
     <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Case A: Interactive (ablation tables, sliders)</div>
@@ -65,8 +65,8 @@ h1 { font-size: 26px; margin-bottom: 4px; }
 </div>
 
 <div class="filters">
-    <button class="filter-btn active" onclick="filterCards('all')">All (4)</button>
-    <button class="filter-btn" onclick="filterCards('A')">Case A (4)</button>
+    <button class="filter-btn active" onclick="filterCards('all')">All (5)</button>
+    <button class="filter-btn" onclick="filterCards('A')">Case A (5)</button>
     <button class="filter-btn" onclick="filterCards('B')">Case B (0)</button>
     <button class="filter-btn" onclick="filterCards('C')">Case C (0)</button>
 </div>
@@ -109,11 +109,11 @@ h1 { font-size: 26px; margin-bottom: 4px; }
             <div class="card-meta">Nils Reimers, Iryna Gurevych (2019) &mdash; arXiv:1908.10084</div>
             <div class="card-stats">
                 <div class="stat">
-                    <div class="stat-value">58</div>
+                    <div class="stat-value">57</div>
                     <div class="stat-label">Data Points</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">4</div>
+                    <div class="stat-value">3</div>
                     <div class="stat-label">Variables</div>
                 </div>
                 <div class="stat">
@@ -126,7 +126,7 @@ h1 { font-size: 26px; margin-bottom: 4px; }
                 </div>
             </div>
             <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
-            <div class="card-footer">The paper contains multiple tables with quantitative results across STS, SentEval, AFS, and Wikipedia tasks, plus a dedicated ablation study (Table 6) that varies pooling strategies (MEAN, MAX, CLS) and concatenation methods under classification vs regression objectives, yielding well over 10 extractable data points with clear citations.</div>
+            <div class="card-footer">The paper contains multiple results tables across STS benchmarks, SentEval transfer tasks, and a dedicated ablation study (Table 6) that varies pooling strategy (MEAN/MAX/CLS) and concatenation mode under classification vs regression objectives, reporting metric outcomes for each configuration.</div>
         </div>
         <div class="card">
             <div class="card-header">
@@ -137,15 +137,15 @@ h1 { font-size: 26px; margin-bottom: 4px; }
             <div class="card-meta">Tom B. Brown, Benjamin Mann, Nick Ryder +28 more (2020) &mdash; arXiv:2005.14165</div>
             <div class="card-stats">
                 <div class="stat">
-                    <div class="stat-value">111</div>
+                    <div class="stat-value">70</div>
                     <div class="stat-label">Data Points</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">4</div>
+                    <div class="stat-value">5</div>
                     <div class="stat-label">Variables</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">5</div>
+                    <div class="stat-value">6</div>
                     <div class="stat-label">Metrics</div>
                 </div>
                 <div class="stat">
@@ -154,7 +154,7 @@ h1 { font-size: 26px; margin-bottom: 4px; }
                 </div>
             </div>
             <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
-            <div class="card-footer">GPT-3 paper systematically varies model size (8 models from 125M to 175B parameters) and number of in-context examples (zero/one/few-shot) across dozens of NLP benchmarks, with extensive tables reporting metrics for each configuration. The master results table alone contains hundreds of data points across model sizes and settings.</div>
+            <div class="card-footer">GPT-3 paper systematically varies model size (8 models from 125M to 175B parameters) and number of in-context examples (zero/one/few-shot) across dozens of NLP benchmarks, reporting metrics for each combination. The master results table alone contains hundreds of data points across model sizes and settings.</div>
         </div>
         <div class="card">
             <div class="card-header">
@@ -183,6 +183,34 @@ h1 { font-size: 26px; margin-bottom: 4px; }
             </div>
             <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
             <div class="card-footer">The LoRA paper has extensive ablation tables varying rank r, weight matrix types, adapter configurations, and model sizes across multiple benchmarks (GLUE, E2E, WikiSQL, MNLI, SAMSum), with well over 100 extractable quantitative data points with clear table citations.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="2604.19321.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/2604.19321" target="_blank">RDP LoRA: Geometry-Driven Identification for Parameter-Efficient Adaptation in Large Language Models</a></h3>
+            <div class="card-meta">Yusuf Çelebi, Yağız Asker, Özay Ezerceli +4 more (2026) &mdash; arXiv:2604.19321</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">28</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">The paper has two clear results tables varying adaptation strategy across multiple models and reporting MMLU-Math accuracy. The main table shows 8 strategies on Qwen3-8B-Base, and the appendix table shows 5 strategies across 4 additional models, providing well-structured ablation-style comparisons with &gt;10 quantitative data points.</div>
         </div></div>
 
 <div class="note">
