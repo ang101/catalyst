@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoRA Paper Reader</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #fff; color: #1a1a2e; margin: 0; padding: 20px;
+  line-height: 1.6;
+}
+.container { max-width: 900px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+h2 { font-size: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; margin-top: 2rem; }
+a { color: #2563eb; }
+.meta { color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
+.claims { list-style: disc; padding-left: 1.5rem; }
+.claims li { margin-bottom: 0.5rem; }
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin: 1rem 0;
+}
+.control-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: #475569; }
+.control-group select, .control-group input[type=range] { width: 100%; }
+.control-group select {
+  padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-size: 0.9rem; background: #fff;
+}
+.rank-display { font-size: 1.4rem; font-weight: 700; color: #2563eb; text-align: center; margin-top: 4px; }
+
+.results-panel {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 20px; margin: 1rem 0;
+}
+.result-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.result-item { flex: 1; min-width: 160px; }
+.result-label { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.result-value { font-size: 1.5rem; font-weight: 700; margin: 4px 0; }
+.result-sub { font-size: 0.78rem; color: #94a3b8; }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; vertical-align: middle;
+}
+.badge-paper { background: #22c55e; color: #fff; }
+.badge-interp { background: #f59e0b; color: #1a1a2e; }
+.badge-na { background: #ef4444; color: #fff; }
+
+.chart-container { position: relative; margin: 1rem 0; max-height: 400px; }
+.no-data-msg {
+  text-align: center; padding: 40px 20px; color: #94a3b8;
+  font-style: italic; border: 1px dashed #e2e8f0; border-radius: 10px; margin: 1rem 0;
+}
+
+details { margin: 1.5rem 0; }
+details summary {
+  cursor: pointer; font-weight: 600; font-size: 1rem;
+  padding: 8px 0; color: #334155;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
+th, td { padding: 6px 10px; border: 1px solid #e2e8f0; text-align: left; }
+th { background: #f1f5f9; font-weight: 600; }
+
+.repro-note {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+  padding: 16px; margin: 2rem 0; font-size: 0.9rem; color: #78350f;
+}
+
+@media (max-width: 600px) {
+  .controls { grid-template-columns: 1fr; }
+  .result-row { flex-direction: column; gap: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<h1>LoRA: Low-Rank Adaptation of Large Language Models</h1>
+<div class="meta">
+  <a href="https://arxiv.org/abs/2106.09685" target="_blank">arXiv:2106.09685</a><br>
+  Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen (2021)
+</div>
+
+<!-- Claims -->
+<h2>What this paper claims</h2>
+<ul class="claims" id="claims-list"></ul>
+
+<!-- Controls -->
+<h2>Explore the results</h2>
+<div class="controls">
+  <div class="control-group">
+    <label>Rank (r)</label>
+    <input type="range" id="rank-slider" min="0" max="100" value="50">
+    <div class="rank-display" id="rank-value">4</div>
+  </div>
+  <div class="control-group">
+    <label>Weight Type</label>
+    <select id="weight-type"></select>
+  </div>
+  <div class="control-group">
+    <label>Model</label>
+    <select id="model-select"></select>
+  </div>
+  <div class="control-group">
+    <label>Task</label>
+    <select id="task-select"></select>
+  </div>
+</div>
+
+<!-- Results Panel -->
+<div class="results-panel">
+  <div class="result-row">
+    <div class="result-item">
+      <div class="result-label">Metric Value</div>
+      <div class="result-value" id="res-metric">--</div>
+      <div id="res-badge"></div>
+      <div class="result-sub" id="res-source"></div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Trainable Parameters</div>
+      <div class="result-value" id="res-params">--</div>
+    </div>
+    <div class="result-item">
+      <div class="result-label">Memory Savings vs Full FT</div>
+      <div class="result-value" id="res-savings">--</div>
+    </div>
+  </div>
+</div>
+
+<!-- Rank Chart -->
+<h2>Rank vs. Performance</h2>
+<div id="rank-chart-wrapper">
+  <div class="chart-container"><canvas id="rank-chart"></canvas></div>
+</div>
+<div class="no-data-msg" id="rank-no-data" style="display:none;">No rank ablation data for this model</div>
+
+<!-- Weight Type Chart -->
+<div id="weight-chart-section">
+  <h2>Weight Type Comparison</h2>
+  <div class="chart-container"><canvas id="weight-chart"></canvas></div>
+</div>
+
+<!-- Source Data -->
+<h2>Source Data</h2>
+<details>
+  <summary>Show raw data tables from the paper</summary>
+  <table id="source-table">
+    <thead><tr><th>Model</th><th>Task</th><th>Metric</th><th>Value</th><th>Source Cell</th></tr></thead>
+    <tbody id="source-tbody"></tbody>
+  </table>
+</details>
+
+<!-- Reproduction Note -->
+<div class="repro-note">
+  <strong>Reproduction Note:</strong> An automated reproduction of Sentence-BERT (a different paper, arXiv 1908.10084) was successful using this system's eval-only strategy: 76.99 vs 77.03 paper-claimed Spearman correlation on the STS benchmark, matching within 0.04 points. The LoRA values shown here come directly from the LoRA paper's reported tables, not from a reproduction run.
+</div>
+
+</div><!-- .container -->
+
+<script>
+const LORA_DATA = {"paper":{"title":"LoRA: Low-Rank Adaptation of Large Language Models","authors":["Edward J. Hu","Yelong Shen","Phillip Wallis","Zeyuan Allen-Zhu","Yuanzhi Li","Shean Wang","Lu Wang","Weizhu Chen"],"year":2021,"arxiv_id":"2106.09685","url":"https://arxiv.org/abs/2106.09685"},"main_claims":["LoRA matches or exceeds full fine-tuning quality on RoBERTa, DeBERTa, GPT-2, and GPT-3 while training less than 1% of parameters","LoRA reduces trainable parameters by up to 10,000x and GPU memory by 3x compared to full fine-tuning with Adam on GPT-3 175B","LoRA introduces no additional inference latency \u2014 adapted weights can be merged into the pre-trained model","A very low rank (r=1 or r=2) is sufficient for strong adaptation on GPT-3, suggesting weight updates have low intrinsic rank","Adapting both W_q and W_v yields the best results given a fixed parameter budget, outperforming single-weight adaptation at higher rank"],"models":[{"name":"RoBERTa-base","params_millions":125,"tasks":["MNLI","SST-2","MRPC","CoLA","QNLI","QQP","RTE","STS-B"]},{"name":"RoBERTa-large","params_millions":355,"tasks":["MNLI","SST-2","MRPC","CoLA","QNLI","QQP","RTE","STS-B"]},{"name":"DeBERTa-XXL","params_millions":1500,"tasks":["MNLI","SST-2","MRPC","CoLA","QNLI","QQP","RTE","STS-B"]},{"name":"GPT-2 Medium","params_millions":355,"tasks":["E2E NLG"]},{"name":"GPT-2 Large","params_millions":774,"tasks":["E2E NLG"]},{"name":"GPT-3 175B","params_millions":175256,"tasks":["WikiSQL","MNLI","SAMSum"]}],"main_results":[{"model":"RoBERTa-base","method":"LoRA","task":"MNLI","metric_name":"Accuracy","value":87.5,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), MNLI"},{"model":"RoBERTa-base","method":"LoRA","task":"SST-2","metric_name":"Accuracy","value":95.1,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), SST-2"},{"model":"RoBERTa-base","method":"LoRA","task":"MRPC","metric_name":"Accuracy","value":89.7,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), MRPC"},{"model":"RoBERTa-base","method":"LoRA","task":"CoLA","metric_name":"Matthews Corr.","value":63.4,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), CoLA"},{"model":"RoBERTa-base","method":"LoRA","task":"QNLI","metric_name":"Accuracy","value":93.3,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), QNLI"},{"model":"RoBERTa-base","method":"LoRA","task":"QQP","metric_name":"Accuracy","value":90.8,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), QQP"},{"model":"RoBERTa-base","method":"LoRA","task":"RTE","metric_name":"Accuracy","value":86.6,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), RTE"},{"model":"RoBERTa-base","method":"LoRA","task":"STS-B","metric_name":"Spearman Corr.","value":91.5,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), STS-B"},{"model":"RoBERTa-base","method":"LoRA","task":"GLUE Avg","metric_name":"Average","value":87.2,"params":"0.3M","source_cell":"Table 2, RoB_base (LoRA), Avg."},{"model":"RoBERTa-base","method":"Full FT","task":"GLUE Avg","metric_name":"Average","value":86.4,"params":"125.0M","source_cell":"Table 2, RoB_base (FT), Avg."},{"model":"RoBERTa-large","method":"LoRA","task":"MNLI","metric_name":"Accuracy","value":90.6,"params":"0.8M","source_cell":"Table 2, RoB_large (LoRA), MNLI"},{"model":"RoBERTa-large","method":"LoRA","task":"GLUE Avg","metric_name":"Average","value":89.0,"params":"0.8M","source_cell":"Table 2, RoB_large (LoRA), Avg."},{"model":"RoBERTa-large","method":"Full FT","task":"GLUE Avg","metric_name":"Average","value":88.9,"params":"355.0M","source_cell":"Table 2, RoB_large (FT), Avg."},{"model":"DeBERTa-XXL","method":"LoRA","task":"MNLI","metric_name":"Accuracy","value":91.9,"params":"4.7M","source_cell":"Table 2, DeB_XXL (LoRA), MNLI"},{"model":"DeBERTa-XXL","method":"LoRA","task":"GLUE Avg","metric_name":"Average","value":91.3,"params":"4.7M","source_cell":"Table 2, DeB_XXL (LoRA), Avg."},{"model":"DeBERTa-XXL","method":"Full FT","task":"GLUE Avg","metric_name":"Average","value":91.1,"params":"1500.0M","source_cell":"Table 2, DeB_XXL (FT), Avg."},{"model":"GPT-2 Medium","method":"LoRA","task":"E2E NLG","metric_name":"BLEU","value":70.4,"params":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), BLEU"},{"model":"GPT-2 Medium","method":"LoRA","task":"E2E NLG","metric_name":"NIST","value":8.85,"params":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), NIST"},{"model":"GPT-2 Medium","method":"LoRA","task":"E2E NLG","metric_name":"MET","value":46.8,"params":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), MET"},{"model":"GPT-2 Medium","method":"LoRA","task":"E2E NLG","metric_name":"ROUGE-L","value":71.8,"params":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), ROUGE-L"},{"model":"GPT-2 Medium","method":"LoRA","task":"E2E NLG","metric_name":"CIDEr","value":2.53,"params":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), CIDEr"},{"model":"GPT-2 Medium","method":"Full FT","task":"E2E NLG","metric_name":"BLEU","value":68.2,"params":"354.92M","source_cell":"Table 4, GPT-2 M (FT), BLEU"},{"model":"GPT-2 Large","method":"LoRA","task":"E2E NLG","metric_name":"BLEU","value":70.4,"params":"0.77M","source_cell":"Table 4, GPT-2 L (LoRA), BLEU"},{"model":"GPT-2 Large","method":"LoRA","task":"E2E NLG","metric_name":"NIST","value":8.89,"params":"0.77M","source_cell":"Table 4, GPT-2 L (LoRA), NIST"},{"model":"GPT-3 175B","method":"LoRA","task":"WikiSQL","metric_name":"Accuracy","value":73.4,"params":"4.7M","source_cell":"Table 5, GPT-3 (LoRA) 4.7M, WikiSQL"},{"model":"GPT-3 175B","method":"LoRA","task":"MNLI","metric_name":"Accuracy","value":91.7,"params":"4.7M","source_cell":"Table 5, GPT-3 (LoRA) 4.7M, MNLI"},{"model":"GPT-3 175B","method":"LoRA","task":"SAMSum","metric_name":"R1/R2/RL","value":"53.8/29.8/45.9","params":"4.7M","source_cell":"Table 5, GPT-3 (LoRA) 4.7M, SAMSum"},{"model":"GPT-3 175B","method":"Full FT","task":"WikiSQL","metric_name":"Accuracy","value":73.8,"params":"175255.8M","source_cell":"Table 5, GPT-3 (FT), WikiSQL"},{"model":"GPT-3 175B","method":"Full FT","task":"MNLI","metric_name":"Accuracy","value":89.5,"params":"175255.8M","source_cell":"Table 5, GPT-3 (FT), MNLI"}],"weight_type_ablation":{"source":"Table 7","model":"GPT-3 175B","param_budget":"18M","values":[{"weights":"W_q","rank":8,"wikisql":70.4,"multinli":91.0,"source_cell":"Table 7, W_q column"},{"weights":"W_k","rank":8,"wikisql":70.0,"multinli":90.8,"source_cell":"Table 7, W_k column"},{"weights":"W_v","rank":8,"wikisql":73.0,"multinli":91.0,"source_cell":"Table 7, W_v column"},{"weights":"W_o","rank":8,"wikisql":73.2,"multinli":91.3,"source_cell":"Table 7, W_o column"},{"weights":"W_q,W_k","rank":4,"wikisql":71.4,"multinli":91.3,"source_cell":"Table 7, W_q,W_k column"},{"weights":"W_q,W_v","rank":4,"wikisql":73.7,"multinli":91.3,"source_cell":"Table 7, W_q,W_v column"},{"weights":"W_q,W_k,W_v,W_o","rank":2,"wikisql":73.7,"multinli":91.7,"source_cell":"Table 7, W_q,W_k,W_v,W_o column"}]},"rank_ablation_gpt3":{"source":"Table 6","model":"GPT-3 175B","rank_values":[1,2,4,8,64],"values":[{"task":"WikiSQL","weights":"W_q","ranks":{"1":68.8,"2":69.6,"4":70.5,"8":70.4,"64":70.0},"source_cell":"Table 6, WikiSQL W_q row"},{"task":"WikiSQL","weights":"W_q,W_v","ranks":{"1":73.4,"2":73.3,"4":73.7,"8":73.8,"64":73.5},"source_cell":"Table 6, WikiSQL W_q,W_v row"},{"task":"WikiSQL","weights":"W_q,W_k,W_v,W_o","ranks":{"1":74.1,"2":73.7,"4":74.0,"8":74.0,"64":73.9},"source_cell":"Table 6, WikiSQL W_q,W_k,W_v,W_o row"},{"task":"MultiNLI","weights":"W_q","ranks":{"1":90.7,"2":90.9,"4":91.1,"8":90.7,"64":90.7},"source_cell":"Table 6, MultiNLI W_q row"},{"task":"MultiNLI","weights":"W_q,W_v","ranks":{"1":91.3,"2":91.4,"4":91.3,"8":91.6,"64":91.4},"source_cell":"Table 6, MultiNLI W_q,W_v row"},{"task":"MultiNLI","weights":"W_q,W_k,W_v,W_o","ranks":{"1":91.2,"2":91.7,"4":91.7,"8":91.5,"64":91.4},"source_cell":"Table 6, MultiNLI W_q,W_k,W_v,W_o row"}]},"rank_ablation_gpt2":{"source":"Appendix F.3, Table (Effect of r on GPT-2)","model":"GPT-2 Medium","task":"E2E NLG","values":[{"rank":1,"val_loss":1.23,"BLEU":68.72,"NIST":8.7215,"MET":0.4565,"ROUGE_L":0.7052,"CIDEr":2.4329,"source_cell":"Appendix F.3 table, r=1 row"},{"rank":2,"val_loss":1.21,"BLEU":69.17,"NIST":8.7413,"MET":0.459,"ROUGE_L":0.7052,"CIDEr":2.4639,"source_cell":"Appendix F.3 table, r=2 row"},{"rank":4,"val_loss":1.18,"BLEU":70.38,"NIST":8.8439,"MET":0.4689,"ROUGE_L":0.7186,"CIDEr":2.5349,"source_cell":"Appendix F.3 table, r=4 row"},{"rank":8,"val_loss":1.17,"BLEU":69.57,"NIST":8.7457,"MET":0.4636,"ROUGE_L":0.7196,"CIDEr":2.5196,"source_cell":"Appendix F.3 table, r=8 row"},{"rank":16,"val_loss":1.16,"BLEU":69.61,"NIST":8.7483,"MET":0.4629,"ROUGE_L":0.7177,"CIDEr":2.4985,"source_cell":"Appendix F.3 table, r=16 row"},{"rank":32,"val_loss":1.16,"BLEU":69.33,"NIST":8.7736,"MET":0.4642,"ROUGE_L":0.7105,"CIDEr":2.5255,"source_cell":"Appendix F.3 table, r=32 row"},{"rank":64,"val_loss":1.16,"BLEU":69.24,"NIST":8.7174,"MET":0.4651,"ROUGE_L":0.718,"CIDEr":2.507,"source_cell":"Appendix F.3 table, r=64 row"},{"rank":128,"val_loss":1.16,"BLEU":68.73,"NIST":8.6718,"MET":0.4628,"ROUGE_L":0.7127,"CIDEr":2.503,"source_cell":"Appendix F.3 table, r=128 row"},{"rank":256,"val_loss":1.16,"BLEU":68.92,"NIST":8.6982,"MET":0.4629,"ROUGE_L":0.7128,"CIDEr":2.5012,"source_cell":"Appendix F.3 table, r=256 row"}]},"trainable_params":{"RoBERTa-base LoRA r=8 (W_q,W_v)":{"value":"0.3M","source_cell":"Table 2, RoB_base (LoRA), Parameters"},"RoBERTa-large LoRA r=8 (W_q,W_v)":{"value":"0.8M","source_cell":"Table 2, RoB_large (LoRA), Parameters"},"DeBERTa-XXL LoRA r=8 (W_q,W_v)":{"value":"4.7M","source_cell":"Table 2, DeB_XXL (LoRA), Parameters"},"GPT-2 Medium LoRA r=4 (W_q,W_v)":{"value":"0.35M","source_cell":"Table 4, GPT-2 M (LoRA), Parameters"},"GPT-2 Large LoRA r=4 (W_q,W_v)":{"value":"0.77M","source_cell":"Table 4, GPT-2 L (LoRA), Parameters"},"GPT-3 175B LoRA (4.7M)":{"value":"4.7M","source_cell":"Table 5, GPT-3 (LoRA) 4.7M, Parameters"},"GPT-3 175B LoRA (37.7M)":{"value":"37.7M","source_cell":"Table 5, GPT-3 (LoRA) 37.7M, Parameters"},"formula":"2 * L_LoRA * d_model * r (Section 4.2, Equation)"}};
+
+// ---- MODEL/TASK MAPPINGS ----
+const MODEL_TASKS = {};
+LORA_DATA.models.forEach(m => {
+  const tasks = [...m.tasks];
+  if (["RoBERTa-base","RoBERTa-large","DeBERTa-XXL"].includes(m.name)) tasks.push("GLUE Avg");
+  MODEL_TASKS[m.name] = tasks;
+});
+
+const MODEL_PARAMS = {};
+LORA_DATA.models.forEach(m => { MODEL_PARAMS[m.name] = m.params_millions; });
+
+const LORA_PARAMS_MAP = {
+  "RoBERTa-base": 0.3, "RoBERTa-large": 0.8, "DeBERTa-XXL": 4.7,
+  "GPT-2 Medium": 0.35, "GPT-2 Large": 0.77, "GPT-3 175B": 4.7
+};
+
+const FULL_FT_PARAMS_MAP = {
+  "RoBERTa-base": 125, "RoBERTa-large": 355, "DeBERTa-XXL": 1500,
+  "GPT-2 Medium": 354.92, "GPT-2 Large": 774, "GPT-3 175B": 175255.8
+};
+
+const GPT3_RANK_STOPS = [1, 2, 4, 8, 64];
+const GPT2_RANK_STOPS = [1, 2, 4, 8, 16, 32, 64, 128, 256];
+
+const WEIGHT_OPTIONS = ["W_q", "W_k", "W_v", "W_o", "W_q,W_v", "W_q,W_k", "W_q,W_k,W_v,W_o"];
+
+// ---- DOM REFS ----
+const rankSlider = document.getElementById('rank-slider');
+const rankDisplay = document.getElementById('rank-value');
+const weightSelect = document.getElementById('weight-type');
+const modelSelect = document.getElementById('model-select');
+const taskSelect = document.getElementById('task-select');
+
+// ---- INIT ----
+// Claims
+const claimsList = document.getElementById('claims-list');
+LORA_DATA.main_claims.forEach(c => {
+  const li = document.createElement('li');
+  li.textContent = c;
+  claimsList.appendChild(li);
+});
+
+// Weight type dropdown
+WEIGHT_OPTIONS.forEach(w => {
+  const o = document.createElement('option');
+  o.value = w; o.textContent = w;
+  weightSelect.appendChild(o);
+});
+weightSelect.value = "W_q,W_v";
+
+// Model dropdown
+LORA_DATA.models.forEach(m => {
+  const o = document.createElement('option');
+  o.value = m.name; o.textContent = m.name;
+  modelSelect.appendChild(o);
+});
+modelSelect.value = "GPT-3 175B";
+
+// Source data table
+const tbody = document.getElementById('source-tbody');
+LORA_DATA.main_results.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${r.model}</td><td>${r.task}</td><td>${r.metric_name}</td><td>${r.value}</td><td>${r.source_cell}</td>`;
+  tbody.appendChild(tr);
+});
+
+// ---- SLIDER LOGIC ----
+let currentRankStops = GPT3_RANK_STOPS;
+
+function sliderToRank(sliderVal) {
+  // Map 0-100 to continuous range across rank stops
+  const stops = currentRankStops;
+  const minLog = Math.log2(stops[0]);
+  const maxLog = Math.log2(stops[stops.length - 1]);
+  const logVal = minLog + (sliderVal / 100) * (maxLog - minLog);
+  return Math.pow(2, logVal);
+}
+
+function rankToSlider(rank) {
+  const stops = currentRankStops;
+  const minLog = Math.log2(stops[0]);
+  const maxLog = Math.log2(stops[stops.length - 1]);
+  const logVal = Math.log2(rank);
+  return ((logVal - minLog) / (maxLog - minLog)) * 100;
+}
+
+function snapToNearestStop(rawRank) {
+  // Find if we're very close to a stop (within 15% of the gap in log space)
+  const stops = currentRankStops;
+  for (const s of stops) {
+    const logDist = Math.abs(Math.log2(rawRank) - Math.log2(s));
+    if (logDist < 0.15) return s;
+  }
+  return Math.round(rawRank * 100) / 100;
+}
+
+function getCurrentRank() {
+  const raw = sliderToRank(parseFloat(rankSlider.value));
+  return snapToNearestStop(raw);
+}
+
+// ---- PROVENANCE ----
+function getProvenance(rankValue, dataPoints) {
+  const ranks = Object.keys(dataPoints).map(Number).sort((a, b) => a - b);
+
+  if (dataPoints[String(rankValue)] !== undefined) {
+    return {
+      type: "PAPER",
+      value: dataPoints[String(rankValue)],
+      source: findSourceCell(rankValue, dataPoints)
+    };
+  }
+
+  let lower = null, upper = null;
+  for (const r of ranks) {
+    if (r < rankValue) lower = r;
+    if (r > rankValue && upper === null) upper = r;
+  }
+  if (lower !== null && upper !== null) {
+    const lv = dataPoints[String(lower)];
+    const uv = dataPoints[String(upper)];
+    const frac = (rankValue - lower) / (upper - lower);
+    const interp = lv + frac * (uv - lv);
+    return {
+      type: "INTERP",
+      value: Math.round(interp * 100) / 100,
+      source: `Interpolated between r=${lower} (${lv}) and r=${upper} (${uv})`
+    };
+  }
+
+  return { type: "N/A", value: null, source: "Not characterized in paper" };
+}
+
+function findSourceCell(rankValue, dataPoints) {
+  // Generic fallback
+  return "Paper-reported value at r=" + rankValue;
+}
+
+function makeBadge(type) {
+  const cls = type === "PAPER" ? "badge-paper" : type === "INTERP" ? "badge-interp" : "badge-na";
+  return `<span class="badge ${cls}">[${type}]</span>`;
+}
+
+// ---- CHARTS ----
+let rankChart = null;
+let weightChart = null;
+
+function destroyChart(chart) {
+  if (chart) chart.destroy();
+  return null;
+}
+
+function buildRankChart(datasets, currentRank, xLabel, yLabel) {
+  rankChart = destroyChart(rankChart);
+  const ctx = document.getElementById('rank-chart').getContext('2d');
+
+  const allX = [];
+  datasets.forEach(ds => ds.data.forEach(p => allX.push(p.x)));
+  const minX = Math.min(...allX);
+  const maxX = Math.max(...allX);
+
+  rankChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: datasets.map((ds, i) => ({
+        label: ds.label,
+        data: ds.data,
+        showLine: true,
+        borderColor: ['#2563eb','#dc2626','#16a34a','#9333ea','#ea580c','#0891b2'][i % 6],
+        backgroundColor: ['#2563eb','#dc2626','#16a34a','#9333ea','#ea580c','#0891b2'][i % 6],
+        pointRadius: 5,
+        pointStyle: 'circle',
+        tension: 0.1,
+        borderWidth: 2
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      scales: {
+        x: {
+          type: 'logarithmic',
+          title: { display: true, text: xLabel || 'Rank (r)' },
+          min: minX * 0.8,
+          max: maxX * 1.2
+        },
+        y: {
+          title: { display: true, text: yLabel || 'Metric Value' }
+        }
+      },
+      plugins: {
+        annotation: undefined,
+        legend: { position: 'top' }
+      }
+    },
+    plugins: [{
+      id: 'verticalLine',
+      afterDraw(chart) {
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+        if (currentRank < xScale.min || currentRank > xScale.max) return;
+        const xPixel = xScale.getPixelForValue(currentRank);
+        const ctx2 = chart.ctx;
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.setLineDash([6, 4]);
+        ctx2.strokeStyle = '#f59e0b';
+        ctx2.lineWidth = 2;
+        ctx2.moveTo(xPixel, yScale.top);
+        ctx2.lineTo(xPixel, yScale.bottom);
+        ctx2.stroke();
+        ctx2.restore();
+      }
+    }]
+  });
+}
+
+function buildWeightChart() {
+  weightChart = destroyChart(weightChart);
+  const ctx = document.getElementById('weight-chart').getContext('2d');
+  const vals = LORA_DATA.weight_type_ablation.values;
+  const labels = vals.map(v => v.weights);
+  const wikiData = vals.map(v => v.wikisql);
+  const mnliData = vals.map(v => v.multinli);
+
+  weightChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'WikiSQL', data: wikiData, backgroundColor: '#2563eb' },
+        { label: 'MultiNLI', data: mnliData, backgroundColor: '#16a34a' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      scales: {
+        y: { beginAtZero: false, min: 68, title: { display: true, text: 'Accuracy' } }
+      },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+}
+
+// ---- UPDATE LOGIC ----
+function updateTaskDropdown() {
+  const model = modelSelect.value;
+  const tasks = MODEL_TASKS[model] || [];
+  taskSelect.innerHTML = '';
+  tasks.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    taskSelect.appendChild(o);
+  });
+}
+
+function updateRankStops() {
+  const model = modelSelect.value;
+  if (model === "GPT-2 Medium" || model === "GPT-2 Large") {
+    currentRankStops = GPT2_RANK_STOPS;
+  } else {
+    currentRankStops = GPT3_RANK_STOPS;
+  }
+}
+
+function updateResults() {
+  const model = modelSelect.value;
+  const task = taskSelect.value;
+  const rank = getCurrentRank();
+  const weightType = weightSelect.value;
+
+  rankDisplay.textContent = Number.isInteger(rank) ? rank : rank.toFixed(1);
+
+  // Find metric result
+  let provenance = null;
+  let metricName = '';
+
+  // Try rank ablation data first (GPT-3 or GPT-2)
+  if (model === "GPT-3 175B") {
+    const taskKey = task === "MNLI" ? "MultiNLI" : task;
+    const ablationRows = LORA_DATA.rank_ablation_gpt3.values.filter(
+      v => v.task === taskKey && v.weights === weightType
+    );
+    if (ablationRows.length > 0) {
+      provenance = getProvenance(rank, ablationRows[0].ranks);
+      if (provenance.type === "PAPER") {
+        provenance.source = ablationRows[0].source_cell;
+      }
+      metricName = 'Accuracy';
+    } else {
+      // Fall back to main results
+      const mr = LORA_DATA.main_results.find(r => r.model === model && r.task === task && r.method === "LoRA");
+      if (mr) {
+        provenance = { type: "PAPER", value: mr.value, source: mr.source_cell };
+        metricName = mr.metric_name;
+      } else {
+        provenance = { type: "N/A", value: null, source: "Not characterized in paper" };
+      }
+    }
+  } else if (model === "GPT-2 Medium") {
+    // Use GPT-2 rank ablation (BLEU)
+    const dataPoints = {};
+    LORA_DATA.rank_ablation_gpt2.values.forEach(v => { dataPoints[String(v.rank)] = v.BLEU; });
+    provenance = getProvenance(rank, dataPoints);
+    if (provenance.type === "PAPER") {
+      const row = LORA_DATA.rank_ablation_gpt2.values.find(v => v.rank === rank);
+      if (row) provenance.source = row.source_cell;
+    }
+    metricName = 'BLEU';
+  } else {
+    // Other models: just show main results (no rank ablation)
+    const mr = LORA_DATA.main_results.find(r => r.model === model && r.task === task && r.method === "LoRA");
+    if (mr) {
+      provenance = { type: "PAPER", value: mr.value, source: mr.source_cell };
+      metricName = mr.metric_name;
+    } else {
+      provenance = { type: "N/A", value: null, source: "Not characterized in paper" };
+    }
+  }
+
+  // Display
+  const resMetric = document.getElementById('res-metric');
+  const resBadge = document.getElementById('res-badge');
+  const resSource = document.getElementById('res-source');
+  const resParams = document.getElementById('res-params');
+  const resSavings = document.getElementById('res-savings');
+
+  if (provenance.value !== null) {
+    resMetric.textContent = provenance.value + (metricName ? ` (${metricName})` : '');
+  } else {
+    resMetric.textContent = '--';
+  }
+  resBadge.innerHTML = makeBadge(provenance.type);
+  resSource.textContent = provenance.source;
+
+  // Params
+  const loraP = LORA_PARAMS_MAP[model];
+  const fullP = FULL_FT_PARAMS_MAP[model];
+  resParams.textContent = loraP ? loraP + 'M' : '--';
+  if (loraP && fullP) {
+    const ratio = Math.round(fullP / loraP);
+    resSavings.textContent = ratio + 'x fewer params';
+  } else {
+    resSavings.textContent = '--';
+  }
+}
+
+function updateRankChart() {
+  const model = modelSelect.value;
+  const rank = getCurrentRank();
+  const chartWrapper = document.getElementById('rank-chart-wrapper');
+  const noData = document.getElementById('rank-no-data');
+
+  if (model === "GPT-3 175B") {
+    chartWrapper.style.display = '';
+    noData.style.display = 'none';
+
+    // Show WikiSQL and MultiNLI lines grouped by weight type
+    const datasets = [];
+    LORA_DATA.rank_ablation_gpt3.values.forEach(row => {
+      const data = Object.entries(row.ranks).map(([r, v]) => ({ x: Number(r), y: v })).sort((a, b) => a.x - b.x);
+      datasets.push({ label: `${row.task} (${row.weights})`, data });
+    });
+    buildRankChart(datasets, rank, 'Rank (r)', 'Accuracy');
+  } else if (model === "GPT-2 Medium") {
+    chartWrapper.style.display = '';
+    noData.style.display = 'none';
+
+    const data = LORA_DATA.rank_ablation_gpt2.values.map(v => ({ x: v.rank, y: v.BLEU })).sort((a, b) => a.x - b.x);
+    buildRankChart([{ label: 'BLEU on E2E NLG', data }], rank, 'Rank (r)', 'BLEU');
+  } else {
+    chartWrapper.style.display = 'none';
+    noData.style.display = '';
+    rankChart = destroyChart(rankChart);
+  }
+}
+
+function updateWeightChart() {
+  const model = modelSelect.value;
+  const section = document.getElementById('weight-chart-section');
+  if (model === "GPT-3 175B") {
+    section.style.display = '';
+    buildWeightChart();
+  } else {
+    section.style.display = 'none';
+    weightChart = destroyChart(weightChart);
+  }
+}
+
+function updateAll() {
+  updateResults();
+  updateRankChart();
+  updateWeightChart();
+}
+
+// ---- EVENT LISTENERS ----
+modelSelect.addEventListener('change', () => {
+  updateTaskDropdown();
+  updateRankStops();
+  updateAll();
+});
+
+taskSelect.addEventListener('change', updateAll);
+weightSelect.addEventListener('change', updateAll);
+rankSlider.addEventListener('input', () => {
+  updateResults();
+  // Redraw chart for vertical line
+  updateRankChart();
+});
+
+// ---- INITIAL RENDER ----
+updateTaskDropdown();
+updateRankStops();
+rankSlider.value = rankToSlider(4);
+updateAll();
+</script>
+</body>
+</html>

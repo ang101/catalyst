@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attention Is All You Need</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; color: #1a1a1a; line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 24px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin: 32px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+h3 { font-size: 15px; margin: 16px 0 8px; }
+a { color: #2563eb; }
+.meta { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.claims { margin: 16px 0; padding-left: 24px; }
+.claims li { margin-bottom: 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }
+.control-group { flex: 1 1 180px; min-width: 150px; }
+.control-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.slider { width: 100%; }
+.slider-value { font-size: 20px; font-weight: 700; color: #2563eb; text-align: center; }
+.slider-ticks { font-size: 10px; color: #9ca3af; text-align: center; }
+.dropdown, select { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+.result-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }
+.result-value { font-size: 36px; font-weight: 700; margin: 8px 0; }
+.result-meta { font-size: 13px; color: #6b7280; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; vertical-align: middle; cursor: help; }
+    .badge-paper { background: #22c55e; color: #fff; }
+    .badge-interp { background: #f59e0b; color: #1a1a1a; }
+    .badge-low { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #dc2626 4px, #dc2626 8px); color: #fff; padding: 2px 10px; }
+    .badge-na { background: #9ca3af; color: #fff; }
+    .source-text { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .warning-icon { margin-right: 2px; }
+    
+.chart-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+.chart-container canvas { max-height: 400px; }
+.no-chart { text-align: center; padding: 40px; color: #9ca3af; }
+details { margin: 16px 0; }
+summary { cursor: pointer; font-weight: 600; padding: 8px; background: #f3f4f6; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+th, td { padding: 4px 8px; border: 1px solid #e5e7eb; text-align: left; }
+th { background: #f9fafb; font-weight: 600; }
+.repro-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 32px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Attention Is All You Need</h1>
+<div class="meta">
+    Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin (2017) &mdash;
+    <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv:1706.03762</a>
+</div>
+
+<h2>What this paper claims</h2>
+<ul class="claims"><li>The Transformer architecture based solely on attention mechanisms achieves higher BLEU scores on WMT 2014 English-to-German translation than all previously reported models including ensembles.</li><li>The Transformer establishes a new single-model state-of-the-art BLEU score of 41.8 on WMT 2014 English-to-French translation while requiring a small fraction of the training cost of competitive models.</li><li>Multi-head attention with 8 heads outperforms single-head attention and attention with too many heads when total computation is held constant.</li><li>Reducing attention key dimensionality dk hurts model quality, suggesting dot-product compatibility may be insufficient for very low dimensions.</li><li>The Transformer generalizes to English constituency parsing, outperforming all previously reported models except the Recurrent Neural Network Grammar without task-specific tuning.</li><li>Label smoothing hurts perplexity but improves BLEU score and accuracy.</li></ul>
+
+<h2>Explore the results</h2>
+<div class="controls" id="controls">
+        <div class="control-group">
+            <label>Number of Attention Heads h</label>
+            <input type="range" id="slider_num_heads" min="0" max="4" value="0" class="slider" data-var="num_heads">
+            <div class="slider-value" id="val_num_heads">1</div>
+            <div class="slider-ticks">1 16 32 4 8</div>
+        </div>
+        <div class="control-group">
+            <label>Attention Key Dimension dk</label>
+            <input type="range" id="slider_d_k" min="0" max="3" value="0" class="slider" data-var="d_k">
+            <div class="slider-value" id="val_d_k">128</div>
+            <div class="slider-ticks">128 16 32 64</div>
+        </div>
+        <div class="control-group">
+            <label>Model / Method</label>
+            <select id="dd_method" class="dropdown" data-var="method"><option value="Deep-Att + PosUnk">Deep-Att + PosUnk</option><option value="GNMT + RL">GNMT + RL</option><option value="ConvS2S">ConvS2S</option><option value="MoE">MoE</option><option value="GNMT + RL Ensemble">GNMT + RL Ensemble</option><option value="ConvS2S Ensemble">ConvS2S Ensemble</option><option value="Transformer (base model)">Transformer (base model)</option><option value="Transformer (big)">Transformer (big)</option></select>
+        </div>
+        <div class="control-group">
+            <label>Positional Encoding Type</label>
+            <select id="dd_positional_encoding" class="dropdown" data-var="positional_encoding"><option value="sinusoidal">sinusoidal</option><option value="learned">learned</option></select>
+        </div>
+        <div class="control-group">
+            <label>Parsing Method</label>
+            <select id="dd_parsing_method" class="dropdown" data-var="parsing_method"><option value="Petrov et al. (2006)">Petrov et al. (2006)</option><option value="Zhu et al. (2013)">Zhu et al. (2013)</option><option value="Dyer et al. (2016)">Dyer et al. (2016)</option><option value="Transformer (4 layers)">Transformer (4 layers)</option><option value="Huang &amp; Harper (2009)">Huang &amp; Harper (2009)</option><option value="McClosky et al. (2006)">McClosky et al. (2006)</option><option value="Vinyals &amp; Kaiser et al. (2014)">Vinyals &amp; Kaiser et al. (2014)</option><option value="Luong et al. (2015)">Luong et al. (2015)</option></select>
+        </div>
+        <div class="control-group">
+            <label>Parsing Training Setting</label>
+            <select id="dd_parsing_setting" class="dropdown" data-var="parsing_setting"><option value="WSJ only, discriminative">WSJ only, discriminative</option><option value="semi-supervised">semi-supervised</option><option value="multi-task">multi-task</option><option value="generative">generative</option></select>
+        </div>
+    <div class="control-group">
+        <label>Metric</label>
+        <select id="metric_select"><option value="bleu_en_de">BLEU Score (EN-DE)</option><option value="bleu_en_fr">BLEU Score (EN-FR)</option><option value="train_flops_en_de">Training FLOPs (EN-DE)</option><option value="train_flops_en_fr">Training FLOPs (EN-FR)</option><option value="ppl_dev">Perplexity (dev)</option><option value="bleu_dev">BLEU Score (dev, newstest2013)</option><option value="params_M">Number of Parameters (millions)</option><option value="f1_wsj23">F1 Score (WSJ Section 23)</option></select>
+    </div></div>
+
+<div class="result-panel">
+    <div id="result-badge"></div>
+    <div class="result-value" id="result-value">—</div>
+    <div class="result-meta" id="result-meta"></div>
+</div>
+
+<h2>Parameter Sweep</h2>
+<div class="chart-container">
+    <canvas id="sweepChart"></canvas>
+    <div class="no-chart" id="noChart" style="display:none;">No sweep data for current selection</div>
+</div>
+
+<h2>Source Data</h2>
+<details>
+<summary>Show 33 extracted data points</summary>
+<table>
+<thead><tr><th>Context</th><th>Variables</th><th>Metrics</th><th>Source</th></tr></thead>
+<tbody><tr><td>WMT 2014 machine translation</td><td>method=Deep-Att + PosUnk</td><td>bleu_en_fr=39.2, train_flops_en_fr=1e+20</td><td>Table 2, row Deep-Att + PosUnk</td></tr><tr><td>WMT 2014 machine translation</td><td>method=GNMT + RL</td><td>bleu_en_de=24.6, bleu_en_fr=39.92, train_flops_en_de=2.3e+19, train_flops_en_fr=1.4e+20</td><td>Table 2, row GNMT + RL</td></tr><tr><td>WMT 2014 machine translation</td><td>method=ConvS2S</td><td>bleu_en_de=25.16, bleu_en_fr=40.46, train_flops_en_de=9.6e+18, train_flops_en_fr=1.5e+20</td><td>Table 2, row ConvS2S</td></tr><tr><td>WMT 2014 machine translation</td><td>method=MoE</td><td>bleu_en_de=26.03, bleu_en_fr=40.56, train_flops_en_de=2e+19, train_flops_en_fr=1.2e+20</td><td>Table 2, row MoE</td></tr><tr><td>WMT 2014 machine translation</td><td>method=GNMT + RL Ensemble</td><td>bleu_en_de=26.3, bleu_en_fr=41.16, train_flops_en_de=1.8e+20, train_flops_en_fr=1.1e+21</td><td>Table 2, row GNMT + RL Ensemble</td></tr><tr><td>WMT 2014 machine translation</td><td>method=ConvS2S Ensemble</td><td>bleu_en_de=26.36, bleu_en_fr=41.29, train_flops_en_de=7.7e+19, train_flops_en_fr=1.2e+21</td><td>Table 2, row ConvS2S Ensemble</td></tr><tr><td>WMT 2014 machine translation</td><td>method=Transformer (base model)</td><td>bleu_en_de=27.3, bleu_en_fr=38.1, train_flops_en_de=3.3e+18</td><td>Table 2, row Transformer (base model)</td></tr><tr><td>WMT 2014 machine translation</td><td>method=Transformer (big)</td><td>bleu_en_de=28.4, bleu_en_fr=41.8, train_flops_en_de=2.3e+19</td><td>Table 2, row Transformer (big)</td></tr><tr><td>Ablation on EN-DE dev set, base model variation</td><td>num_heads=1, d_k=128, d_v=128</td><td>ppl_dev=5.0, bleu_dev=25.5</td><td>Table 3, row (A) h=1</td></tr><tr><td>Ablation on EN-DE dev set, base model variation. Note: Table 3 row A with h=4 shows dk=128, dv=128 but the paper text states single-head is 0.9 BLEU worse than best. The first row in A has h=1 with dk=128 dv=128.</td><td>num_heads=4, d_k=128, d_v=128</td><td>ppl_dev=5.0, bleu_dev=25.5</td><td>Table 3, row (A) h=4 (inferred from base heading)</td></tr><tr><td>Ablation on EN-DE dev set, base model variation</td><td>num_heads=16, d_k=32, d_v=32</td><td>ppl_dev=4.91, bleu_dev=25.8</td><td>Table 3, row (A) h=16</td></tr><tr><td>Ablation on EN-DE dev set, base model variation</td><td>num_heads=32, d_k=16, d_v=16</td><td>ppl_dev=5.01, bleu_dev=25.4</td><td>Table 3, row (A) h=32</td></tr><tr><td>Ablation on EN-DE dev set, reduced key dimension</td><td>d_k=32</td><td>ppl_dev=5.01, bleu_dev=25.4, params_M=60</td><td>Table 3, row (B) dk=32</td></tr><tr><td>Ablation on EN-DE dev set, fewer layers</td><td>N=4</td><td>ppl_dev=5.19, bleu_dev=25.3, params_M=50</td><td>Table 3, row (C) N=4 (first row)</td></tr><tr><td>Ablation on EN-DE dev set, more layers</td><td>N=8</td><td>ppl_dev=4.88, bleu_dev=25.5, params_M=80</td><td>Table 3, row (C) N=8 (second row)</td></tr><tr><td>Ablation on EN-DE dev set, smaller model</td><td>d_model=256, d_k=32, d_v=32</td><td>ppl_dev=5.75, bleu_dev=24.5, params_M=28</td><td>Table 3, row (D) dmodel=256</td></tr><tr><td>Ablation on EN-DE dev set, larger model</td><td>d_model=1024, d_k=128, d_v=128</td><td>ppl_dev=4.66, bleu_dev=26.0, params_M=168</td><td>Table 3, row (D) dmodel=1024</td></tr><tr><td>Ablation on EN-DE dev set, smaller FFN</td><td>d_ff=1024</td><td>ppl_dev=5.12, bleu_dev=25.4, params_M=53</td><td>Table 3, row (D) dff=1024</td></tr><tr><td>Ablation on EN-DE dev set, larger FFN</td><td>d_ff=4096</td><td>ppl_dev=4.75, bleu_dev=26.2, params_M=90</td><td>Table 3, row (D) dff=4096</td></tr><tr><td>Ablation on EN-DE dev set, higher dropout</td><td>P_drop=0.2</td><td>ppl_dev=4.95, bleu_dev=25.5</td><td>Table 3, row (D) Pdrop=0.2</td></tr><tr><td>Ablation on EN-DE dev set, no label smoothing</td><td>epsilon_ls=0.0</td><td>ppl_dev=4.67, bleu_dev=25.3</td><td>Table 3, row (E) epsilon_ls=0.0</td></tr><tr><td>Ablation on EN-DE dev set, higher label smoothing</td><td>epsilon_ls=0.2</td><td>ppl_dev=5.47, bleu_dev=25.7</td><td>Table 3, row (E) epsilon_ls=0.2</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Petrov et al. (2006), parsing_setting=WSJ only, discriminative</td><td>f1_wsj23=90.4</td><td>Table 4, row Petrov et al. (2006)</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Zhu et al. (2013), parsing_setting=WSJ only, discriminative</td><td>f1_wsj23=90.4</td><td>Table 4, row Zhu et al. (2013) WSJ only</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Dyer et al. (2016), parsing_setting=WSJ only, discriminative</td><td>f1_wsj23=91.7</td><td>Table 4, row Dyer et al. (2016) discriminative</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Transformer (4 layers), parsing_setting=WSJ only, discriminative</td><td>f1_wsj23=91.3</td><td>Table 4, row Transformer (4 layers) WSJ only</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Zhu et al. (2013), parsing_setting=semi-supervised</td><td>f1_wsj23=91.3</td><td>Table 4, row Zhu et al. (2013) semi-supervised</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Huang &amp; Harper (2009), parsing_setting=semi-supervised</td><td>f1_wsj23=91.3</td><td>Table 4, row Huang &amp; Harper (2009)</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=McClosky et al. (2006), parsing_setting=semi-supervised</td><td>f1_wsj23=92.1</td><td>Table 4, row McClosky et al. (2006)</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Vinyals &amp; Kaiser et al. (2014), parsing_setting=semi-supervised</td><td>f1_wsj23=92.7</td><td>Table 4, row Vinyals &amp; Kaiser et al. (2014)</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Transformer (4 layers), parsing_setting=semi-supervised</td><td>f1_wsj23=92.7</td><td>Table 4, row Transformer (4 layers) semi-supervised</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Luong et al. (2015), parsing_setting=multi-task</td><td>f1_wsj23=93.0</td><td>Table 4, row Luong et al. (2015)</td></tr><tr><td>English constituency parsing, WSJ Section 23</td><td>parsing_method=Dyer et al. (2016), parsing_setting=generative</td><td>f1_wsj23=93.3</td><td>Table 4, row Dyer et al. (2016) generative</td></tr></tbody>
+</table>
+</details>
+
+<div class="repro-note">
+<strong>Reproduction note:</strong> An automated reproduction of Sentence-BERT (arXiv 1908.10084) was successful using this system's eval-only strategy: 76.99 vs 77.03 paper-claimed Spearman correlation on the STS benchmark, matching within 0.04 points. The values shown in this reader come directly from the paper's reported tables, not from a reproduction run.
+</div>
+
+</div>
+
+<script>
+const DATA = {"paper": {"title": "Attention Is All You Need", "authors": ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit", "Llion Jones", "Aidan N. Gomez", "\u0141ukasz Kaiser", "Illia Polosukhin"], "year": 2017, "arxiv_id": "1706.03762"}, "main_claims": ["The Transformer architecture based solely on attention mechanisms achieves higher BLEU scores on WMT 2014 English-to-German translation than all previously reported models including ensembles.", "The Transformer establishes a new single-model state-of-the-art BLEU score of 41.8 on WMT 2014 English-to-French translation while requiring a small fraction of the training cost of competitive models.", "Multi-head attention with 8 heads outperforms single-head attention and attention with too many heads when total computation is held constant.", "Reducing attention key dimensionality dk hurts model quality, suggesting dot-product compatibility may be insufficient for very low dimensions.", "The Transformer generalizes to English constituency parsing, outperforming all previously reported models except the Recurrent Neural Network Grammar without task-specific tuning.", "Label smoothing hurts perplexity but improves BLEU score and accuracy."], "variables": [{"name": "method", "label": "Model / Method", "type": "categorical", "values": ["Deep-Att + PosUnk", "GNMT + RL", "ConvS2S", "MoE", "GNMT + RL Ensemble", "ConvS2S Ensemble", "Transformer (base model)", "Transformer (big)"], "unit": null}, {"name": "num_heads", "label": "Number of Attention Heads h", "type": "discrete", "values": ["1", "4", "8", "16", "32"], "unit": null}, {"name": "d_k", "label": "Attention Key Dimension dk", "type": "discrete", "values": ["16", "32", "64", "128"], "unit": null}, {"name": "d_v", "label": "Attention Value Dimension dv", "type": "discrete", "values": ["16", "32", "64", "128"], "unit": null}, {"name": "N", "label": "Number of Layers N", "type": "discrete", "values": ["4", "8"], "unit": null}, {"name": "d_model", "label": "Model Dimension dmodel", "type": "discrete", "values": ["256", "512", "1024"], "unit": null}, {"name": "d_ff", "label": "Feed-Forward Inner Dimension dff", "type": "discrete", "values": ["1024", "2048", "4096"], "unit": null}, {"name": "P_drop", "label": "Dropout Rate Pdrop", "type": "continuous", "values": ["0.0", "0.1", "0.2", "0.3"], "unit": null}, {"name": "epsilon_ls", "label": "Label Smoothing Value", "type": "continuous", "values": ["0.0", "0.1", "0.2"], "unit": null}, {"name": "positional_encoding", "label": "Positional Encoding Type", "type": "categorical", "values": ["sinusoidal", "learned"], "unit": null}, {"name": "parsing_method", "label": "Parsing Method", "type": "categorical", "values": ["Petrov et al. (2006)", "Zhu et al. (2013)", "Dyer et al. (2016)", "Transformer (4 layers)", "Huang & Harper (2009)", "McClosky et al. (2006)", "Vinyals & Kaiser et al. (2014)", "Luong et al. (2015)"], "unit": null}, {"name": "parsing_setting", "label": "Parsing Training Setting", "type": "categorical", "values": ["WSJ only, discriminative", "semi-supervised", "multi-task", "generative"], "unit": null}], "metrics": [{"name": "bleu_en_de", "label": "BLEU Score (EN-DE)", "higher_is_better": true}, {"name": "bleu_en_fr", "label": "BLEU Score (EN-FR)", "higher_is_better": true}, {"name": "train_flops_en_de", "label": "Training FLOPs (EN-DE)", "higher_is_better": false}, {"name": "train_flops_en_fr", "label": "Training FLOPs (EN-FR)", "higher_is_better": false}, {"name": "ppl_dev", "label": "Perplexity (dev)", "higher_is_better": false}, {"name": "bleu_dev", "label": "BLEU Score (dev, newstest2013)", "higher_is_better": true}, {"name": "params_M", "label": "Number of Parameters (millions)", "higher_is_better": false}, {"name": "f1_wsj23", "label": "F1 Score (WSJ Section 23)", "higher_is_better": true}], "data_points": [{"variable_values": {"method": "Deep-Att + PosUnk"}, "metric_values": {"bleu_en_fr": 39.2, "train_flops_en_fr": 1e+20}, "source_cell": "Table 2, row Deep-Att + PosUnk", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "GNMT + RL"}, "metric_values": {"bleu_en_de": 24.6, "bleu_en_fr": 39.92, "train_flops_en_de": 2.3e+19, "train_flops_en_fr": 1.4e+20}, "source_cell": "Table 2, row GNMT + RL", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "ConvS2S"}, "metric_values": {"bleu_en_de": 25.16, "bleu_en_fr": 40.46, "train_flops_en_de": 9.6e+18, "train_flops_en_fr": 1.5e+20}, "source_cell": "Table 2, row ConvS2S", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "MoE"}, "metric_values": {"bleu_en_de": 26.03, "bleu_en_fr": 40.56, "train_flops_en_de": 2e+19, "train_flops_en_fr": 1.2e+20}, "source_cell": "Table 2, row MoE", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "GNMT + RL Ensemble"}, "metric_values": {"bleu_en_de": 26.3, "bleu_en_fr": 41.16, "train_flops_en_de": 1.8e+20, "train_flops_en_fr": 1.1e+21}, "source_cell": "Table 2, row GNMT + RL Ensemble", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "ConvS2S Ensemble"}, "metric_values": {"bleu_en_de": 26.36, "bleu_en_fr": 41.29, "train_flops_en_de": 7.7e+19, "train_flops_en_fr": 1.2e+21}, "source_cell": "Table 2, row ConvS2S Ensemble", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "Transformer (base model)"}, "metric_values": {"bleu_en_de": 27.3, "bleu_en_fr": 38.1, "train_flops_en_de": 3.3e+18}, "source_cell": "Table 2, row Transformer (base model)", "context": "WMT 2014 machine translation"}, {"variable_values": {"method": "Transformer (big)"}, "metric_values": {"bleu_en_de": 28.4, "bleu_en_fr": 41.8, "train_flops_en_de": 2.3e+19}, "source_cell": "Table 2, row Transformer (big)", "context": "WMT 2014 machine translation"}, {"variable_values": {"num_heads": "1", "d_k": "128", "d_v": "128"}, "metric_values": {"ppl_dev": 5.0, "bleu_dev": 25.5}, "source_cell": "Table 3, row (A) h=1", "context": "Ablation on EN-DE dev set, base model variation"}, {"variable_values": {"num_heads": "4", "d_k": "128", "d_v": "128"}, "metric_values": {"ppl_dev": 5.0, "bleu_dev": 25.5}, "source_cell": "Table 3, row (A) h=4 (inferred from base heading)", "context": "Ablation on EN-DE dev set, base model variation. Note: Table 3 row A with h=4 shows dk=128, dv=128 but the paper text states single-head is 0.9 BLEU worse than best. The first row in A has h=1 with dk=128 dv=128."}, {"variable_values": {"num_heads": "16", "d_k": "32", "d_v": "32"}, "metric_values": {"ppl_dev": 4.91, "bleu_dev": 25.8}, "source_cell": "Table 3, row (A) h=16", "context": "Ablation on EN-DE dev set, base model variation"}, {"variable_values": {"num_heads": "32", "d_k": "16", "d_v": "16"}, "metric_values": {"ppl_dev": 5.01, "bleu_dev": 25.4}, "source_cell": "Table 3, row (A) h=32", "context": "Ablation on EN-DE dev set, base model variation"}, {"variable_values": {"d_k": "32"}, "metric_values": {"ppl_dev": 5.01, "bleu_dev": 25.4, "params_M": 60}, "source_cell": "Table 3, row (B) dk=32", "context": "Ablation on EN-DE dev set, reduced key dimension"}, {"variable_values": {"N": "4"}, "metric_values": {"ppl_dev": 5.19, "bleu_dev": 25.3, "params_M": 50}, "source_cell": "Table 3, row (C) N=4 (first row)", "context": "Ablation on EN-DE dev set, fewer layers"}, {"variable_values": {"N": "8"}, "metric_values": {"ppl_dev": 4.88, "bleu_dev": 25.5, "params_M": 80}, "source_cell": "Table 3, row (C) N=8 (second row)", "context": "Ablation on EN-DE dev set, more layers"}, {"variable_values": {"d_model": "256", "d_k": "32", "d_v": "32"}, "metric_values": {"ppl_dev": 5.75, "bleu_dev": 24.5, "params_M": 28}, "source_cell": "Table 3, row (D) dmodel=256", "context": "Ablation on EN-DE dev set, smaller model"}, {"variable_values": {"d_model": "1024", "d_k": "128", "d_v": "128"}, "metric_values": {"ppl_dev": 4.66, "bleu_dev": 26.0, "params_M": 168}, "source_cell": "Table 3, row (D) dmodel=1024", "context": "Ablation on EN-DE dev set, larger model"}, {"variable_values": {"d_ff": "1024"}, "metric_values": {"ppl_dev": 5.12, "bleu_dev": 25.4, "params_M": 53}, "source_cell": "Table 3, row (D) dff=1024", "context": "Ablation on EN-DE dev set, smaller FFN"}, {"variable_values": {"d_ff": "4096"}, "metric_values": {"ppl_dev": 4.75, "bleu_dev": 26.2, "params_M": 90}, "source_cell": "Table 3, row (D) dff=4096", "context": "Ablation on EN-DE dev set, larger FFN"}, {"variable_values": {"P_drop": "0.2"}, "metric_values": {"ppl_dev": 4.95, "bleu_dev": 25.5}, "source_cell": "Table 3, row (D) Pdrop=0.2", "context": "Ablation on EN-DE dev set, higher dropout"}, {"variable_values": {"epsilon_ls": "0.0"}, "metric_values": {"ppl_dev": 4.67, "bleu_dev": 25.3}, "source_cell": "Table 3, row (E) epsilon_ls=0.0", "context": "Ablation on EN-DE dev set, no label smoothing"}, {"variable_values": {"epsilon_ls": "0.2"}, "metric_values": {"ppl_dev": 5.47, "bleu_dev": 25.7}, "source_cell": "Table 3, row (E) epsilon_ls=0.2", "context": "Ablation on EN-DE dev set, higher label smoothing"}, {"variable_values": {"parsing_method": "Petrov et al. (2006)", "parsing_setting": "WSJ only, discriminative"}, "metric_values": {"f1_wsj23": 90.4}, "source_cell": "Table 4, row Petrov et al. (2006)", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Zhu et al. (2013)", "parsing_setting": "WSJ only, discriminative"}, "metric_values": {"f1_wsj23": 90.4}, "source_cell": "Table 4, row Zhu et al. (2013) WSJ only", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Dyer et al. (2016)", "parsing_setting": "WSJ only, discriminative"}, "metric_values": {"f1_wsj23": 91.7}, "source_cell": "Table 4, row Dyer et al. (2016) discriminative", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Transformer (4 layers)", "parsing_setting": "WSJ only, discriminative"}, "metric_values": {"f1_wsj23": 91.3}, "source_cell": "Table 4, row Transformer (4 layers) WSJ only", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Zhu et al. (2013)", "parsing_setting": "semi-supervised"}, "metric_values": {"f1_wsj23": 91.3}, "source_cell": "Table 4, row Zhu et al. (2013) semi-supervised", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Huang & Harper (2009)", "parsing_setting": "semi-supervised"}, "metric_values": {"f1_wsj23": 91.3}, "source_cell": "Table 4, row Huang & Harper (2009)", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "McClosky et al. (2006)", "parsing_setting": "semi-supervised"}, "metric_values": {"f1_wsj23": 92.1}, "source_cell": "Table 4, row McClosky et al. (2006)", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Vinyals & Kaiser et al. (2014)", "parsing_setting": "semi-supervised"}, "metric_values": {"f1_wsj23": 92.7}, "source_cell": "Table 4, row Vinyals & Kaiser et al. (2014)", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Transformer (4 layers)", "parsing_setting": "semi-supervised"}, "metric_values": {"f1_wsj23": 92.7}, "source_cell": "Table 4, row Transformer (4 layers) semi-supervised", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Luong et al. (2015)", "parsing_setting": "multi-task"}, "metric_values": {"f1_wsj23": 93.0}, "source_cell": "Table 4, row Luong et al. (2015)", "context": "English constituency parsing, WSJ Section 23"}, {"variable_values": {"parsing_method": "Dyer et al. (2016)", "parsing_setting": "generative"}, "metric_values": {"f1_wsj23": 93.3}, "source_cell": "Table 4, row Dyer et al. (2016) generative", "context": "English constituency parsing, WSJ Section 23"}], "context_descriptors": {"method": ["Deep-Att + PosUnk", "GNMT + RL", "ConvS2S", "MoE", "GNMT + RL Ensemble", "ConvS2S Ensemble", "Transformer (base model)", "Transformer (big)"], "parsing_method": ["Petrov et al. (2006)", "Zhu et al. (2013)", "Dyer et al. (2016)", "Transformer (4 layers)", "Huang & Harper (2009)", "McClosky et al. (2006)", "Vinyals & Kaiser et al. (2014)", "Luong et al. (2015)"], "parsing_setting": ["WSJ only, discriminative", "semi-supervised", "multi-task", "generative"]}};
+const dataPoints = DATA.data_points || [];
+const variables = DATA.variables || [];
+const metrics = DATA.metrics || [];
+
+// Build lookup: slider var -> sorted numeric values
+const sliderVars = {};
+document.querySelectorAll('.slider').forEach(s => {
+    const varName = s.dataset.var;
+    const v = variables.find(x => x.name === varName);
+    if (v) {
+        const nums = v.values.filter(x => typeof x === 'number' || (typeof x === 'string' && !isNaN(Number(x)) && x !== 'full')).map(Number).sort((a,b) => a-b);
+        sliderVars[varName] = nums;
+        s.max = nums.length - 1;
+        s.value = 0;
+    }
+});
+
+function getCurrentSelection() {
+    const sel = {};
+    // Sliders
+    document.querySelectorAll('.slider').forEach(s => {
+        const varName = s.dataset.var;
+        const nums = sliderVars[varName];
+        if (nums) {
+            sel[varName] = nums[parseInt(s.value)];
+            document.getElementById('val_' + varName).textContent = sel[varName];
+        }
+    });
+    // Dropdowns
+    document.querySelectorAll('.dropdown').forEach(d => {
+        sel[d.dataset.var] = d.value;
+    });
+    // Context
+    document.querySelectorAll('.ctx-dropdown').forEach(d => {
+        sel['_ctx_' + d.dataset.ctx] = d.value;
+    });
+    // Metric
+    sel._metric = document.getElementById('metric_select').value;
+    return sel;
+}
+
+function matchDP(dp, sel) {
+    // Check context match
+    for (const [k, v] of Object.entries(sel)) {
+        if (k.startsWith('_')) continue;
+        const dpVal = dp.variable_values[k];
+        if (dpVal === undefined) continue;
+        if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
+    }
+    // Check context descriptors
+    for (const [k, v] of Object.entries(sel)) {
+        if (!k.startsWith('_ctx_')) continue;
+        const ctxName = k.slice(5);
+        if (dp.context && !dp.context.toLowerCase().includes(v.toLowerCase().replace(/_/g, ' ').replace(/_/g, '-'))) {
+            // Fuzzy context match
+            const words = v.toLowerCase().split('_');
+            const ctx = dp.context.toLowerCase();
+            if (!words.some(w => ctx.includes(w))) return false;
+        }
+    }
+    return true;
+}
+
+function getProvenance(sel) {
+    const metricName = sel._metric;
+
+    // 1. Exact match
+    const exact = dataPoints.filter(dp => {
+        if (!matchDP(dp, sel)) return false;
+        return dp.metric_values && dp.metric_values[metricName] !== undefined;
+    });
+    if (exact.length > 0) {
+        const dp = exact[0];
+        return {
+            type: 'PAPER',
+            value: dp.metric_values[metricName],
+            source: dp.source_cell || 'Paper table'
+        };
+    }
+
+    // 2. Check for interpolation on slider variables
+    for (const sv of Object.keys(sliderVars)) {
+        const currentVal = sel[sv];
+        const nums = sliderVars[sv];
+        if (nums.includes(currentVal)) continue; // exact value exists, no interp needed on this var
+
+        // Find bracketing points
+        const lower = nums.filter(n => n < currentVal).pop();
+        const upper = nums.find(n => n > currentVal);
+        if (lower === undefined || upper === undefined) continue;
+
+        // Check if both endpoints have data
+        const selLower = { ...sel, [sv]: lower };
+        const selUpper = { ...sel, [sv]: upper };
+        const dpLower = dataPoints.find(dp => matchDP(dp, selLower) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpUpper = dataPoints.find(dp => matchDP(dp, selUpper) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+
+        if (dpLower && dpUpper) {
+            const vl = dpLower.metric_values[metricName];
+            const vu = dpUpper.metric_values[metricName];
+            const frac = (currentVal - lower) / (upper - lower);
+            const interp = Math.round((vl + frac * (vu - vl)) * 100) / 100;
+            return {
+                type: 'INTERP',
+                value: interp,
+                source: `Interpolated between ${sv}=${lower} (${vl}) and ${sv}=${upper} (${vu})`
+            };
+        }
+    }
+
+    // 3. N/A
+    return { type: 'N/A', value: null, source: 'Not characterized in paper' };
+}
+
+function makeBadgeHTML(prov) {
+    if (prov.type === 'PAPER') {
+        return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    } else if (prov.type === 'INTERP') {
+        return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    } else {
+        return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+    }
+}
+
+let chart = null;
+
+function updateChart(sel) {
+    const canvas = document.getElementById('sweepChart');
+    const noChart = document.getElementById('noChart');
+    const metricName = sel._metric;
+
+    // Find a slider variable with data
+    const svName = Object.keys(sliderVars)[0];
+    if (!svName) {
+        canvas.style.display = 'none';
+        noChart.style.display = '';
+        return;
+    }
+    const nums = sliderVars[svName];
+
+    // Collect data points for each value of the slider var
+    const chartData = [];
+    for (const val of nums) {
+        const testSel = { ...sel, [svName]: val };
+        const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
+        if (dp) {
+            chartData.push({ x: val, y: dp.metric_values[metricName] });
+        }
+    }
+
+    if (chartData.length < 2) {
+        canvas.style.display = 'none';
+        noChart.style.display = '';
+        if (chart) { chart.destroy(); chart = null; }
+        return;
+    }
+
+    canvas.style.display = '';
+    noChart.style.display = 'none';
+
+    const currentVal = sel[svName];
+    const metricLabel = (metrics.find(m => m.name === metricName) || {}).label || metricName;
+    const varLabel = (variables.find(v => v.name === svName) || {}).label || svName;
+
+    if (chart) chart.destroy();
+    chart = new Chart(canvas, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: metricLabel + ' (paper)',
+                    data: chartData,
+                    backgroundColor: '#22c55e',
+                    borderColor: '#16a34a',
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    showLine: true,
+                    borderWidth: 2,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: metricLabel + ' vs ' + varLabel },
+                annotation: undefined
+            },
+            scales: {
+                x: {
+                    type: 'logarithmic',
+                    title: { display: true, text: varLabel },
+                    ticks: { callback: v => v }
+                },
+                y: {
+                    title: { display: true, text: metricLabel }
+                }
+            }
+        },
+        plugins: [{
+            id: 'verticalLine',
+            afterDraw(chart) {
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                const x = xScale.getPixelForValue(currentVal);
+                if (x >= xScale.left && x <= xScale.right) {
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(x, yScale.top);
+                    ctx.lineTo(x, yScale.bottom);
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 4]);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }]
+    });
+}
+
+function update() {
+    const sel = getCurrentSelection();
+    const prov = getProvenance(sel);
+
+    document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
+    const metricObj = metrics.find(m => m.name === sel._metric);
+    const metricLabel = metricObj ? metricObj.label : sel._metric;
+
+    if (prov.value !== null) {
+        document.getElementById('result-value').textContent = prov.value;
+        document.getElementById('result-meta').textContent = metricLabel;
+    } else {
+        document.getElementById('result-value').textContent = '—';
+        document.getElementById('result-meta').textContent = 'Not characterized';
+    }
+
+    updateChart(sel);
+}
+
+// Attach listeners
+document.querySelectorAll('.slider, .dropdown, .ctx-dropdown, #metric_select').forEach(el => {
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
+});
+
+// Initial render
+update();
+</script>
+</body>
+</html>

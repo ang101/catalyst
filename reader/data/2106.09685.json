@@ -1,0 +1,2269 @@
+{
+  "classification": {
+    "case": "A",
+    "reasoning": "The LoRA paper has extensive ablation tables varying rank r, weight matrix types, adapter configurations, and model sizes across multiple benchmarks (GLUE, E2E, WikiSQL, MNLI, SAMSum), with well over 100 extractable quantitative data points with clear table citations.",
+    "tables_found": 16,
+    "ablation_tables_found": 6,
+    "estimated_data_points": 250,
+    "is_theoretical": false
+  },
+  "extraction": {
+    "paper": {
+      "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+      "authors": [
+        "Edward J. Hu",
+        "Yelong Shen",
+        "Phillip Wallis",
+        "Zeyuan Allen-Zhu",
+        "Yuanzhi Li",
+        "Shean Wang",
+        "Lu Wang",
+        "Weizhu Chen"
+      ],
+      "year": 2022,
+      "arxiv_id": "2106.09685"
+    },
+    "main_claims": [
+      "LoRA matches or exceeds full fine-tuning performance on RoBERTa, DeBERTa, GPT-2, and GPT-3 despite training far fewer parameters.",
+      "LoRA introduces zero additional inference latency compared to adapter-based methods which increase latency by up to 30%.",
+      "A very low rank (r=1 or r=2) suffices for LoRA adaptation even when the full weight matrix rank is 12,288.",
+      "Adapting both Wq and Wv yields better performance than adapting a single weight type with higher rank given the same parameter budget.",
+      "The adaptation matrix delta-W amplifies task-specific directions not emphasized in the pre-trained weight matrix W rather than repeating its top singular directions.",
+      "LoRA reduces trainable parameters by 10,000x and GPU memory by 3x compared to full fine-tuning on GPT-3 175B."
+    ],
+    "variables": [
+      {
+        "name": "method",
+        "label": "Adaptation Method",
+        "type": "categorical",
+        "values": [
+          "FT",
+          "BitFit",
+          "AdapterD",
+          "AdapterH",
+          "AdapterL",
+          "AdapterP",
+          "PreEmbed",
+          "PreLayer",
+          "FT_Top2",
+          "LoRA",
+          "LoRA+PE",
+          "LoRA+PL"
+        ],
+        "unit": null
+      },
+      {
+        "name": "model",
+        "label": "Pre-trained Model",
+        "type": "categorical",
+        "values": [
+          "RoBERTa_base",
+          "RoBERTa_large",
+          "DeBERTa_XXL",
+          "GPT-2_M",
+          "GPT-2_L",
+          "GPT-3_175B"
+        ],
+        "unit": null
+      },
+      {
+        "name": "rank",
+        "label": "LoRA Rank r",
+        "type": "discrete",
+        "values": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32,
+          64,
+          128,
+          256,
+          512,
+          1024
+        ],
+        "unit": null
+      },
+      {
+        "name": "trainable_params",
+        "label": "Trainable Parameters",
+        "type": "continuous",
+        "values": [
+          "0.1M",
+          "0.3M",
+          "0.35M",
+          "0.37M",
+          "0.77M",
+          "0.8M",
+          "0.88M",
+          "0.9M",
+          "3.0M",
+          "3.2M",
+          "4.7M",
+          "6.0M",
+          "7.1M",
+          "9.4M",
+          "11.09M",
+          "14.2M",
+          "18.8M",
+          "20.2M",
+          "21.2M",
+          "23.0M",
+          "25.19M",
+          "37.7M",
+          "40.1M",
+          "77.9M",
+          "125.0M",
+          "301.9M",
+          "304.4M",
+          "354.92M",
+          "355.0M",
+          "603.8M",
+          "774.03M",
+          "1500.0M",
+          "175255.8M"
+        ],
+        "unit": "parameters"
+      },
+      {
+        "name": "weight_type",
+        "label": "Weight Matrices Adapted",
+        "type": "categorical",
+        "values": [
+          "Wq",
+          "Wk",
+          "Wv",
+          "Wo",
+          "Wq,Wk",
+          "Wq,Wv",
+          "Wq,Wk,Wv,Wo"
+        ],
+        "unit": null
+      },
+      {
+        "name": "num_train_examples",
+        "label": "Number of Training Examples",
+        "type": "discrete",
+        "values": [
+          100,
+          1000,
+          10000,
+          "full"
+        ],
+        "unit": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "mnli",
+        "label": "MNLI Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "sst2",
+        "label": "SST-2 Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "mrpc",
+        "label": "MRPC Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "cola",
+        "label": "CoLA (Matthew's Corr)",
+        "higher_is_better": true
+      },
+      {
+        "name": "qnli",
+        "label": "QNLI Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "qqp",
+        "label": "QQP Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "rte",
+        "label": "RTE Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "stsb",
+        "label": "STS-B (Pearson Corr)",
+        "higher_is_better": true
+      },
+      {
+        "name": "glue_avg",
+        "label": "GLUE Average",
+        "higher_is_better": true
+      },
+      {
+        "name": "bleu",
+        "label": "BLEU Score",
+        "higher_is_better": true
+      },
+      {
+        "name": "nist",
+        "label": "NIST Score",
+        "higher_is_better": true
+      },
+      {
+        "name": "met",
+        "label": "METEOR Score",
+        "higher_is_better": true
+      },
+      {
+        "name": "rouge_l",
+        "label": "ROUGE-L",
+        "higher_is_better": true
+      },
+      {
+        "name": "cider",
+        "label": "CIDEr Score",
+        "higher_is_better": true
+      },
+      {
+        "name": "ter",
+        "label": "TER Score",
+        "higher_is_better": false
+      },
+      {
+        "name": "wikisql_acc",
+        "label": "WikiSQL Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "mnli_acc",
+        "label": "MultiNLI Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "r1",
+        "label": "ROUGE-1",
+        "higher_is_better": true
+      },
+      {
+        "name": "r2",
+        "label": "ROUGE-2",
+        "higher_is_better": true
+      },
+      {
+        "name": "rl",
+        "label": "ROUGE-L (SAMSum)",
+        "higher_is_better": true
+      },
+      {
+        "name": "val_loss",
+        "label": "Validation Loss",
+        "higher_is_better": false
+      }
+    ],
+    "data_points": [
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "RoBERTa_base",
+          "trainable_params": "125.0M"
+        },
+        "metric_values": {
+          "mnli": 87.6,
+          "sst2": 94.8,
+          "mrpc": 90.2,
+          "cola": 63.6,
+          "qnli": 92.8,
+          "qqp": 91.9,
+          "rte": 78.7,
+          "stsb": 91.2,
+          "glue_avg": 86.4
+        },
+        "source_cell": "Table 2, row RoB_base (FT)*, all columns",
+        "context": "RoBERTa base full fine-tuning on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "BitFit",
+          "model": "RoBERTa_base",
+          "trainable_params": "0.1M"
+        },
+        "metric_values": {
+          "mnli": 84.7,
+          "sst2": 93.7,
+          "mrpc": 92.7,
+          "cola": 62.0,
+          "qnli": 91.8,
+          "qqp": 84.0,
+          "rte": 81.5,
+          "stsb": 90.8,
+          "glue_avg": 85.2
+        },
+        "source_cell": "Table 2, row RoB_base (BitFit)*, all columns",
+        "context": "RoBERTa base BitFit on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterD",
+          "model": "RoBERTa_base",
+          "trainable_params": "0.3M"
+        },
+        "metric_values": {
+          "mnli": 87.1,
+          "sst2": 94.2,
+          "mrpc": 88.5,
+          "cola": 60.8,
+          "qnli": 93.1,
+          "qqp": 90.2,
+          "rte": 71.5,
+          "stsb": 89.7,
+          "glue_avg": 84.4
+        },
+        "source_cell": "Table 2, row RoB_base (AdptD)* 0.3M, all columns",
+        "context": "RoBERTa base AdapterDrop 0.3M on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterD",
+          "model": "RoBERTa_base",
+          "trainable_params": "0.9M"
+        },
+        "metric_values": {
+          "mnli": 87.3,
+          "sst2": 94.7,
+          "mrpc": 88.4,
+          "cola": 62.6,
+          "qnli": 93.0,
+          "qqp": 90.6,
+          "rte": 75.9,
+          "stsb": 90.3,
+          "glue_avg": 85.4
+        },
+        "source_cell": "Table 2, row RoB_base (AdptD)* 0.9M, all columns",
+        "context": "RoBERTa base AdapterDrop 0.9M on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "RoBERTa_base",
+          "trainable_params": "0.3M"
+        },
+        "metric_values": {
+          "mnli": 87.5,
+          "sst2": 95.1,
+          "mrpc": 89.7,
+          "cola": 63.4,
+          "qnli": 93.3,
+          "qqp": 90.8,
+          "rte": 86.6,
+          "stsb": 91.5,
+          "glue_avg": 87.2
+        },
+        "source_cell": "Table 2, row RoB_base (LoRA) 0.3M, all columns",
+        "context": "RoBERTa base LoRA on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "RoBERTa_large",
+          "trainable_params": "355.0M"
+        },
+        "metric_values": {
+          "mnli": 90.2,
+          "sst2": 96.4,
+          "mrpc": 90.9,
+          "cola": 68.0,
+          "qnli": 94.7,
+          "qqp": 92.2,
+          "rte": 86.6,
+          "stsb": 92.4,
+          "glue_avg": 88.9
+        },
+        "source_cell": "Table 2, row RoB_large (FT)*, all columns",
+        "context": "RoBERTa large full fine-tuning on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "RoBERTa_large",
+          "trainable_params": "0.8M"
+        },
+        "metric_values": {
+          "mnli": 90.6,
+          "sst2": 96.2,
+          "mrpc": 90.9,
+          "cola": 68.2,
+          "qnli": 94.9,
+          "qqp": 91.6,
+          "rte": 87.4,
+          "stsb": 92.6,
+          "glue_avg": 89.0
+        },
+        "source_cell": "Table 2, row RoB_large (LoRA) 0.8M, all columns",
+        "context": "RoBERTa large LoRA on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterP",
+          "model": "RoBERTa_large",
+          "trainable_params": "3.0M"
+        },
+        "metric_values": {
+          "mnli": 90.2,
+          "sst2": 96.1,
+          "mrpc": 90.2,
+          "cola": 68.3,
+          "qnli": 94.8,
+          "qqp": 91.9,
+          "rte": 83.8,
+          "stsb": 92.1,
+          "glue_avg": 88.4
+        },
+        "source_cell": "Table 2, row RoB_large (AdptP) 3.0M dagger, all columns",
+        "context": "RoBERTa large AdapterP 3.0M on GLUE (restricted setup)"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterP",
+          "model": "RoBERTa_large",
+          "trainable_params": "0.8M"
+        },
+        "metric_values": {
+          "mnli": 90.5,
+          "sst2": 96.6,
+          "mrpc": 89.7,
+          "cola": 67.8,
+          "qnli": 94.8,
+          "qqp": 91.7,
+          "rte": 80.1,
+          "stsb": 91.9,
+          "glue_avg": 87.9
+        },
+        "source_cell": "Table 2, row RoB_large (AdptP) 0.8M dagger, all columns",
+        "context": "RoBERTa large AdapterP 0.8M on GLUE (restricted setup)"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "RoBERTa_large",
+          "trainable_params": "6.0M"
+        },
+        "metric_values": {
+          "mnli": 89.9,
+          "sst2": 96.2,
+          "mrpc": 88.7,
+          "cola": 66.5,
+          "qnli": 94.7,
+          "qqp": 92.1,
+          "rte": 83.4,
+          "stsb": 91.0,
+          "glue_avg": 87.8
+        },
+        "source_cell": "Table 2, row RoB_large (AdptH) 6.0M dagger, all columns",
+        "context": "RoBERTa large AdapterH 6.0M on GLUE (restricted setup)"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "RoBERTa_large",
+          "trainable_params": "0.8M"
+        },
+        "metric_values": {
+          "mnli": 90.3,
+          "sst2": 96.3,
+          "mrpc": 87.7,
+          "cola": 66.3,
+          "qnli": 94.7,
+          "qqp": 91.5,
+          "rte": 72.9,
+          "stsb": 91.5,
+          "glue_avg": 86.4
+        },
+        "source_cell": "Table 2, row RoB_large (AdptH) 0.8M dagger, all columns",
+        "context": "RoBERTa large AdapterH 0.8M on GLUE (restricted setup)"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "RoBERTa_large",
+          "trainable_params": "0.8M"
+        },
+        "metric_values": {
+          "mnli": 90.6,
+          "sst2": 96.2,
+          "mrpc": 90.2,
+          "cola": 68.2,
+          "qnli": 94.8,
+          "qqp": 91.6,
+          "rte": 85.2,
+          "stsb": 92.3,
+          "glue_avg": 88.6
+        },
+        "source_cell": "Table 2, row RoB_large (LoRA) 0.8M dagger, all columns",
+        "context": "RoBERTa large LoRA on GLUE (restricted setup)"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "DeBERTa_XXL",
+          "trainable_params": "1500.0M"
+        },
+        "metric_values": {
+          "mnli": 91.8,
+          "sst2": 97.2,
+          "mrpc": 92.0,
+          "cola": 72.0,
+          "qnli": 96.0,
+          "qqp": 92.7,
+          "rte": 93.9,
+          "stsb": 92.9,
+          "glue_avg": 91.1
+        },
+        "source_cell": "Table 2, row DeB_XXL (FT)*, all columns",
+        "context": "DeBERTa XXL full fine-tuning on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "DeBERTa_XXL",
+          "trainable_params": "4.7M"
+        },
+        "metric_values": {
+          "mnli": 91.9,
+          "sst2": 96.9,
+          "mrpc": 92.6,
+          "cola": 72.4,
+          "qnli": 96.0,
+          "qqp": 92.9,
+          "rte": 94.9,
+          "stsb": 93.0,
+          "glue_avg": 91.3
+        },
+        "source_cell": "Table 2, row DeB_XXL (LoRA) 4.7M, all columns",
+        "context": "DeBERTa XXL LoRA on GLUE"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_M",
+          "trainable_params": "354.92M"
+        },
+        "metric_values": {
+          "bleu": 68.2,
+          "nist": 8.62,
+          "met": 46.2,
+          "rouge_l": 71.0,
+          "cider": 2.47
+        },
+        "source_cell": "Table 3, row GPT-2 M (FT)*, all columns",
+        "context": "GPT-2 Medium full fine-tuning on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "0.37M"
+        },
+        "metric_values": {
+          "bleu": 66.3,
+          "nist": 8.41,
+          "met": 45.0,
+          "rouge_l": 69.8,
+          "cider": 2.4
+        },
+        "source_cell": "Table 3, row GPT-2 M (AdapterL)* 0.37M, all columns",
+        "context": "GPT-2 Medium AdapterL 0.37M on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "11.09M"
+        },
+        "metric_values": {
+          "bleu": 68.9,
+          "nist": 8.71,
+          "met": 46.1,
+          "rouge_l": 71.3,
+          "cider": 2.47
+        },
+        "source_cell": "Table 3, row GPT-2 M (AdapterL)* 11.09M, all columns",
+        "context": "GPT-2 Medium AdapterL 11.09M on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-2_M",
+          "trainable_params": "11.09M"
+        },
+        "metric_values": {
+          "bleu": 67.3,
+          "nist": 8.5,
+          "met": 46.0,
+          "rouge_l": 70.7,
+          "cider": 2.44
+        },
+        "source_cell": "Table 3, row GPT-2 M (AdapterH) 11.09M, all columns",
+        "context": "GPT-2 Medium AdapterH on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT_Top2",
+          "model": "GPT-2_M",
+          "trainable_params": "25.19M"
+        },
+        "metric_values": {
+          "bleu": 68.1,
+          "nist": 8.59,
+          "met": 46.0,
+          "rouge_l": 70.8,
+          "cider": 2.41
+        },
+        "source_cell": "Table 3, row GPT-2 M (FT_Top2)* 25.19M, all columns",
+        "context": "GPT-2 Medium FT last 2 layers on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu": 69.7,
+          "nist": 8.81,
+          "met": 46.1,
+          "rouge_l": 71.4,
+          "cider": 2.49
+        },
+        "source_cell": "Table 3, row GPT-2 M (PreLayer)* 0.35M, all columns",
+        "context": "GPT-2 Medium prefix-layer tuning on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu": 70.4,
+          "nist": 8.85,
+          "met": 46.8,
+          "rouge_l": 71.8,
+          "cider": 2.53
+        },
+        "source_cell": "Table 3, row GPT-2 M (LoRA) 0.35M, all columns",
+        "context": "GPT-2 Medium LoRA on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_L",
+          "trainable_params": "774.03M"
+        },
+        "metric_values": {
+          "bleu": 68.5,
+          "nist": 8.78,
+          "met": 46.0,
+          "rouge_l": 69.9,
+          "cider": 2.45
+        },
+        "source_cell": "Table 3, row GPT-2 L (FT)* 774.03M, all columns",
+        "context": "GPT-2 Large full fine-tuning on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "0.88M"
+        },
+        "metric_values": {
+          "bleu": 69.1,
+          "nist": 8.68,
+          "met": 46.3,
+          "rouge_l": 71.4,
+          "cider": 2.49
+        },
+        "source_cell": "Table 3, row GPT-2 L (AdapterL) 0.88M, all columns",
+        "context": "GPT-2 Large AdapterL 0.88M on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "23.0M"
+        },
+        "metric_values": {
+          "bleu": 68.9,
+          "nist": 8.7,
+          "met": 46.1,
+          "rouge_l": 71.3,
+          "cider": 2.45
+        },
+        "source_cell": "Table 3, row GPT-2 L (AdapterL) 23.0M, all columns",
+        "context": "GPT-2 Large AdapterL 23.0M on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu": 70.3,
+          "nist": 8.85,
+          "met": 46.2,
+          "rouge_l": 71.7,
+          "cider": 2.47
+        },
+        "source_cell": "Table 3, row GPT-2 L (PreLayer)* 0.77M, all columns",
+        "context": "GPT-2 Large prefix-layer tuning on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu": 70.4,
+          "nist": 8.89,
+          "met": 46.8,
+          "rouge_l": 72.0,
+          "cider": 2.47
+        },
+        "source_cell": "Table 3, row GPT-2 L (LoRA) 0.77M, all columns",
+        "context": "GPT-2 Large LoRA on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B",
+          "trainable_params": "175255.8M"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.8,
+          "mnli_acc": 89.5,
+          "r1": 52.0,
+          "r2": 28.0,
+          "rl": 44.5
+        },
+        "source_cell": "Table 4, row GPT-3 (FT), all columns",
+        "context": "GPT-3 175B full fine-tuning on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "BitFit",
+          "model": "GPT-3_175B",
+          "trainable_params": "14.2M"
+        },
+        "metric_values": {
+          "wikisql_acc": 71.3,
+          "mnli_acc": 91.0,
+          "r1": 51.3,
+          "r2": 27.4,
+          "rl": 43.5
+        },
+        "source_cell": "Table 4, row GPT-3 (BitFit), all columns",
+        "context": "GPT-3 175B BitFit on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "3.2M"
+        },
+        "metric_values": {
+          "wikisql_acc": 63.1,
+          "mnli_acc": 88.6,
+          "r1": 48.3,
+          "r2": 24.2,
+          "rl": 40.5
+        },
+        "source_cell": "Table 4, row GPT-3 (PreEmbed), all columns",
+        "context": "GPT-3 175B prefix-embedding tuning on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "20.2M"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.1,
+          "mnli_acc": 89.5,
+          "r1": 50.8,
+          "r2": 27.3,
+          "rl": 43.5
+        },
+        "source_cell": "Table 4, row GPT-3 (PreLayer), all columns",
+        "context": "GPT-3 175B prefix-layer tuning on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "7.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 71.9,
+          "mnli_acc": 89.8,
+          "r1": 53.0,
+          "r2": 28.9,
+          "rl": 44.8
+        },
+        "source_cell": "Table 4, row GPT-3 (AdapterH) 7.1M, all columns",
+        "context": "GPT-3 175B AdapterH 7.1M on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "40.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.2,
+          "mnli_acc": 91.5,
+          "r1": 53.2,
+          "r2": 29.0,
+          "rl": 45.1
+        },
+        "source_cell": "Table 4, row GPT-3 (AdapterH) 40.1M, all columns",
+        "context": "GPT-3 175B AdapterH 40.1M on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "4.7M"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.4,
+          "mnli_acc": 91.7,
+          "r1": 53.8,
+          "r2": 29.8,
+          "rl": 45.9
+        },
+        "source_cell": "Table 4, row GPT-3 (LoRA) 4.7M, all columns",
+        "context": "GPT-3 175B LoRA 4.7M on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "37.7M"
+        },
+        "metric_values": {
+          "wikisql_acc": 74.0,
+          "mnli_acc": 91.6,
+          "r1": 53.4,
+          "r2": 29.2,
+          "rl": 45.1
+        },
+        "source_cell": "Table 4, row GPT-3 (LoRA) 37.7M, all columns",
+        "context": "GPT-3 175B LoRA 37.7M on WikiSQL/MNLI/SAMSum"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.4,
+          "mnli_acc": 91.0
+        },
+        "source_cell": "Table 5, row Wq r=8",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wk",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.0,
+          "mnli_acc": 90.8
+        },
+        "source_cell": "Table 5, row Wk r=8",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wv",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.0,
+          "mnli_acc": 91.0
+        },
+        "source_cell": "Table 5, row Wv r=8",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wo",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.2,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 5, row Wo r=8",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk",
+          "rank": 4,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 71.4,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 5, row Wq,Wk r=4",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 4,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 5, row Wq,Wv r=4",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 2,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 5, row Wq,Wk,Wv,Wo r=2",
+        "context": "GPT-3 175B weight type ablation, 18M param budget"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 1,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 68.8,
+          "mnli_acc": 90.7
+        },
+        "source_cell": "Table 6, WikiSQL Wq row r=1, MultiNLI Wq row r=1",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 2,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 69.6,
+          "mnli_acc": 90.9
+        },
+        "source_cell": "Table 6, WikiSQL Wq row r=2, MultiNLI Wq row r=2",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 4,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.5,
+          "mnli_acc": 91.1
+        },
+        "source_cell": "Table 6, WikiSQL Wq row r=4, MultiNLI Wq row r=4",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.4,
+          "mnli_acc": 90.7
+        },
+        "source_cell": "Table 6, WikiSQL Wq row r=8, MultiNLI Wq row r=8",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq",
+          "rank": 64,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.0,
+          "mnli_acc": 90.7
+        },
+        "source_cell": "Table 6, WikiSQL Wq row r=64, MultiNLI Wq row r=64",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 1,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.4,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wv row r=1, MultiNLI Wq,Wv row r=1",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 2,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.3,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wv row r=2, MultiNLI Wq,Wv row r=2",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 4,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wv row r=4, MultiNLI Wq,Wv row r=4",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.8,
+          "mnli_acc": 91.6
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wv row r=8, MultiNLI Wq,Wv row r=8",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wv",
+          "rank": 64,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.5,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wv row r=64, MultiNLI Wq,Wv row r=64",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 1,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 74.1,
+          "mnli_acc": 91.2
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wk,Wv,Wo row r=1, MultiNLI row r=1",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 2,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wk,Wv,Wo row r=2, MultiNLI row r=2",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 4,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 74.0,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wk,Wv,Wo row r=4, MultiNLI row r=4",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 8,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 74.0,
+          "mnli_acc": 91.5
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wk,Wv,Wo row r=8, MultiNLI row r=8",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 64,
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.9,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 6, WikiSQL Wq,Wk,Wv,Wo row r=64, MultiNLI row r=64",
+        "context": "GPT-3 175B rank ablation"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_M"
+        },
+        "metric_values": {
+          "bleu": 46.2,
+          "met": 0.39,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row Fine-Tune GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium full fine-tuning on DART"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "0.37M"
+        },
+        "metric_values": {
+          "bleu": 42.4,
+          "met": 0.36,
+          "ter": 0.48
+        },
+        "source_cell": "Table 13, row AdapterL 0.37M GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium AdapterL 0.37M on DART"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "11M"
+        },
+        "metric_values": {
+          "bleu": 45.2,
+          "met": 0.38,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row AdapterL 11M GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium AdapterL 11M on DART"
+      },
+      {
+        "variable_values": {
+          "method": "FT_Top2",
+          "model": "GPT-2_M",
+          "trainable_params": "24M"
+        },
+        "metric_values": {
+          "bleu": 41.0,
+          "met": 0.34,
+          "ter": 0.56
+        },
+        "source_cell": "Table 13, row FT_Top2 GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium FT last 2 layers on DART"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu": 46.4,
+          "met": 0.38,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row PrefLayer 0.35M GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium prefix-layer on DART"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu": 47.1,
+          "met": 0.39,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row LoRA 0.35M GPT-2 Medium, all columns",
+        "context": "GPT-2 Medium LoRA on DART"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_L"
+        },
+        "metric_values": {
+          "bleu": 47.0,
+          "met": 0.39,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row Fine-Tune GPT-2 Large, all columns",
+        "context": "GPT-2 Large full fine-tuning on DART"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "0.88M"
+        },
+        "metric_values": {
+          "bleu": 45.7,
+          "met": 0.38,
+          "ter": 0.46
+        },
+        "source_cell": "Table 13, row AdapterL 0.88M GPT-2 Large, all columns",
+        "context": "GPT-2 Large AdapterL 0.88M on DART"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "23M"
+        },
+        "metric_values": {
+          "bleu": 47.1,
+          "met": 0.39,
+          "ter": 0.45
+        },
+        "source_cell": "Table 13, row AdapterL 23M GPT-2 Large, all columns",
+        "context": "GPT-2 Large AdapterL 23M on DART"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu": 46.7,
+          "met": 0.38,
+          "ter": 0.45
+        },
+        "source_cell": "Table 13, row PrefLayer 0.77M GPT-2 Large, all columns",
+        "context": "GPT-2 Large prefix-layer on DART"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu": 47.5,
+          "met": 0.39,
+          "ter": 0.45
+        },
+        "source_cell": "Table 13, row LoRA 0.77M GPT-2 Large, all columns",
+        "context": "GPT-2 Large LoRA on DART"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_M"
+        },
+        "metric_values": {
+          "bleu_u": 27.7,
+          "bleu_s": 64.2,
+          "bleu_a": 46.5
+        },
+        "source_cell": "Table 14, row Fine-Tune GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium full fine-tuning on WebNLG (U/S/A)"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "0.37M"
+        },
+        "metric_values": {
+          "bleu_u": 45.1,
+          "bleu_s": 54.5,
+          "bleu_a": 50.2
+        },
+        "source_cell": "Table 14, row AdapterL 0.37M GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium AdapterL 0.37M on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_M",
+          "trainable_params": "11M"
+        },
+        "metric_values": {
+          "bleu_u": 48.3,
+          "bleu_s": 60.4,
+          "bleu_a": 54.9
+        },
+        "source_cell": "Table 14, row AdapterL 11M GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium AdapterL 11M on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT_Top2",
+          "model": "GPT-2_M",
+          "trainable_params": "24M"
+        },
+        "metric_values": {
+          "bleu_u": 18.9,
+          "bleu_s": 53.6,
+          "bleu_a": 36.0
+        },
+        "source_cell": "Table 14, row FT_Top2 GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium FT Top2 on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu_u": 45.6,
+          "bleu_s": 62.9,
+          "bleu_a": 55.1
+        },
+        "source_cell": "Table 14, row Prefix 0.35M GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium prefix-layer on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "trainable_params": "0.35M"
+        },
+        "metric_values": {
+          "bleu_u": 46.7,
+          "bleu_s": 62.1,
+          "bleu_a": 55.3
+        },
+        "source_cell": "Table 14, row LoRA 0.35M GPT-2 Medium, BLEU columns",
+        "context": "GPT-2 Medium LoRA on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-2_L"
+        },
+        "metric_values": {
+          "bleu_u": 43.1,
+          "bleu_s": 65.3,
+          "bleu_a": 55.5
+        },
+        "source_cell": "Table 14, row Fine-Tune GPT-2 Large, BLEU columns",
+        "context": "GPT-2 Large full fine-tuning on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "0.88M"
+        },
+        "metric_values": {
+          "bleu_u": 49.8,
+          "bleu_s": 61.1,
+          "bleu_a": 56.0
+        },
+        "source_cell": "Table 14, row AdapterL 0.88M GPT-2 Large, BLEU columns",
+        "context": "GPT-2 Large AdapterL 0.88M on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterL",
+          "model": "GPT-2_L",
+          "trainable_params": "23M"
+        },
+        "metric_values": {
+          "bleu_u": 49.2,
+          "bleu_s": 64.7,
+          "bleu_a": 57.7
+        },
+        "source_cell": "Table 14, row AdapterL 23M GPT-2 Large, BLEU columns",
+        "context": "GPT-2 Large AdapterL 23M on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu_u": 47.7,
+          "bleu_s": 63.4,
+          "bleu_a": 56.3
+        },
+        "source_cell": "Table 14, row Prefix 0.77M GPT-2 Large, BLEU columns",
+        "context": "GPT-2 Large prefix-layer on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_L",
+          "trainable_params": "0.77M"
+        },
+        "metric_values": {
+          "bleu_u": 48.4,
+          "bleu_s": 64.0,
+          "bleu_a": 57.0
+        },
+        "source_cell": "Table 14, row LoRA 0.77M GPT-2 Large, BLEU columns",
+        "context": "GPT-2 Large LoRA on WebNLG"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.8,
+          "mnli_acc": 89.5
+        },
+        "source_cell": "Table 15, row Fine-Tune 175B",
+        "context": "GPT-3 175B detailed results on WikiSQL/MNLI"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "0.4M"
+        },
+        "metric_values": {
+          "wikisql_acc": 55.9,
+          "mnli_acc": 84.9
+        },
+        "source_cell": "Table 15, row PrefixEmbed lp=32 li=8",
+        "context": "GPT-3 175B PrefixEmbed lp=32"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "0.9M"
+        },
+        "metric_values": {
+          "wikisql_acc": 58.7,
+          "mnli_acc": 88.1
+        },
+        "source_cell": "Table 15, row PrefixEmbed lp=64 li=8",
+        "context": "GPT-3 175B PrefixEmbed lp=64"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "1.7M"
+        },
+        "metric_values": {
+          "wikisql_acc": 60.6,
+          "mnli_acc": 88.0
+        },
+        "source_cell": "Table 15, row PrefixEmbed lp=128 li=8",
+        "context": "GPT-3 175B PrefixEmbed lp=128"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "3.2M"
+        },
+        "metric_values": {
+          "wikisql_acc": 63.1,
+          "mnli_acc": 88.6
+        },
+        "source_cell": "Table 15, row PrefixEmbed lp=256 li=8",
+        "context": "GPT-3 175B PrefixEmbed lp=256"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "trainable_params": "6.4M"
+        },
+        "metric_values": {
+          "wikisql_acc": 55.9,
+          "mnli_acc": 85.8
+        },
+        "source_cell": "Table 15, row PrefixEmbed lp=512 li=8",
+        "context": "GPT-3 175B PrefixEmbed lp=512"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "5.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 68.5,
+          "mnli_acc": 89.2
+        },
+        "source_cell": "Table 15, row PrefixLayer lp=2 li=2",
+        "context": "GPT-3 175B PrefixLayer lp=2 li=2"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "10.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 69.8,
+          "mnli_acc": 88.2
+        },
+        "source_cell": "Table 15, row PrefixLayer lp=8 li=0",
+        "context": "GPT-3 175B PrefixLayer lp=8 li=0"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "20.2M"
+        },
+        "metric_values": {
+          "wikisql_acc": 70.1,
+          "mnli_acc": 89.5
+        },
+        "source_cell": "Table 15, row PrefixLayer lp=8 li=8",
+        "context": "GPT-3 175B PrefixLayer lp=8 li=8"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "44.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 66.4,
+          "mnli_acc": 89.6
+        },
+        "source_cell": "Table 15, row PrefixLayer lp=32 li=4",
+        "context": "GPT-3 175B PrefixLayer lp=32 li=4"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "trainable_params": "76.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 64.9,
+          "mnli_acc": 87.9
+        },
+        "source_cell": "Table 15, row PrefixLayer lp=64 li=0",
+        "context": "GPT-3 175B PrefixLayer lp=64 li=0"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "7.1M",
+          "rank": 1
+        },
+        "metric_values": {
+          "wikisql_acc": 71.9,
+          "mnli_acc": 89.8
+        },
+        "source_cell": "Table 15, row AdapterH r=1",
+        "context": "GPT-3 175B AdapterH r=1"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "21.2M",
+          "rank": 4
+        },
+        "metric_values": {
+          "wikisql_acc": 73.2,
+          "mnli_acc": 91.0
+        },
+        "source_cell": "Table 15, row AdapterH r=4",
+        "context": "GPT-3 175B AdapterH r=4"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "40.1M",
+          "rank": 8
+        },
+        "metric_values": {
+          "wikisql_acc": 73.2,
+          "mnli_acc": 91.5
+        },
+        "source_cell": "Table 15, row AdapterH r=8",
+        "context": "GPT-3 175B AdapterH r=8"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "77.9M",
+          "rank": 16
+        },
+        "metric_values": {
+          "wikisql_acc": 73.2,
+          "mnli_acc": 91.5
+        },
+        "source_cell": "Table 15, row AdapterH r=16",
+        "context": "GPT-3 175B AdapterH r=16"
+      },
+      {
+        "variable_values": {
+          "method": "AdapterH",
+          "model": "GPT-3_175B",
+          "trainable_params": "304.4M",
+          "rank": 64
+        },
+        "metric_values": {
+          "wikisql_acc": 72.6,
+          "mnli_acc": 91.5
+        },
+        "source_cell": "Table 15, row AdapterH r=64",
+        "context": "GPT-3 175B AdapterH r=64"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "4.7M",
+          "weight_type": "Wv"
+        },
+        "metric_values": {
+          "wikisql_acc": 73.4,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 15, row LoRA rv=2",
+        "context": "GPT-3 175B LoRA rv=2"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "4.7M",
+          "weight_type": "Wq,Wv",
+          "rank": 1
+        },
+        "metric_values": {
+          "wikisql_acc": 73.4,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 15, row LoRA rq=rv=1",
+        "context": "GPT-3 175B LoRA rq=rv=1"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "9.4M",
+          "weight_type": "Wq,Wv",
+          "rank": 2
+        },
+        "metric_values": {
+          "wikisql_acc": 73.3,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 15, row LoRA rq=rv=2",
+        "context": "GPT-3 175B LoRA rq=rv=2"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "9.4M",
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 1
+        },
+        "metric_values": {
+          "wikisql_acc": 74.1,
+          "mnli_acc": 91.2
+        },
+        "source_cell": "Table 15, row LoRA rq=rk=rv=ro=1",
+        "context": "GPT-3 175B LoRA all weights r=1"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "18.8M",
+          "weight_type": "Wq,Wv",
+          "rank": 4
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 15, row LoRA rq=rv=4",
+        "context": "GPT-3 175B LoRA rq=rv=4"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "18.8M",
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 2
+        },
+        "metric_values": {
+          "wikisql_acc": 73.7,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 15, row LoRA rq=rk=rv=ro=2",
+        "context": "GPT-3 175B LoRA all weights r=2"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "37.7M",
+          "weight_type": "Wq,Wv",
+          "rank": 8
+        },
+        "metric_values": {
+          "wikisql_acc": 73.8,
+          "mnli_acc": 91.6
+        },
+        "source_cell": "Table 15, row LoRA rq=rv=8",
+        "context": "GPT-3 175B LoRA rq=rv=8"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "37.7M",
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 4
+        },
+        "metric_values": {
+          "wikisql_acc": 74.0,
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 15, row LoRA rq=rk=rv=ro=4",
+        "context": "GPT-3 175B LoRA all weights r=4"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "301.9M",
+          "weight_type": "Wq,Wv",
+          "rank": 64
+        },
+        "metric_values": {
+          "wikisql_acc": 73.6,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 15, row LoRA rq=rv=64",
+        "context": "GPT-3 175B LoRA rq=rv=64"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "trainable_params": "603.8M",
+          "weight_type": "Wq,Wk,Wv,Wo",
+          "rank": 64
+        },
+        "metric_values": {
+          "wikisql_acc": 73.9,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 15, row LoRA rq=rk=rv=ro=64",
+        "context": "GPT-3 175B LoRA all weights r=64"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA+PE",
+          "model": "GPT-3_175B",
+          "trainable_params": "37.8M"
+        },
+        "metric_values": {
+          "wikisql_acc": 75.0,
+          "mnli_acc": 91.4
+        },
+        "source_cell": "Table 15, row LoRA+PE rq=rv=8 lp=8 li=4",
+        "context": "GPT-3 175B LoRA+PrefixEmbed"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA+PE",
+          "model": "GPT-3_175B",
+          "trainable_params": "151.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 75.9,
+          "mnli_acc": 91.1
+        },
+        "source_cell": "Table 15, row LoRA+PE rq=rv=32 lp=8 li=4",
+        "context": "GPT-3 175B LoRA+PrefixEmbed r=32"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA+PE",
+          "model": "GPT-3_175B",
+          "trainable_params": "302.1M"
+        },
+        "metric_values": {
+          "wikisql_acc": 76.2,
+          "mnli_acc": 91.3
+        },
+        "source_cell": "Table 15, row LoRA+PE rq=rv=64 lp=8 li=4",
+        "context": "GPT-3 175B LoRA+PrefixEmbed r=64"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA+PL",
+          "model": "GPT-3_175B",
+          "trainable_params": "52.8M"
+        },
+        "metric_values": {
+          "wikisql_acc": 72.9,
+          "mnli_acc": 90.2
+        },
+        "source_cell": "Table 15, row LoRA+PL rq=rv=8 lp=8 li=4",
+        "context": "GPT-3 175B LoRA+PrefixLayer"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B",
+          "num_train_examples": 100
+        },
+        "metric_values": {
+          "mnli_acc": 60.2
+        },
+        "source_cell": "Table 16, row GPT-3 (Fine-Tune) MNLI-100",
+        "context": "GPT-3 175B low-data regime MNLI-100"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B",
+          "num_train_examples": 1000
+        },
+        "metric_values": {
+          "mnli_acc": 85.8
+        },
+        "source_cell": "Table 16, row GPT-3 (Fine-Tune) MNLI-1k",
+        "context": "GPT-3 175B low-data regime MNLI-1k"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B",
+          "num_train_examples": 10000
+        },
+        "metric_values": {
+          "mnli_acc": 88.9
+        },
+        "source_cell": "Table 16, row GPT-3 (Fine-Tune) MNLI-10k",
+        "context": "GPT-3 175B low-data regime MNLI-10k"
+      },
+      {
+        "variable_values": {
+          "method": "FT",
+          "model": "GPT-3_175B",
+          "num_train_examples": "full"
+        },
+        "metric_values": {
+          "mnli_acc": 89.5
+        },
+        "source_cell": "Table 16, row GPT-3 (Fine-Tune) MNLI-Full",
+        "context": "GPT-3 175B low-data regime MNLI-Full"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "num_train_examples": 100
+        },
+        "metric_values": {
+          "mnli_acc": 37.6
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixEmbed) MNLI-100",
+        "context": "GPT-3 175B low-data regime MNLI-100"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "num_train_examples": 1000
+        },
+        "metric_values": {
+          "mnli_acc": 75.2
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixEmbed) MNLI-1k",
+        "context": "GPT-3 175B low-data regime MNLI-1k"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "num_train_examples": 10000
+        },
+        "metric_values": {
+          "mnli_acc": 79.5
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixEmbed) MNLI-10k",
+        "context": "GPT-3 175B low-data regime MNLI-10k"
+      },
+      {
+        "variable_values": {
+          "method": "PreEmbed",
+          "model": "GPT-3_175B",
+          "num_train_examples": "full"
+        },
+        "metric_values": {
+          "mnli_acc": 88.6
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixEmbed) MNLI-Full",
+        "context": "GPT-3 175B low-data regime MNLI-Full"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "num_train_examples": 100
+        },
+        "metric_values": {
+          "mnli_acc": 48.3
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixLayer) MNLI-100",
+        "context": "GPT-3 175B low-data regime MNLI-100"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "num_train_examples": 1000
+        },
+        "metric_values": {
+          "mnli_acc": 82.5
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixLayer) MNLI-1k",
+        "context": "GPT-3 175B low-data regime MNLI-1k"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "num_train_examples": 10000
+        },
+        "metric_values": {
+          "mnli_acc": 85.9
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixLayer) MNLI-10k",
+        "context": "GPT-3 175B low-data regime MNLI-10k"
+      },
+      {
+        "variable_values": {
+          "method": "PreLayer",
+          "model": "GPT-3_175B",
+          "num_train_examples": "full"
+        },
+        "metric_values": {
+          "mnli_acc": 89.6
+        },
+        "source_cell": "Table 16, row GPT-3 (PrefixLayer) MNLI-Full",
+        "context": "GPT-3 175B low-data regime MNLI-Full"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "num_train_examples": 100
+        },
+        "metric_values": {
+          "mnli_acc": 63.8
+        },
+        "source_cell": "Table 16, row GPT-3 (LoRA) MNLI-100",
+        "context": "GPT-3 175B low-data regime MNLI-100"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "num_train_examples": 1000
+        },
+        "metric_values": {
+          "mnli_acc": 85.6
+        },
+        "source_cell": "Table 16, row GPT-3 (LoRA) MNLI-1k",
+        "context": "GPT-3 175B low-data regime MNLI-1k"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "num_train_examples": 10000
+        },
+        "metric_values": {
+          "mnli_acc": 89.2
+        },
+        "source_cell": "Table 16, row GPT-3 (LoRA) MNLI-10k",
+        "context": "GPT-3 175B low-data regime MNLI-10k"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-3_175B",
+          "num_train_examples": "full"
+        },
+        "metric_values": {
+          "mnli_acc": 91.7
+        },
+        "source_cell": "Table 16, row GPT-3 (LoRA) MNLI-Full",
+        "context": "GPT-3 175B low-data regime MNLI-Full"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 1
+        },
+        "metric_values": {
+          "val_loss": 1.23,
+          "bleu": 68.72,
+          "nist": 8.7215,
+          "met": 0.4565,
+          "rouge_l": 0.7052,
+          "cider": 2.4329
+        },
+        "source_cell": "Table 18, row r=1",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 2
+        },
+        "metric_values": {
+          "val_loss": 1.21,
+          "bleu": 69.17,
+          "nist": 8.7413,
+          "met": 0.459,
+          "rouge_l": 0.7052,
+          "cider": 2.4639
+        },
+        "source_cell": "Table 18, row r=2",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 4
+        },
+        "metric_values": {
+          "val_loss": 1.18,
+          "bleu": 70.38,
+          "nist": 8.8439,
+          "met": 0.4689,
+          "rouge_l": 0.7186,
+          "cider": 2.5349
+        },
+        "source_cell": "Table 18, row r=4",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 8
+        },
+        "metric_values": {
+          "val_loss": 1.17,
+          "bleu": 69.57,
+          "nist": 8.7457,
+          "met": 0.4636,
+          "rouge_l": 0.7196,
+          "cider": 2.5196
+        },
+        "source_cell": "Table 18, row r=8",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 16
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 69.61,
+          "nist": 8.7483,
+          "met": 0.4629,
+          "rouge_l": 0.7177,
+          "cider": 2.4985
+        },
+        "source_cell": "Table 18, row r=16",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 32
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 69.33,
+          "nist": 8.7736,
+          "met": 0.4642,
+          "rouge_l": 0.7105,
+          "cider": 2.5255
+        },
+        "source_cell": "Table 18, row r=32",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 64
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 69.24,
+          "nist": 8.7174,
+          "met": 0.4651,
+          "rouge_l": 0.718,
+          "cider": 2.507
+        },
+        "source_cell": "Table 18, row r=64",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 128
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 68.73,
+          "nist": 8.6718,
+          "met": 0.4628,
+          "rouge_l": 0.7127,
+          "cider": 2.503
+        },
+        "source_cell": "Table 18, row r=128",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 256
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 68.92,
+          "nist": 8.6982,
+          "met": 0.4629,
+          "rouge_l": 0.7128,
+          "cider": 2.5012
+        },
+        "source_cell": "Table 18, row r=256",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 512
+        },
+        "metric_values": {
+          "val_loss": 1.16,
+          "bleu": 68.78,
+          "nist": 8.6857,
+          "met": 0.4637,
+          "rouge_l": 0.7128,
+          "cider": 2.5025
+        },
+        "source_cell": "Table 18, row r=512",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "model": "GPT-2_M",
+          "rank": 1024
+        },
+        "metric_values": {
+          "val_loss": 1.17,
+          "bleu": 69.37,
+          "nist": 8.7495,
+          "met": 0.4659,
+          "rouge_l": 0.7149,
+          "cider": 2.509
+        },
+        "source_cell": "Table 18, row r=1024",
+        "context": "GPT-2 Medium LoRA rank ablation on E2E NLG"
+      }
+    ],
+    "context_descriptors": {
+      "model": [
+        "RoBERTa_base",
+        "RoBERTa_large",
+        "DeBERTa_XXL",
+        "GPT-2_M",
+        "GPT-2_L",
+        "GPT-3_175B"
+      ],
+      "task": [
+        "GLUE",
+        "E2E_NLG",
+        "WikiSQL",
+        "MNLI",
+        "SAMSum",
+        "DART",
+        "WebNLG"
+      ]
+    }
+  },
+  "extracted_at": "2026-04-26T21:42:36Z"
+}

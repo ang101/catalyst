@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Reader Catalog</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1a1a1a; line-height: 1.5; }
+.container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 26px; margin-bottom: 4px; }
+.subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn { padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; }
+.filter-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 16px; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.case-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; color: #fff; font-size: 11px; font-weight: 600; }
+.reader-link { font-size: 13px; font-weight: 600; color: #2563eb; text-decoration: none; padding: 4px 12px; border: 1px solid #2563eb; border-radius: 6px; }
+.reader-link:hover { background: #2563eb; color: #fff; }
+.no-reader { font-size: 12px; color: #9ca3af; }
+.card h3 { font-size: 15px; margin-bottom: 4px; }
+.card h3 a { color: inherit; text-decoration: none; }
+.card h3 a:hover { color: #2563eb; }
+.card-meta { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+.card-stats { display: flex; gap: 16px; margin: 8px 0; }
+.stat { text-align: center; flex: 1; }
+.stat-value { font-size: 18px; font-weight: 700; color: #111827; }
+.stat-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+.quality-bar { height: 4px; background: #f3f4f6; border-radius: 2px; margin: 8px 0; overflow: hidden; }
+.quality-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.card-footer { font-size: 12px; color: #6b7280; font-style: italic; }
+.add-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.add-form label { font-size: 13px; font-weight: 600; color: #374151; }
+.add-form input { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 200px; }
+.add-form button { padding: 6px 16px; background: #2563eb; color: #fff; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+.add-form button:hover { background: #1d4ed8; }
+.note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; margin: 24px 0; font-size: 13px; }
+.legend { display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Paper Reader Catalog</h1>
+<div class="subtitle">4 papers extracted &mdash; Generated 2026-04-26 21:56 UTC</div>
+
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Case A: Interactive (ablation tables, sliders)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Case B: Sparse (limited data, static view)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6b7280"></div>Case C: Theoretical (claims only)</div>
+</div>
+
+<div class="add-form">
+    <form id="addForm" onsubmit="processForm(event)">
+        <label for="arxivInput">Add paper by arXiv ID:</label>
+        <input type="text" id="arxivInput" name="arxiv_id" placeholder="e.g. 2005.14165" required>
+        <button type="submit">Process</button>
+    </form>
+    <div id="formMsg" style="display:none;margin-top:8px;font-size:13px;padding:8px;border-radius:4px;"></div>
+</div>
+
+<div class="filters">
+    <button class="filter-btn active" onclick="filterCards('all')">All (4)</button>
+    <button class="filter-btn" onclick="filterCards('A')">Case A (4)</button>
+    <button class="filter-btn" onclick="filterCards('B')">Case B (0)</button>
+    <button class="filter-btn" onclick="filterCards('C')">Case C (0)</button>
+</div>
+
+<div class="grid" id="grid">
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="1706.03762.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/1706.03762" target="_blank">Attention Is All You Need</a></h3>
+            <div class="card-meta">Ashish Vaswani, Noam Shazeer, Niki Parmar +5 more (2017) &mdash; arXiv:1706.03762</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">33</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">This is the &#x27;Attention Is All You Need&#x27; paper. It contains Table 3 (model variations/ablations) which systematically varies attention heads, key dimensions, model size, FFN size, and dropout while reporting PPL and BLEU on EN-DE dev set — a clear ablation table with 13+ rows. Table 2 reports MT results across multiple models, and Table 4 covers parsing results. Well over 10 extractable data points with clear table citations.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="1908.10084.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/1908.10084" target="_blank">Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</a></h3>
+            <div class="card-meta">Nils Reimers, Iryna Gurevych (2019) &mdash; arXiv:1908.10084</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">58</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">The paper contains multiple tables with quantitative results across STS, SentEval, AFS, and Wikipedia tasks, plus a dedicated ablation study (Table 6) that varies pooling strategies (MEAN, MAX, CLS) and concatenation methods under classification vs regression objectives, yielding well over 10 extractable data points with clear citations.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="2005.14165.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/2005.14165" target="_blank">Language Models are Few-Shot Learners</a></h3>
+            <div class="card-meta">Tom B. Brown, Benjamin Mann, Nick Ryder +28 more (2020) &mdash; arXiv:2005.14165</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">111</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">GPT-3 paper systematically varies model size (8 models from 125M to 175B parameters) and number of in-context examples (zero/one/few-shot) across dozens of NLP benchmarks, with extensive tables reporting metrics for each configuration. The master results table alone contains hundreds of data points across model sizes and settings.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="2106.09685.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/2106.09685" target="_blank">LoRA: Low-Rank Adaptation of Large Language Models</a></h3>
+            <div class="card-meta">Edward J. Hu, Yelong Shen, Phillip Wallis +5 more (2022) &mdash; arXiv:2106.09685</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">135</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">21</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">The LoRA paper has extensive ablation tables varying rank r, weight matrix types, adapter configurations, and model sizes across multiple benchmarks (GLUE, E2E, WikiSQL, MNLI, SAMSum), with well over 100 extractable quantitative data points with clear table citations.</div>
+        </div></div>
+
+<div class="note">
+<strong>Integrity:</strong> All values in interactive readers use a four-tier badge system.
+<strong>[PAPER]</strong> (green) = directly from paper with table citation.
+<strong>[INTERP]</strong> (yellow) = linear interpolation between paper points.
+<strong>[LOW CONFIDENCE]</strong> (orange striped) = LLM estimate, visually distinct.
+<strong>[N/A]</strong> (gray) = not characterized.
+Papers with &lt;30% cited values are flagged as "limited extraction quality."
+</div>
+
+</div>
+<script>
+function processForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('arxivInput').value.trim();
+    const msg = document.getElementById('formMsg');
+    if (!id) return;
+    msg.style.display = '';
+    msg.style.background = '#dbeafe';
+    msg.style.color = '#1e40af';
+    msg.textContent = 'Processing ' + id + '... This takes 60-120 seconds. Refresh the page when done.';
+    fetch('/process', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'arxiv_id='+encodeURIComponent(id)})
+        .then(r => r.json())
+        .then(d => { msg.textContent = d.message || 'Started. Refresh in 60-120s.'; })
+        .catch(() => {
+            msg.style.background = '#fef3c7';
+            msg.style.color = '#92400e';
+            msg.textContent = 'Server not running. Use CLI: python3 reader/run_pipeline.py ' + id;
+        });
+}
+function filterCards(c) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.card').forEach(card => {
+        if (c === 'all') { card.style.display = ''; return; }
+        const badge = card.querySelector('.case-badge');
+        card.style.display = badge && badge.textContent.includes('Case ' + c) ? '' : 'none';
+    });
+}
+</script>
+</body>
+</html>

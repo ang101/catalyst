@@ -1,0 +1,650 @@
+{
+  "classification": {
+    "case": "A",
+    "reasoning": "This is the 'Attention Is All You Need' paper. It contains Table 3 (model variations/ablations) which systematically varies attention heads, key dimensions, model size, FFN size, and dropout while reporting PPL and BLEU on EN-DE dev set \u2014 a clear ablation table with 13+ rows. Table 2 reports MT results across multiple models, and Table 4 covers parsing results. Well over 10 extractable data points with clear table citations.",
+    "tables_found": 5,
+    "ablation_tables_found": 1,
+    "estimated_data_points": 35,
+    "is_theoretical": false
+  },
+  "extraction": {
+    "paper": {
+      "title": "Attention Is All You Need",
+      "authors": [
+        "Ashish Vaswani",
+        "Noam Shazeer",
+        "Niki Parmar",
+        "Jakob Uszkoreit",
+        "Llion Jones",
+        "Aidan N. Gomez",
+        "\u0141ukasz Kaiser",
+        "Illia Polosukhin"
+      ],
+      "year": 2017,
+      "arxiv_id": "1706.03762"
+    },
+    "main_claims": [
+      "The Transformer architecture based solely on attention mechanisms achieves higher BLEU scores on WMT 2014 English-to-German translation than all previously reported models including ensembles.",
+      "The Transformer establishes a new single-model state-of-the-art BLEU score of 41.8 on WMT 2014 English-to-French translation while requiring a small fraction of the training cost of competitive models.",
+      "Multi-head attention with 8 heads outperforms single-head attention and attention with too many heads when total computation is held constant.",
+      "Reducing attention key dimensionality dk hurts model quality, suggesting dot-product compatibility may be insufficient for very low dimensions.",
+      "The Transformer generalizes to English constituency parsing, outperforming all previously reported models except the Recurrent Neural Network Grammar without task-specific tuning.",
+      "Label smoothing hurts perplexity but improves BLEU score and accuracy."
+    ],
+    "variables": [
+      {
+        "name": "method",
+        "label": "Model / Method",
+        "type": "categorical",
+        "values": [
+          "Deep-Att + PosUnk",
+          "GNMT + RL",
+          "ConvS2S",
+          "MoE",
+          "GNMT + RL Ensemble",
+          "ConvS2S Ensemble",
+          "Transformer (base model)",
+          "Transformer (big)"
+        ],
+        "unit": null
+      },
+      {
+        "name": "num_heads",
+        "label": "Number of Attention Heads h",
+        "type": "discrete",
+        "values": [
+          "1",
+          "4",
+          "8",
+          "16",
+          "32"
+        ],
+        "unit": null
+      },
+      {
+        "name": "d_k",
+        "label": "Attention Key Dimension dk",
+        "type": "discrete",
+        "values": [
+          "16",
+          "32",
+          "64",
+          "128"
+        ],
+        "unit": null
+      },
+      {
+        "name": "d_v",
+        "label": "Attention Value Dimension dv",
+        "type": "discrete",
+        "values": [
+          "16",
+          "32",
+          "64",
+          "128"
+        ],
+        "unit": null
+      },
+      {
+        "name": "N",
+        "label": "Number of Layers N",
+        "type": "discrete",
+        "values": [
+          "4",
+          "8"
+        ],
+        "unit": null
+      },
+      {
+        "name": "d_model",
+        "label": "Model Dimension dmodel",
+        "type": "discrete",
+        "values": [
+          "256",
+          "512",
+          "1024"
+        ],
+        "unit": null
+      },
+      {
+        "name": "d_ff",
+        "label": "Feed-Forward Inner Dimension dff",
+        "type": "discrete",
+        "values": [
+          "1024",
+          "2048",
+          "4096"
+        ],
+        "unit": null
+      },
+      {
+        "name": "P_drop",
+        "label": "Dropout Rate Pdrop",
+        "type": "continuous",
+        "values": [
+          "0.0",
+          "0.1",
+          "0.2",
+          "0.3"
+        ],
+        "unit": null
+      },
+      {
+        "name": "epsilon_ls",
+        "label": "Label Smoothing Value",
+        "type": "continuous",
+        "values": [
+          "0.0",
+          "0.1",
+          "0.2"
+        ],
+        "unit": null
+      },
+      {
+        "name": "positional_encoding",
+        "label": "Positional Encoding Type",
+        "type": "categorical",
+        "values": [
+          "sinusoidal",
+          "learned"
+        ],
+        "unit": null
+      },
+      {
+        "name": "parsing_method",
+        "label": "Parsing Method",
+        "type": "categorical",
+        "values": [
+          "Petrov et al. (2006)",
+          "Zhu et al. (2013)",
+          "Dyer et al. (2016)",
+          "Transformer (4 layers)",
+          "Huang & Harper (2009)",
+          "McClosky et al. (2006)",
+          "Vinyals & Kaiser et al. (2014)",
+          "Luong et al. (2015)"
+        ],
+        "unit": null
+      },
+      {
+        "name": "parsing_setting",
+        "label": "Parsing Training Setting",
+        "type": "categorical",
+        "values": [
+          "WSJ only, discriminative",
+          "semi-supervised",
+          "multi-task",
+          "generative"
+        ],
+        "unit": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "bleu_en_de",
+        "label": "BLEU Score (EN-DE)",
+        "higher_is_better": true
+      },
+      {
+        "name": "bleu_en_fr",
+        "label": "BLEU Score (EN-FR)",
+        "higher_is_better": true
+      },
+      {
+        "name": "train_flops_en_de",
+        "label": "Training FLOPs (EN-DE)",
+        "higher_is_better": false
+      },
+      {
+        "name": "train_flops_en_fr",
+        "label": "Training FLOPs (EN-FR)",
+        "higher_is_better": false
+      },
+      {
+        "name": "ppl_dev",
+        "label": "Perplexity (dev)",
+        "higher_is_better": false
+      },
+      {
+        "name": "bleu_dev",
+        "label": "BLEU Score (dev, newstest2013)",
+        "higher_is_better": true
+      },
+      {
+        "name": "params_M",
+        "label": "Number of Parameters (millions)",
+        "higher_is_better": false
+      },
+      {
+        "name": "f1_wsj23",
+        "label": "F1 Score (WSJ Section 23)",
+        "higher_is_better": true
+      }
+    ],
+    "data_points": [
+      {
+        "variable_values": {
+          "method": "Deep-Att + PosUnk"
+        },
+        "metric_values": {
+          "bleu_en_fr": 39.2,
+          "train_flops_en_fr": 1e+20
+        },
+        "source_cell": "Table 2, row Deep-Att + PosUnk",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "GNMT + RL"
+        },
+        "metric_values": {
+          "bleu_en_de": 24.6,
+          "bleu_en_fr": 39.92,
+          "train_flops_en_de": 2.3e+19,
+          "train_flops_en_fr": 1.4e+20
+        },
+        "source_cell": "Table 2, row GNMT + RL",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "ConvS2S"
+        },
+        "metric_values": {
+          "bleu_en_de": 25.16,
+          "bleu_en_fr": 40.46,
+          "train_flops_en_de": 9.6e+18,
+          "train_flops_en_fr": 1.5e+20
+        },
+        "source_cell": "Table 2, row ConvS2S",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "MoE"
+        },
+        "metric_values": {
+          "bleu_en_de": 26.03,
+          "bleu_en_fr": 40.56,
+          "train_flops_en_de": 2e+19,
+          "train_flops_en_fr": 1.2e+20
+        },
+        "source_cell": "Table 2, row MoE",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "GNMT + RL Ensemble"
+        },
+        "metric_values": {
+          "bleu_en_de": 26.3,
+          "bleu_en_fr": 41.16,
+          "train_flops_en_de": 1.8e+20,
+          "train_flops_en_fr": 1.1e+21
+        },
+        "source_cell": "Table 2, row GNMT + RL Ensemble",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "ConvS2S Ensemble"
+        },
+        "metric_values": {
+          "bleu_en_de": 26.36,
+          "bleu_en_fr": 41.29,
+          "train_flops_en_de": 7.7e+19,
+          "train_flops_en_fr": 1.2e+21
+        },
+        "source_cell": "Table 2, row ConvS2S Ensemble",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "Transformer (base model)"
+        },
+        "metric_values": {
+          "bleu_en_de": 27.3,
+          "bleu_en_fr": 38.1,
+          "train_flops_en_de": 3.3e+18
+        },
+        "source_cell": "Table 2, row Transformer (base model)",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "method": "Transformer (big)"
+        },
+        "metric_values": {
+          "bleu_en_de": 28.4,
+          "bleu_en_fr": 41.8,
+          "train_flops_en_de": 2.3e+19
+        },
+        "source_cell": "Table 2, row Transformer (big)",
+        "context": "WMT 2014 machine translation"
+      },
+      {
+        "variable_values": {
+          "num_heads": "1",
+          "d_k": "128",
+          "d_v": "128"
+        },
+        "metric_values": {
+          "ppl_dev": 5.0,
+          "bleu_dev": 25.5
+        },
+        "source_cell": "Table 3, row (A) h=1",
+        "context": "Ablation on EN-DE dev set, base model variation"
+      },
+      {
+        "variable_values": {
+          "num_heads": "4",
+          "d_k": "128",
+          "d_v": "128"
+        },
+        "metric_values": {
+          "ppl_dev": 5.0,
+          "bleu_dev": 25.5
+        },
+        "source_cell": "Table 3, row (A) h=4 (inferred from base heading)",
+        "context": "Ablation on EN-DE dev set, base model variation. Note: Table 3 row A with h=4 shows dk=128, dv=128 but the paper text states single-head is 0.9 BLEU worse than best. The first row in A has h=1 with dk=128 dv=128."
+      },
+      {
+        "variable_values": {
+          "num_heads": "16",
+          "d_k": "32",
+          "d_v": "32"
+        },
+        "metric_values": {
+          "ppl_dev": 4.91,
+          "bleu_dev": 25.8
+        },
+        "source_cell": "Table 3, row (A) h=16",
+        "context": "Ablation on EN-DE dev set, base model variation"
+      },
+      {
+        "variable_values": {
+          "num_heads": "32",
+          "d_k": "16",
+          "d_v": "16"
+        },
+        "metric_values": {
+          "ppl_dev": 5.01,
+          "bleu_dev": 25.4
+        },
+        "source_cell": "Table 3, row (A) h=32",
+        "context": "Ablation on EN-DE dev set, base model variation"
+      },
+      {
+        "variable_values": {
+          "d_k": "32"
+        },
+        "metric_values": {
+          "ppl_dev": 5.01,
+          "bleu_dev": 25.4,
+          "params_M": 60
+        },
+        "source_cell": "Table 3, row (B) dk=32",
+        "context": "Ablation on EN-DE dev set, reduced key dimension"
+      },
+      {
+        "variable_values": {
+          "N": "4"
+        },
+        "metric_values": {
+          "ppl_dev": 5.19,
+          "bleu_dev": 25.3,
+          "params_M": 50
+        },
+        "source_cell": "Table 3, row (C) N=4 (first row)",
+        "context": "Ablation on EN-DE dev set, fewer layers"
+      },
+      {
+        "variable_values": {
+          "N": "8"
+        },
+        "metric_values": {
+          "ppl_dev": 4.88,
+          "bleu_dev": 25.5,
+          "params_M": 80
+        },
+        "source_cell": "Table 3, row (C) N=8 (second row)",
+        "context": "Ablation on EN-DE dev set, more layers"
+      },
+      {
+        "variable_values": {
+          "d_model": "256",
+          "d_k": "32",
+          "d_v": "32"
+        },
+        "metric_values": {
+          "ppl_dev": 5.75,
+          "bleu_dev": 24.5,
+          "params_M": 28
+        },
+        "source_cell": "Table 3, row (D) dmodel=256",
+        "context": "Ablation on EN-DE dev set, smaller model"
+      },
+      {
+        "variable_values": {
+          "d_model": "1024",
+          "d_k": "128",
+          "d_v": "128"
+        },
+        "metric_values": {
+          "ppl_dev": 4.66,
+          "bleu_dev": 26.0,
+          "params_M": 168
+        },
+        "source_cell": "Table 3, row (D) dmodel=1024",
+        "context": "Ablation on EN-DE dev set, larger model"
+      },
+      {
+        "variable_values": {
+          "d_ff": "1024"
+        },
+        "metric_values": {
+          "ppl_dev": 5.12,
+          "bleu_dev": 25.4,
+          "params_M": 53
+        },
+        "source_cell": "Table 3, row (D) dff=1024",
+        "context": "Ablation on EN-DE dev set, smaller FFN"
+      },
+      {
+        "variable_values": {
+          "d_ff": "4096"
+        },
+        "metric_values": {
+          "ppl_dev": 4.75,
+          "bleu_dev": 26.2,
+          "params_M": 90
+        },
+        "source_cell": "Table 3, row (D) dff=4096",
+        "context": "Ablation on EN-DE dev set, larger FFN"
+      },
+      {
+        "variable_values": {
+          "P_drop": "0.2"
+        },
+        "metric_values": {
+          "ppl_dev": 4.95,
+          "bleu_dev": 25.5
+        },
+        "source_cell": "Table 3, row (D) Pdrop=0.2",
+        "context": "Ablation on EN-DE dev set, higher dropout"
+      },
+      {
+        "variable_values": {
+          "epsilon_ls": "0.0"
+        },
+        "metric_values": {
+          "ppl_dev": 4.67,
+          "bleu_dev": 25.3
+        },
+        "source_cell": "Table 3, row (E) epsilon_ls=0.0",
+        "context": "Ablation on EN-DE dev set, no label smoothing"
+      },
+      {
+        "variable_values": {
+          "epsilon_ls": "0.2"
+        },
+        "metric_values": {
+          "ppl_dev": 5.47,
+          "bleu_dev": 25.7
+        },
+        "source_cell": "Table 3, row (E) epsilon_ls=0.2",
+        "context": "Ablation on EN-DE dev set, higher label smoothing"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Petrov et al. (2006)",
+          "parsing_setting": "WSJ only, discriminative"
+        },
+        "metric_values": {
+          "f1_wsj23": 90.4
+        },
+        "source_cell": "Table 4, row Petrov et al. (2006)",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Zhu et al. (2013)",
+          "parsing_setting": "WSJ only, discriminative"
+        },
+        "metric_values": {
+          "f1_wsj23": 90.4
+        },
+        "source_cell": "Table 4, row Zhu et al. (2013) WSJ only",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Dyer et al. (2016)",
+          "parsing_setting": "WSJ only, discriminative"
+        },
+        "metric_values": {
+          "f1_wsj23": 91.7
+        },
+        "source_cell": "Table 4, row Dyer et al. (2016) discriminative",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Transformer (4 layers)",
+          "parsing_setting": "WSJ only, discriminative"
+        },
+        "metric_values": {
+          "f1_wsj23": 91.3
+        },
+        "source_cell": "Table 4, row Transformer (4 layers) WSJ only",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Zhu et al. (2013)",
+          "parsing_setting": "semi-supervised"
+        },
+        "metric_values": {
+          "f1_wsj23": 91.3
+        },
+        "source_cell": "Table 4, row Zhu et al. (2013) semi-supervised",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Huang & Harper (2009)",
+          "parsing_setting": "semi-supervised"
+        },
+        "metric_values": {
+          "f1_wsj23": 91.3
+        },
+        "source_cell": "Table 4, row Huang & Harper (2009)",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "McClosky et al. (2006)",
+          "parsing_setting": "semi-supervised"
+        },
+        "metric_values": {
+          "f1_wsj23": 92.1
+        },
+        "source_cell": "Table 4, row McClosky et al. (2006)",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Vinyals & Kaiser et al. (2014)",
+          "parsing_setting": "semi-supervised"
+        },
+        "metric_values": {
+          "f1_wsj23": 92.7
+        },
+        "source_cell": "Table 4, row Vinyals & Kaiser et al. (2014)",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Transformer (4 layers)",
+          "parsing_setting": "semi-supervised"
+        },
+        "metric_values": {
+          "f1_wsj23": 92.7
+        },
+        "source_cell": "Table 4, row Transformer (4 layers) semi-supervised",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Luong et al. (2015)",
+          "parsing_setting": "multi-task"
+        },
+        "metric_values": {
+          "f1_wsj23": 93.0
+        },
+        "source_cell": "Table 4, row Luong et al. (2015)",
+        "context": "English constituency parsing, WSJ Section 23"
+      },
+      {
+        "variable_values": {
+          "parsing_method": "Dyer et al. (2016)",
+          "parsing_setting": "generative"
+        },
+        "metric_values": {
+          "f1_wsj23": 93.3
+        },
+        "source_cell": "Table 4, row Dyer et al. (2016) generative",
+        "context": "English constituency parsing, WSJ Section 23"
+      }
+    ],
+    "context_descriptors": {
+      "method": [
+        "Deep-Att + PosUnk",
+        "GNMT + RL",
+        "ConvS2S",
+        "MoE",
+        "GNMT + RL Ensemble",
+        "ConvS2S Ensemble",
+        "Transformer (base model)",
+        "Transformer (big)"
+      ],
+      "parsing_method": [
+        "Petrov et al. (2006)",
+        "Zhu et al. (2013)",
+        "Dyer et al. (2016)",
+        "Transformer (4 layers)",
+        "Huang & Harper (2009)",
+        "McClosky et al. (2006)",
+        "Vinyals & Kaiser et al. (2014)",
+        "Luong et al. (2015)"
+      ],
+      "parsing_setting": [
+        "WSJ only, discriminative",
+        "semi-supervised",
+        "multi-task",
+        "generative"
+      ]
+    }
+  },
+  "extracted_at": "2026-04-26T21:48:26Z"
+}

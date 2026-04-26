@@ -1,0 +1,9 @@
+[sop]
+name = "paper_reader_scheduled"
+version = "0.1.0"
+description = "Process N research papers through the interactive reader pipeline"
+execution_mode = "auto"
+
+[sop.input]
+topic = { type = "string", description = "Search topic or keyword (e.g. 'parameter-efficient fine-tuning')", required = true }
+count = { type = "integer", description = "Number of papers to process (default 2)", required = false, default = 2 }

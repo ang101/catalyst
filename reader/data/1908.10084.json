@@ -1,0 +1,902 @@
+{
+  "classification": {
+    "case": "A",
+    "reasoning": "The paper contains multiple tables with quantitative results across STS, SentEval, AFS, and Wikipedia tasks, plus a dedicated ablation study (Table 6) that varies pooling strategies (MEAN, MAX, CLS) and concatenation methods under classification vs regression objectives, yielding well over 10 extractable data points with clear citations.",
+    "tables_found": 7,
+    "ablation_tables_found": 1,
+    "estimated_data_points": 150,
+    "is_theoretical": false
+  },
+  "extraction": {
+    "paper": {
+      "title": "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
+      "authors": [
+        "Nils Reimers",
+        "Iryna Gurevych"
+      ],
+      "year": 2019,
+      "arxiv_id": "1908.10084"
+    },
+    "main_claims": [
+      "SBERT sentence embeddings trained on NLI data significantly outperform InferSent and Universal Sentence Encoder on unsupervised STS tasks as measured by Spearman correlation with cosine similarity.",
+      "Directly using BERT output (averaged embeddings or CLS token) as sentence embeddings with cosine similarity yields worse performance than average GloVe embeddings on STS tasks.",
+      "SBERT fine-tuned on NLI then STSb achieves higher Spearman correlation on STSb than models trained on STSb alone.",
+      "Replacing BERT with RoBERTa does not yield significant improvement in sentence embedding quality.",
+      "SBERT with smart batching on GPU is faster than InferSent and Universal Sentence Encoder for computing sentence embeddings.",
+      "The element-wise difference |u-v| is the most important concatenation component for the classification objective function in SBERT.",
+      "SBERT sentence embeddings achieve state-of-the-art average performance on SentEval transfer tasks compared to InferSent and Universal Sentence Encoder."
+    ],
+    "variables": [
+      {
+        "name": "method",
+        "label": "Sentence Embedding Method",
+        "type": "categorical",
+        "values": [
+          "Avg. GloVe embeddings",
+          "Avg. BERT embeddings",
+          "BERT CLS-vector",
+          "InferSent - GloVe",
+          "Universal Sentence Encoder",
+          "SBERT-NLI-base",
+          "SBERT-NLI-large",
+          "SRoBERTa-NLI-base",
+          "SRoBERTa-NLI-large",
+          "SBERT-STSb-base",
+          "SRoBERTa-STSb-base",
+          "SBERT-STSb-large",
+          "SRoBERTa-STSb-large",
+          "SBERT-NLI-STSb-base",
+          "SRoBERTa-NLI-STSb-base",
+          "SBERT-NLI-STSb-large",
+          "SRoBERTa-NLI-STSb-large",
+          "BERT-AFS-base",
+          "SBERT-AFS-base",
+          "BERT-AFS-large",
+          "SBERT-AFS-large",
+          "Avg. fast-text embeddings",
+          "skip-thoughts-CS",
+          "Dor et al.",
+          "SBERT-WikiSec-large",
+          "SRoBERTa-WikiSec-base",
+          "SRoBERTa-WikiSec-large",
+          "SBERT-base",
+          "SBERT-base - smart batching"
+        ],
+        "unit": null
+      },
+      {
+        "name": "pooling",
+        "label": "Pooling Strategy",
+        "type": "categorical",
+        "values": [
+          "MEAN",
+          "MAX",
+          "CLS"
+        ],
+        "unit": null
+      },
+      {
+        "name": "concat_mode",
+        "label": "Concatenation Mode",
+        "type": "categorical",
+        "values": [
+          "|u-v|",
+          "u*v",
+          "|u-v|, u*v",
+          "u, v, u*v",
+          "u, v, |u-v|",
+          "u, v, |u-v|, u*v"
+        ],
+        "unit": null
+      },
+      {
+        "name": "objective",
+        "label": "Objective Function",
+        "type": "categorical",
+        "values": [
+          "classification",
+          "regression"
+        ],
+        "unit": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "spearman",
+        "label": "Spearman Rank Correlation (\u03c1\u00d7100)",
+        "higher_is_better": true
+      },
+      {
+        "name": "pearson",
+        "label": "Pearson Correlation (r)",
+        "higher_is_better": true
+      },
+      {
+        "name": "accuracy",
+        "label": "Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "senteval_accuracy",
+        "label": "SentEval Task Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "sentences_per_sec_cpu",
+        "label": "Sentences per Second (CPU)",
+        "higher_is_better": true
+      },
+      {
+        "name": "sentences_per_sec_gpu",
+        "label": "Sentences per Second (GPU)",
+        "higher_is_better": true
+      }
+    ],
+    "data_points": [
+      {
+        "variable_values": {
+          "method": "Avg. GloVe embeddings"
+        },
+        "metric_values": {
+          "spearman_sts12": 55.14,
+          "spearman_sts13": 70.66,
+          "spearman_sts14": 59.73,
+          "spearman_sts15": 68.25,
+          "spearman_sts16": 63.66,
+          "spearman_stsb": 58.02,
+          "spearman_sickr": 53.76,
+          "spearman_avg": 61.32
+        },
+        "source_cell": "Table 1, row 1",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. BERT embeddings"
+        },
+        "metric_values": {
+          "spearman_sts12": 38.78,
+          "spearman_sts13": 57.98,
+          "spearman_sts14": 57.98,
+          "spearman_sts15": 63.15,
+          "spearman_sts16": 61.06,
+          "spearman_stsb": 46.35,
+          "spearman_sickr": 58.4,
+          "spearman_avg": 54.81
+        },
+        "source_cell": "Table 1, row 2",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "BERT CLS-vector"
+        },
+        "metric_values": {
+          "spearman_sts12": 20.16,
+          "spearman_sts13": 30.01,
+          "spearman_sts14": 20.09,
+          "spearman_sts15": 36.88,
+          "spearman_sts16": 38.08,
+          "spearman_stsb": 16.5,
+          "spearman_sickr": 42.63,
+          "spearman_avg": 29.19
+        },
+        "source_cell": "Table 1, row 3",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "InferSent - GloVe"
+        },
+        "metric_values": {
+          "spearman_sts12": 52.86,
+          "spearman_sts13": 66.75,
+          "spearman_sts14": 62.15,
+          "spearman_sts15": 72.77,
+          "spearman_sts16": 66.87,
+          "spearman_stsb": 68.03,
+          "spearman_sickr": 65.65,
+          "spearman_avg": 65.01
+        },
+        "source_cell": "Table 1, row 4",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "Universal Sentence Encoder"
+        },
+        "metric_values": {
+          "spearman_sts12": 64.49,
+          "spearman_sts13": 67.8,
+          "spearman_sts14": 64.61,
+          "spearman_sts15": 76.83,
+          "spearman_sts16": 73.18,
+          "spearman_stsb": 74.92,
+          "spearman_sickr": 76.69,
+          "spearman_avg": 71.22
+        },
+        "source_cell": "Table 1, row 5",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-base"
+        },
+        "metric_values": {
+          "spearman_sts12": 70.97,
+          "spearman_sts13": 76.53,
+          "spearman_sts14": 73.19,
+          "spearman_sts15": 79.09,
+          "spearman_sts16": 74.3,
+          "spearman_stsb": 77.03,
+          "spearman_sickr": 72.91,
+          "spearman_avg": 74.89
+        },
+        "source_cell": "Table 1, row 6",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-large"
+        },
+        "metric_values": {
+          "spearman_sts12": 72.27,
+          "spearman_sts13": 78.46,
+          "spearman_sts14": 74.9,
+          "spearman_sts15": 80.99,
+          "spearman_sts16": 76.25,
+          "spearman_stsb": 79.23,
+          "spearman_sickr": 73.75,
+          "spearman_avg": 76.55
+        },
+        "source_cell": "Table 1, row 7",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-NLI-base"
+        },
+        "metric_values": {
+          "spearman_sts12": 71.54,
+          "spearman_sts13": 72.49,
+          "spearman_sts14": 70.8,
+          "spearman_sts15": 78.74,
+          "spearman_sts16": 73.69,
+          "spearman_stsb": 77.77,
+          "spearman_sickr": 74.46,
+          "spearman_avg": 74.21
+        },
+        "source_cell": "Table 1, row 8",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-NLI-large"
+        },
+        "metric_values": {
+          "spearman_sts12": 74.53,
+          "spearman_sts13": 77.0,
+          "spearman_sts14": 73.18,
+          "spearman_sts15": 81.85,
+          "spearman_sts16": 76.82,
+          "spearman_stsb": 79.1,
+          "spearman_sickr": 74.29,
+          "spearman_avg": 76.68
+        },
+        "source_cell": "Table 1, row 9",
+        "context": "Unsupervised STS evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. BERT embeddings"
+        },
+        "metric_values": {
+          "spearman_stsb": 46.35
+        },
+        "source_cell": "Table 2, row 1",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "InferSent - GloVe"
+        },
+        "metric_values": {
+          "spearman_stsb": 68.03
+        },
+        "source_cell": "Table 2, row 2",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "Universal Sentence Encoder"
+        },
+        "metric_values": {
+          "spearman_stsb": 74.92
+        },
+        "source_cell": "Table 2, row 3",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-base"
+        },
+        "metric_values": {
+          "spearman_stsb": 77.03
+        },
+        "source_cell": "Table 2, row 4",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-large"
+        },
+        "metric_values": {
+          "spearman_stsb": 79.23
+        },
+        "source_cell": "Table 2, row 5",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-STSb-base"
+        },
+        "metric_values": {
+          "spearman_stsb": 84.67
+        },
+        "source_cell": "Table 2, row 6",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-STSb-base"
+        },
+        "metric_values": {
+          "spearman_stsb": 84.92
+        },
+        "source_cell": "Table 2, row 7",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-STSb-large"
+        },
+        "metric_values": {
+          "spearman_stsb": 84.45
+        },
+        "source_cell": "Table 2, row 8",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-STSb-large"
+        },
+        "metric_values": {
+          "spearman_stsb": 85.02
+        },
+        "source_cell": "Table 2, row 9",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-STSb-base"
+        },
+        "metric_values": {
+          "spearman_stsb": 85.35
+        },
+        "source_cell": "Table 2, row 10",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-NLI-STSb-base"
+        },
+        "metric_values": {
+          "spearman_stsb": 84.79
+        },
+        "source_cell": "Table 2, row 11",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-STSb-large"
+        },
+        "metric_values": {
+          "spearman_stsb": 86.1
+        },
+        "source_cell": "Table 2, row 12",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-NLI-STSb-large"
+        },
+        "metric_values": {
+          "spearman_stsb": 86.15
+        },
+        "source_cell": "Table 2, row 13",
+        "context": "Supervised STS on STSb test set"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. GloVe embeddings"
+        },
+        "metric_values": {
+          "spearman": 32.4,
+          "pearson": 34.0
+        },
+        "source_cell": "Table 3, row 1",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "InferSent - GloVe"
+        },
+        "metric_values": {
+          "spearman": 27.08,
+          "pearson": 26.63
+        },
+        "source_cell": "Table 3, row 2",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "BERT-AFS-base"
+        },
+        "metric_values": {
+          "spearman": 77.2,
+          "pearson": 74.84
+        },
+        "source_cell": "Table 3, row 3",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-AFS-base"
+        },
+        "metric_values": {
+          "spearman": 76.57,
+          "pearson": 74.13
+        },
+        "source_cell": "Table 3, row 4",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "BERT-AFS-large"
+        },
+        "metric_values": {
+          "spearman": 78.68,
+          "pearson": 76.38
+        },
+        "source_cell": "Table 3, row 5",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-AFS-large"
+        },
+        "metric_values": {
+          "spearman": 77.85,
+          "pearson": 75.93
+        },
+        "source_cell": "Table 3, row 6",
+        "context": "AFS 10-fold cross-validation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-AFS-base"
+        },
+        "metric_values": {
+          "spearman": 52.34,
+          "pearson": 50.65
+        },
+        "source_cell": "Table 3, row 7",
+        "context": "AFS cross-topic evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "BERT-AFS-large"
+        },
+        "metric_values": {
+          "spearman": 62.02,
+          "pearson": 60.34
+        },
+        "source_cell": "Table 3, row 8",
+        "context": "AFS cross-topic evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-AFS-large"
+        },
+        "metric_values": {
+          "spearman": 53.82,
+          "pearson": 53.1
+        },
+        "source_cell": "Table 3, row 9",
+        "context": "AFS cross-topic evaluation"
+      },
+      {
+        "variable_values": {
+          "method": "skip-thoughts-CS"
+        },
+        "metric_values": {
+          "accuracy": 0.62
+        },
+        "source_cell": "Table 4, row 1",
+        "context": "Wikipedia Sections Distinction"
+      },
+      {
+        "variable_values": {
+          "method": "Dor et al."
+        },
+        "metric_values": {
+          "accuracy": 0.74
+        },
+        "source_cell": "Table 4, row 2",
+        "context": "Wikipedia Sections Distinction"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-WikiSec-large"
+        },
+        "metric_values": {
+          "accuracy": 0.8078
+        },
+        "source_cell": "Table 4, row 3",
+        "context": "Wikipedia Sections Distinction"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-WikiSec-base"
+        },
+        "metric_values": {
+          "accuracy": 0.7945
+        },
+        "source_cell": "Table 4, row 4",
+        "context": "Wikipedia Sections Distinction"
+      },
+      {
+        "variable_values": {
+          "method": "SRoBERTa-WikiSec-large"
+        },
+        "metric_values": {
+          "accuracy": 0.7973
+        },
+        "source_cell": "Table 4, row 5",
+        "context": "Wikipedia Sections Distinction"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. GloVe embeddings"
+        },
+        "metric_values": {
+          "senteval_MR": 77.25,
+          "senteval_CR": 78.3,
+          "senteval_SUBJ": 91.17,
+          "senteval_MPQA": 87.85,
+          "senteval_SST": 80.18,
+          "senteval_TREC": 83.0,
+          "senteval_MRPC": 72.87,
+          "senteval_avg": 81.52
+        },
+        "source_cell": "Table 5, row 1",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. fast-text embeddings"
+        },
+        "metric_values": {
+          "senteval_MR": 77.96,
+          "senteval_CR": 79.23,
+          "senteval_SUBJ": 91.68,
+          "senteval_MPQA": 87.81,
+          "senteval_SST": 82.15,
+          "senteval_TREC": 83.6,
+          "senteval_MRPC": 74.49,
+          "senteval_avg": 82.42
+        },
+        "source_cell": "Table 5, row 2",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "Avg. BERT embeddings"
+        },
+        "metric_values": {
+          "senteval_MR": 78.66,
+          "senteval_CR": 86.25,
+          "senteval_SUBJ": 94.37,
+          "senteval_MPQA": 88.66,
+          "senteval_SST": 84.4,
+          "senteval_TREC": 92.8,
+          "senteval_MRPC": 69.45,
+          "senteval_avg": 84.94
+        },
+        "source_cell": "Table 5, row 3",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "BERT CLS-vector"
+        },
+        "metric_values": {
+          "senteval_MR": 78.68,
+          "senteval_CR": 84.85,
+          "senteval_SUBJ": 94.21,
+          "senteval_MPQA": 88.23,
+          "senteval_SST": 84.13,
+          "senteval_TREC": 91.4,
+          "senteval_MRPC": 71.13,
+          "senteval_avg": 84.66
+        },
+        "source_cell": "Table 5, row 4",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "InferSent - GloVe"
+        },
+        "metric_values": {
+          "senteval_MR": 81.57,
+          "senteval_CR": 86.54,
+          "senteval_SUBJ": 92.5,
+          "senteval_MPQA": 90.38,
+          "senteval_SST": 84.18,
+          "senteval_TREC": 88.2,
+          "senteval_MRPC": 75.77,
+          "senteval_avg": 85.59
+        },
+        "source_cell": "Table 5, row 5",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "Universal Sentence Encoder"
+        },
+        "metric_values": {
+          "senteval_MR": 80.09,
+          "senteval_CR": 85.19,
+          "senteval_SUBJ": 93.98,
+          "senteval_MPQA": 86.7,
+          "senteval_SST": 86.38,
+          "senteval_TREC": 93.2,
+          "senteval_MRPC": 70.14,
+          "senteval_avg": 85.1
+        },
+        "source_cell": "Table 5, row 6",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-base"
+        },
+        "metric_values": {
+          "senteval_MR": 83.64,
+          "senteval_CR": 89.43,
+          "senteval_SUBJ": 94.39,
+          "senteval_MPQA": 89.86,
+          "senteval_SST": 88.96,
+          "senteval_TREC": 89.6,
+          "senteval_MRPC": 76.0,
+          "senteval_avg": 87.41
+        },
+        "source_cell": "Table 5, row 7",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-NLI-large"
+        },
+        "metric_values": {
+          "senteval_MR": 84.88,
+          "senteval_CR": 90.07,
+          "senteval_SUBJ": 94.52,
+          "senteval_MPQA": 90.33,
+          "senteval_SST": 90.66,
+          "senteval_TREC": 87.4,
+          "senteval_MRPC": 75.94,
+          "senteval_avg": 87.69
+        },
+        "source_cell": "Table 5, row 8",
+        "context": "SentEval transfer tasks"
+      },
+      {
+        "variable_values": {
+          "pooling": "MAX",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 79.07
+        },
+        "source_cell": "Table 6, row 1, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "pooling": "MAX",
+          "objective": "regression"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 69.92
+        },
+        "source_cell": "Table 6, row 1, column 2",
+        "context": "Ablation study, SBERT-base on STSb train, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "pooling": "CLS",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 79.8
+        },
+        "source_cell": "Table 6, row 2, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "pooling": "CLS",
+          "objective": "regression"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 86.62
+        },
+        "source_cell": "Table 6, row 2, column 2",
+        "context": "Ablation study, SBERT-base on STSb train, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "|u-v|",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 69.78
+        },
+        "source_cell": "Table 6, row 3, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "u*v",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 70.54
+        },
+        "source_cell": "Table 6, row 4, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "|u-v|, u*v",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 78.37
+        },
+        "source_cell": "Table 6, row 5, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "u, v, u*v",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 77.44
+        },
+        "source_cell": "Table 6, row 6, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "u, v, |u-v|",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 80.78
+        },
+        "source_cell": "Table 6, row 7, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "concat_mode": "u, v, |u-v|, u*v",
+          "objective": "classification"
+        },
+        "metric_values": {
+          "spearman_stsb_dev": 80.44
+        },
+        "source_cell": "Table 6, row 8, column 1",
+        "context": "Ablation study, SBERT-base on NLI, STSb dev set"
+      },
+      {
+        "variable_values": {
+          "method": "InferSent"
+        },
+        "metric_values": {
+          "sentences_per_sec_cpu": 137,
+          "sentences_per_sec_gpu": 1876
+        },
+        "source_cell": "Table 7, row 1",
+        "context": "Computational efficiency on STS benchmark sentences"
+      },
+      {
+        "variable_values": {
+          "method": "Universal Sentence Encoder"
+        },
+        "metric_values": {
+          "sentences_per_sec_cpu": 67,
+          "sentences_per_sec_gpu": 1318
+        },
+        "source_cell": "Table 7, row 2",
+        "context": "Computational efficiency on STS benchmark sentences"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-base"
+        },
+        "metric_values": {
+          "sentences_per_sec_cpu": 44,
+          "sentences_per_sec_gpu": 1378
+        },
+        "source_cell": "Table 7, row 3",
+        "context": "Computational efficiency on STS benchmark sentences"
+      },
+      {
+        "variable_values": {
+          "method": "SBERT-base - smart batching"
+        },
+        "metric_values": {
+          "sentences_per_sec_cpu": 83,
+          "sentences_per_sec_gpu": 2042
+        },
+        "source_cell": "Table 7, row 4",
+        "context": "Computational efficiency on STS benchmark sentences"
+      }
+    ],
+    "context_descriptors": {
+      "method": [
+        "Avg. GloVe embeddings",
+        "Avg. BERT embeddings",
+        "BERT CLS-vector",
+        "InferSent - GloVe",
+        "Universal Sentence Encoder",
+        "SBERT-NLI-base",
+        "SBERT-NLI-large",
+        "SRoBERTa-NLI-base",
+        "SRoBERTa-NLI-large",
+        "SBERT-STSb-base",
+        "SRoBERTa-STSb-base",
+        "SBERT-STSb-large",
+        "SRoBERTa-STSb-large",
+        "SBERT-NLI-STSb-base",
+        "SRoBERTa-NLI-STSb-base",
+        "SBERT-NLI-STSb-large",
+        "SRoBERTa-NLI-STSb-large",
+        "BERT-AFS-base",
+        "SBERT-AFS-base",
+        "BERT-AFS-large",
+        "SBERT-AFS-large",
+        "Avg. fast-text embeddings",
+        "skip-thoughts-CS",
+        "Dor et al.",
+        "SBERT-WikiSec-large",
+        "SRoBERTa-WikiSec-base",
+        "SRoBERTa-WikiSec-large"
+      ],
+      "evaluation_setting": [
+        "Unsupervised STS",
+        "Supervised STS (STSb)",
+        "AFS 10-fold cross-validation",
+        "AFS cross-topic",
+        "Wikipedia Sections Distinction",
+        "SentEval transfer tasks",
+        "Ablation study",
+        "Computational efficiency"
+      ]
+    }
+  },
+  "extracted_at": "2026-04-26T21:48:20Z"
+}

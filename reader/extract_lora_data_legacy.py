@@ -1,0 +1,191 @@
+"""
+One-shot extraction of LoRA paper data from paper.md.
+All values are manually verified against arXiv 2106.09685.
+Every value has a source_cell citation.
+"""
+
+import json
+
+data = {
+    "paper": {
+        "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+        "authors": ["Edward J. Hu", "Yelong Shen", "Phillip Wallis", "Zeyuan Allen-Zhu",
+                     "Yuanzhi Li", "Shean Wang", "Lu Wang", "Weizhu Chen"],
+        "year": 2021,
+        "arxiv_id": "2106.09685",
+        "url": "https://arxiv.org/abs/2106.09685"
+    },
+
+    "main_claims": [
+        "LoRA matches or exceeds full fine-tuning quality on RoBERTa, DeBERTa, GPT-2, and GPT-3 while training less than 1% of parameters",
+        "LoRA reduces trainable parameters by up to 10,000x and GPU memory by 3x compared to full fine-tuning with Adam on GPT-3 175B",
+        "LoRA introduces no additional inference latency — adapted weights can be merged into the pre-trained model",
+        "A very low rank (r=1 or r=2) is sufficient for strong adaptation on GPT-3, suggesting weight updates have low intrinsic rank",
+        "Adapting both W_q and W_v yields the best results given a fixed parameter budget, outperforming single-weight adaptation at higher rank"
+    ],
+
+    "models": [
+        {"name": "RoBERTa-base", "params_millions": 125, "tasks": ["MNLI", "SST-2", "MRPC", "CoLA", "QNLI", "QQP", "RTE", "STS-B"]},
+        {"name": "RoBERTa-large", "params_millions": 355, "tasks": ["MNLI", "SST-2", "MRPC", "CoLA", "QNLI", "QQP", "RTE", "STS-B"]},
+        {"name": "DeBERTa-XXL", "params_millions": 1500, "tasks": ["MNLI", "SST-2", "MRPC", "CoLA", "QNLI", "QQP", "RTE", "STS-B"]},
+        {"name": "GPT-2 Medium", "params_millions": 355, "tasks": ["E2E NLG"]},
+        {"name": "GPT-2 Large", "params_millions": 774, "tasks": ["E2E NLG"]},
+        {"name": "GPT-3 175B", "params_millions": 175256, "tasks": ["WikiSQL", "MNLI", "SAMSum"]}
+    ],
+
+    # Table 2: RoBERTa/DeBERTa GLUE results (LoRA rows only)
+    "main_results": [
+        # RoBERTa-base LoRA (Table 2)
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "MNLI", "metric_name": "Accuracy", "value": 87.5, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), MNLI"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "SST-2", "metric_name": "Accuracy", "value": 95.1, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), SST-2"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "MRPC", "metric_name": "Accuracy", "value": 89.7, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), MRPC"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "CoLA", "metric_name": "Matthews Corr.", "value": 63.4, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), CoLA"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "QNLI", "metric_name": "Accuracy", "value": 93.3, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), QNLI"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "QQP", "metric_name": "Accuracy", "value": 90.8, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), QQP"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "RTE", "metric_name": "Accuracy", "value": 86.6, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), RTE"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "STS-B", "metric_name": "Spearman Corr.", "value": 91.5, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), STS-B"},
+        {"model": "RoBERTa-base", "method": "LoRA", "task": "GLUE Avg", "metric_name": "Average", "value": 87.2, "params": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), Avg."},
+        # RoBERTa-base Full FT baseline
+        {"model": "RoBERTa-base", "method": "Full FT", "task": "GLUE Avg", "metric_name": "Average", "value": 86.4, "params": "125.0M", "source_cell": "Table 2, RoB_base (FT), Avg."},
+
+        # RoBERTa-large LoRA (Table 2)
+        {"model": "RoBERTa-large", "method": "LoRA", "task": "MNLI", "metric_name": "Accuracy", "value": 90.6, "params": "0.8M", "source_cell": "Table 2, RoB_large (LoRA), MNLI"},
+        {"model": "RoBERTa-large", "method": "LoRA", "task": "GLUE Avg", "metric_name": "Average", "value": 89.0, "params": "0.8M", "source_cell": "Table 2, RoB_large (LoRA), Avg."},
+        {"model": "RoBERTa-large", "method": "Full FT", "task": "GLUE Avg", "metric_name": "Average", "value": 88.9, "params": "355.0M", "source_cell": "Table 2, RoB_large (FT), Avg."},
+
+        # DeBERTa-XXL LoRA (Table 2)
+        {"model": "DeBERTa-XXL", "method": "LoRA", "task": "MNLI", "metric_name": "Accuracy", "value": 91.9, "params": "4.7M", "source_cell": "Table 2, DeB_XXL (LoRA), MNLI"},
+        {"model": "DeBERTa-XXL", "method": "LoRA", "task": "GLUE Avg", "metric_name": "Average", "value": 91.3, "params": "4.7M", "source_cell": "Table 2, DeB_XXL (LoRA), Avg."},
+        {"model": "DeBERTa-XXL", "method": "Full FT", "task": "GLUE Avg", "metric_name": "Average", "value": 91.1, "params": "1500.0M", "source_cell": "Table 2, DeB_XXL (FT), Avg."},
+
+        # GPT-2 Medium LoRA (Table 4)
+        {"model": "GPT-2 Medium", "method": "LoRA", "task": "E2E NLG", "metric_name": "BLEU", "value": 70.4, "params": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), BLEU"},
+        {"model": "GPT-2 Medium", "method": "LoRA", "task": "E2E NLG", "metric_name": "NIST", "value": 8.85, "params": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), NIST"},
+        {"model": "GPT-2 Medium", "method": "LoRA", "task": "E2E NLG", "metric_name": "MET", "value": 46.8, "params": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), MET"},
+        {"model": "GPT-2 Medium", "method": "LoRA", "task": "E2E NLG", "metric_name": "ROUGE-L", "value": 71.8, "params": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), ROUGE-L"},
+        {"model": "GPT-2 Medium", "method": "LoRA", "task": "E2E NLG", "metric_name": "CIDEr", "value": 2.53, "params": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), CIDEr"},
+        {"model": "GPT-2 Medium", "method": "Full FT", "task": "E2E NLG", "metric_name": "BLEU", "value": 68.2, "params": "354.92M", "source_cell": "Table 4, GPT-2 M (FT), BLEU"},
+
+        # GPT-2 Large LoRA (Table 4)
+        {"model": "GPT-2 Large", "method": "LoRA", "task": "E2E NLG", "metric_name": "BLEU", "value": 70.4, "params": "0.77M", "source_cell": "Table 4, GPT-2 L (LoRA), BLEU"},
+        {"model": "GPT-2 Large", "method": "LoRA", "task": "E2E NLG", "metric_name": "NIST", "value": 8.89, "params": "0.77M", "source_cell": "Table 4, GPT-2 L (LoRA), NIST"},
+
+        # GPT-3 175B LoRA (Table 5)
+        {"model": "GPT-3 175B", "method": "LoRA", "task": "WikiSQL", "metric_name": "Accuracy", "value": 73.4, "params": "4.7M", "source_cell": "Table 5, GPT-3 (LoRA) 4.7M, WikiSQL"},
+        {"model": "GPT-3 175B", "method": "LoRA", "task": "MNLI", "metric_name": "Accuracy", "value": 91.7, "params": "4.7M", "source_cell": "Table 5, GPT-3 (LoRA) 4.7M, MNLI"},
+        {"model": "GPT-3 175B", "method": "LoRA", "task": "SAMSum", "metric_name": "R1/R2/RL", "value": "53.8/29.8/45.9", "params": "4.7M", "source_cell": "Table 5, GPT-3 (LoRA) 4.7M, SAMSum"},
+        {"model": "GPT-3 175B", "method": "Full FT", "task": "WikiSQL", "metric_name": "Accuracy", "value": 73.8, "params": "175255.8M", "source_cell": "Table 5, GPT-3 (FT), WikiSQL"},
+        {"model": "GPT-3 175B", "method": "Full FT", "task": "MNLI", "metric_name": "Accuracy", "value": 89.5, "params": "175255.8M", "source_cell": "Table 5, GPT-3 (FT), MNLI"},
+    ],
+
+    # Table 7 (weight_type_ablation): GPT-3 175B, fixed 18M param budget
+    "weight_type_ablation": {
+        "source": "Table 7",
+        "model": "GPT-3 175B",
+        "param_budget": "18M",
+        "values": [
+            {"weights": "W_q", "rank": 8, "wikisql": 70.4, "multinli": 91.0, "source_cell": "Table 7, W_q column"},
+            {"weights": "W_k", "rank": 8, "wikisql": 70.0, "multinli": 90.8, "source_cell": "Table 7, W_k column"},
+            {"weights": "W_v", "rank": 8, "wikisql": 73.0, "multinli": 91.0, "source_cell": "Table 7, W_v column"},
+            {"weights": "W_o", "rank": 8, "wikisql": 73.2, "multinli": 91.3, "source_cell": "Table 7, W_o column"},
+            {"weights": "W_q,W_k", "rank": 4, "wikisql": 71.4, "multinli": 91.3, "source_cell": "Table 7, W_q,W_k column"},
+            {"weights": "W_q,W_v", "rank": 4, "wikisql": 73.7, "multinli": 91.3, "source_cell": "Table 7, W_q,W_v column"},
+            {"weights": "W_q,W_k,W_v,W_o", "rank": 2, "wikisql": 73.7, "multinli": 91.7, "source_cell": "Table 7, W_q,W_k,W_v,W_o column"}
+        ]
+    },
+
+    # Table 6 (rank_ablation): GPT-3 175B, effect of rank r
+    # Columns: r = 1, 2, 4, 8, 64
+    "rank_ablation_gpt3": {
+        "source": "Table 6",
+        "model": "GPT-3 175B",
+        "rank_values": [1, 2, 4, 8, 64],
+        "values": [
+            # WikiSQL, W_q only
+            {"task": "WikiSQL", "weights": "W_q", "ranks": {
+                "1": 68.8, "2": 69.6, "4": 70.5, "8": 70.4, "64": 70.0
+            }, "source_cell": "Table 6, WikiSQL W_q row"},
+            # WikiSQL, W_q,W_v
+            {"task": "WikiSQL", "weights": "W_q,W_v", "ranks": {
+                "1": 73.4, "2": 73.3, "4": 73.7, "8": 73.8, "64": 73.5
+            }, "source_cell": "Table 6, WikiSQL W_q,W_v row"},
+            # WikiSQL, W_q,W_k,W_v,W_o
+            {"task": "WikiSQL", "weights": "W_q,W_k,W_v,W_o", "ranks": {
+                "1": 74.1, "2": 73.7, "4": 74.0, "8": 74.0, "64": 73.9
+            }, "source_cell": "Table 6, WikiSQL W_q,W_k,W_v,W_o row"},
+            # MultiNLI, W_q only
+            {"task": "MultiNLI", "weights": "W_q", "ranks": {
+                "1": 90.7, "2": 90.9, "4": 91.1, "8": 90.7, "64": 90.7
+            }, "source_cell": "Table 6, MultiNLI W_q row"},
+            # MultiNLI, W_q,W_v
+            {"task": "MultiNLI", "weights": "W_q,W_v", "ranks": {
+                "1": 91.3, "2": 91.4, "4": 91.3, "8": 91.6, "64": 91.4
+            }, "source_cell": "Table 6, MultiNLI W_q,W_v row"},
+            # MultiNLI, W_q,W_k,W_v,W_o
+            {"task": "MultiNLI", "weights": "W_q,W_k,W_v,W_o", "ranks": {
+                "1": 91.2, "2": 91.7, "4": 91.7, "8": 91.5, "64": 91.4
+            }, "source_cell": "Table 6, MultiNLI W_q,W_k,W_v,W_o row"}
+        ]
+    },
+
+    # Appendix Table: GPT-2 Medium rank ablation on E2E NLG
+    # Columns: r, Val Loss, BLEU, NIST, MET, ROUGE-L, CIDEr
+    "rank_ablation_gpt2": {
+        "source": "Appendix F.3, Table (Effect of r on GPT-2)",
+        "model": "GPT-2 Medium",
+        "task": "E2E NLG",
+        "values": [
+            {"rank": 1,   "val_loss": 1.23, "BLEU": 68.72, "NIST": 8.7215, "MET": 0.4565, "ROUGE_L": 0.7052, "CIDEr": 2.4329, "source_cell": "Appendix F.3 table, r=1 row"},
+            {"rank": 2,   "val_loss": 1.21, "BLEU": 69.17, "NIST": 8.7413, "MET": 0.4590, "ROUGE_L": 0.7052, "CIDEr": 2.4639, "source_cell": "Appendix F.3 table, r=2 row"},
+            {"rank": 4,   "val_loss": 1.18, "BLEU": 70.38, "NIST": 8.8439, "MET": 0.4689, "ROUGE_L": 0.7186, "CIDEr": 2.5349, "source_cell": "Appendix F.3 table, r=4 row"},
+            {"rank": 8,   "val_loss": 1.17, "BLEU": 69.57, "NIST": 8.7457, "MET": 0.4636, "ROUGE_L": 0.7196, "CIDEr": 2.5196, "source_cell": "Appendix F.3 table, r=8 row"},
+            {"rank": 16,  "val_loss": 1.16, "BLEU": 69.61, "NIST": 8.7483, "MET": 0.4629, "ROUGE_L": 0.7177, "CIDEr": 2.4985, "source_cell": "Appendix F.3 table, r=16 row"},
+            {"rank": 32,  "val_loss": 1.16, "BLEU": 69.33, "NIST": 8.7736, "MET": 0.4642, "ROUGE_L": 0.7105, "CIDEr": 2.5255, "source_cell": "Appendix F.3 table, r=32 row"},
+            {"rank": 64,  "val_loss": 1.16, "BLEU": 69.24, "NIST": 8.7174, "MET": 0.4651, "ROUGE_L": 0.7180, "CIDEr": 2.5070, "source_cell": "Appendix F.3 table, r=64 row"},
+            {"rank": 128, "val_loss": 1.16, "BLEU": 68.73, "NIST": 8.6718, "MET": 0.4628, "ROUGE_L": 0.7127, "CIDEr": 2.5030, "source_cell": "Appendix F.3 table, r=128 row"},
+            {"rank": 256, "val_loss": 1.16, "BLEU": 68.92, "NIST": 8.6982, "MET": 0.4629, "ROUGE_L": 0.7128, "CIDEr": 2.5012, "source_cell": "Appendix F.3 table, r=256 row"}
+        ]
+    },
+
+    "trainable_params": {
+        "RoBERTa-base LoRA r=8 (W_q,W_v)": {"value": "0.3M", "source_cell": "Table 2, RoB_base (LoRA), Parameters"},
+        "RoBERTa-large LoRA r=8 (W_q,W_v)": {"value": "0.8M", "source_cell": "Table 2, RoB_large (LoRA), Parameters"},
+        "DeBERTa-XXL LoRA r=8 (W_q,W_v)": {"value": "4.7M", "source_cell": "Table 2, DeB_XXL (LoRA), Parameters"},
+        "GPT-2 Medium LoRA r=4 (W_q,W_v)": {"value": "0.35M", "source_cell": "Table 4, GPT-2 M (LoRA), Parameters"},
+        "GPT-2 Large LoRA r=4 (W_q,W_v)": {"value": "0.77M", "source_cell": "Table 4, GPT-2 L (LoRA), Parameters"},
+        "GPT-3 175B LoRA (4.7M)": {"value": "4.7M", "source_cell": "Table 5, GPT-3 (LoRA) 4.7M, Parameters"},
+        "GPT-3 175B LoRA (37.7M)": {"value": "37.7M", "source_cell": "Table 5, GPT-3 (LoRA) 37.7M, Parameters"},
+        "formula": "2 * L_LoRA * d_model * r (Section 4.2, Equation)"
+    }
+}
+
+if __name__ == "__main__":
+    outpath = "/home/hchadha1/.zeroclaw/workspace/paper-repro/reader/lora_data.json"
+    with open(outpath, "w") as f:
+        json.dump(data, f, indent=2)
+
+    # Validation summary
+    n_results = len(data["main_results"])
+    n_wt = len(data["weight_type_ablation"]["values"])
+    n_rank_gpt3 = len(data["rank_ablation_gpt3"]["values"])
+    n_rank_gpt2 = len(data["rank_ablation_gpt2"]["values"])
+
+    # Count all source_cell citations
+    citations = 0
+    for r in data["main_results"]:
+        if "source_cell" in r: citations += 1
+    for r in data["weight_type_ablation"]["values"]:
+        if "source_cell" in r: citations += 1
+    for r in data["rank_ablation_gpt3"]["values"]:
+        if "source_cell" in r: citations += 1
+    for r in data["rank_ablation_gpt2"]["values"]:
+        if "source_cell" in r: citations += 1
+
+    print(f"Written to {outpath}")
+    print(f"  {n_results} main results")
+    print(f"  {n_wt} weight type ablation entries")
+    print(f"  {n_rank_gpt3} GPT-3 rank ablation series (5 ranks each)")
+    print(f"  {n_rank_gpt2} GPT-2 rank ablation entries (9 ranks)")
+    print(f"  {citations} total source citations")
+    print(f"  5 main claims")
+    print(f"  6 models")
