@@ -32,6 +32,14 @@ h1 { font-size: 26px; margin-bottom: 4px; }
 .quality-bar { height: 4px; background: #f3f4f6; border-radius: 2px; margin: 8px 0; overflow: hidden; }
 .quality-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
 .card-footer { font-size: 12px; color: #6b7280; font-style: italic; }
+.info-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.info-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+.info-panel h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #374151; margin-bottom: 8px; }
+.info-panel ul { list-style: none; padding: 0; font-size: 13px; }
+.info-panel li { padding: 2px 0; }
+.info-panel a { color: #2563eb; text-decoration: none; }
+.info-meta { font-size: 11px; color: #9ca3af; margin-top: 8px; }
+.info-time { font-size: 11px; color: #9ca3af; }
 .add-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
 .add-form label { font-size: 13px; font-weight: 600; color: #374151; }
 .add-form input { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 200px; }
@@ -47,12 +55,18 @@ h1 { font-size: 26px; margin-bottom: 4px; }
 <div class="container">
 
 <h1>Paper Reader Catalog</h1>
-<div class="subtitle">5 papers extracted &mdash; Generated 2026-04-26 22:40 UTC</div>
+<div class="subtitle">7 papers extracted &mdash; Generated 2026-04-26 23:20 UTC</div>
 
 <div class="legend">
     <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Case A: Interactive (ablation tables, sliders)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Case B: Sparse (limited data, static view)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#6b7280"></div>Case C: Theoretical (claims only)</div>
+</div>
+
+<div class="info-panels">
+<div class="info-panel"><h3>Configured Topics</h3><ul><li>LoRA fine-tuning</li><li>attention mechanisms</li></ul>
+<div class="info-meta">Papers per day: 2 &middot; Max candidates: 8 &middot; Next run: daily 9:00 AM ET</div></div>
+<div class="info-panel"><h3>Recent Activity</h3><ul><li><a href="2604.21592.html">Sculpt4D: High-Fidelity 4D Mesh Generation</a> <span class="info-time">2026-04-26 18:57</span></li><li><a href="2604.17217.html">Adversarial Evaluation Framework for Cross-Modal D</a> <span class="info-time">2026-04-26 18:54</span></li><li><a href="2604.19321.html">RDP LoRA: Geometry-Driven Identification for Param</a> <span class="info-time">2026-04-26 18:29</span></li><li><a href="2005.14165.html">Language Models are Few-Shot Learners</a> <span class="info-time">2026-04-26 18:22</span></li><li><a href="1908.10084.html">Sentence-BERT: Sentence Embeddings using Siamese B</a> <span class="info-time">2026-04-26 18:20</span></li></ul></div>
 </div>
 
 <div class="add-form">
@@ -65,8 +79,8 @@ h1 { font-size: 26px; margin-bottom: 4px; }
 </div>
 
 <div class="filters">
-    <button class="filter-btn active" onclick="filterCards('all')">All (5)</button>
-    <button class="filter-btn" onclick="filterCards('A')">Case A (5)</button>
+    <button class="filter-btn active" onclick="filterCards('all')">All (7)</button>
+    <button class="filter-btn" onclick="filterCards('A')">Case A (7)</button>
     <button class="filter-btn" onclick="filterCards('B')">Case B (0)</button>
     <button class="filter-btn" onclick="filterCards('C')">Case C (0)</button>
 </div>
@@ -187,6 +201,34 @@ h1 { font-size: 26px; margin-bottom: 4px; }
         <div class="card">
             <div class="card-header">
                 <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="2604.17217.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/2604.17217" target="_blank">Adversarial Evaluation Framework for Cross-Modal Dependency in Vision-Language Models</a></h3>
+            <div class="card-meta"> (2026) &mdash; arXiv:2604.17217</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">21</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">The paper contains multiple tables that vary model configurations (Baseline CLIP, LoRA, LoRA Optimized) across adversarial strategies (shape_swap, color_swap, position_swap, random_text) and report metric outcomes (Drop, accuracy, effect sizes). The per-strategy breakdown table and optimization component analysis table provide clear ablation structure with well over 10 extractable data points.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
                 <a href="2604.19321.html" class="reader-link">Open Reader</a>
             </div>
             <h3><a href="https://arxiv.org/abs/2604.19321" target="_blank">RDP LoRA: Geometry-Driven Identification for Parameter-Efficient Adaptation in Large Language Models</a></h3>
@@ -211,6 +253,34 @@ h1 { font-size: 26px; margin-bottom: 4px; }
             </div>
             <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
             <div class="card-footer">The paper has two clear results tables varying adaptation strategy across multiple models and reporting MMLU-Math accuracy. The main table shows 8 strategies on Qwen3-8B-Base, and the appendix table shows 5 strategies across 4 additional models, providing well-structured ablation-style comparisons with &gt;10 quantitative data points.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="case-badge" style="background:#22c55e">Case A: Interactive</span>
+                <a href="2604.21592.html" class="reader-link">Open Reader</a>
+            </div>
+            <h3><a href="https://arxiv.org/abs/2604.21592" target="_blank">Sculpt4D: High-Fidelity 4D Mesh Generation</a></h3>
+            <div class="card-meta"> (2025) &mdash; arXiv:2604.21592</div>
+            <div class="card-stats">
+                <div class="stat">
+                    <div class="stat-value">32</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Variables</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">11</div>
+                    <div class="stat-label">Metrics</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Cited</div>
+                </div>
+            </div>
+            <div class="quality-bar"><div class="quality-fill" style="width:100%;background:#22c55e"></div></div>
+            <div class="card-footer">The paper contains multiple ablation tables that systematically vary design choices (consistent sampling, shared noise, attention sink, stride strategies, sequence length) and report metrics (CD, IoU, F-Score, PFLOPs). There are well over 10 extractable quantitative data points with clear table citations.</div>
         </div></div>
 
 <div class="note">

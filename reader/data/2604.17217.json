@@ -1,0 +1,332 @@
+{
+  "classification": {
+    "case": "A",
+    "reasoning": "The paper contains multiple tables that vary model configurations (Baseline CLIP, LoRA, LoRA Optimized) across adversarial strategies (shape_swap, color_swap, position_swap, random_text) and report metric outcomes (Drop, accuracy, effect sizes). The per-strategy breakdown table and optimization component analysis table provide clear ablation structure with well over 10 extractable data points.",
+    "tables_found": 7,
+    "ablation_tables_found": 3,
+    "estimated_data_points": 45,
+    "is_theoretical": false
+  },
+  "extraction": {
+    "paper": {
+      "title": "Adversarial Evaluation Framework for Cross-Modal Dependency in Vision-Language Models",
+      "authors": [],
+      "year": 2026,
+      "arxiv_id": ""
+    },
+    "main_claims": [
+      "The LoRA Optimized configuration reduces average accuracy Drop under adversarial text perturbation from 27.5% to 9.8% (64.4% relative improvement, p<0.001) compared to baseline CLIP ViT-B/32 on a geometric shapes dataset.",
+      "The LoRA Optimized model maintains 97% normal accuracy while substantially improving adversarial robustness.",
+      "The optimization achieves greater than 60% improvement across all four adversarial strategies, indicating broad reduction in text dependency rather than strategy-specific gains.",
+      "The combined Drop reduction of 17.7 percentage points exceeds the expected 8-12% sum of individual component contributions, indicating synergistic effects among optimization techniques.",
+      "Color swap adversarial attacks show the highest improvement rate (68%) while position swap attacks remain the most challenging despite 60% improvement."
+    ],
+    "variables": [
+      {
+        "name": "method",
+        "label": "Model Configuration",
+        "type": "categorical",
+        "values": [
+          "Baseline CLIP",
+          "LoRA",
+          "LoRA Optimized"
+        ],
+        "unit": null
+      },
+      {
+        "name": "adversarial_strategy",
+        "label": "Adversarial Strategy",
+        "type": "categorical",
+        "values": [
+          "shape_swap",
+          "color_swap",
+          "position_swap",
+          "random_text"
+        ],
+        "unit": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "normal_accuracy",
+        "label": "Normal Accuracy",
+        "higher_is_better": true
+      },
+      {
+        "name": "avg_drop",
+        "label": "Average Drop",
+        "higher_is_better": false
+      },
+      {
+        "name": "drop",
+        "label": "Drop (Accuracy Degradation)",
+        "higher_is_better": false
+      },
+      {
+        "name": "mean_diff",
+        "label": "Mean Difference in Drop",
+        "higher_is_better": false
+      },
+      {
+        "name": "t_statistic",
+        "label": "t-Statistic",
+        "higher_is_better": false
+      },
+      {
+        "name": "cohens_d",
+        "label": "Cohen's d Effect Size",
+        "higher_is_better": false
+      }
+    ],
+    "data_points": [
+      {
+        "variable_values": {
+          "method": "Baseline CLIP"
+        },
+        "metric_values": {
+          "normal_accuracy": 1.0,
+          "avg_drop": 0.275
+        },
+        "source_cell": "Table 1, Baseline CLIP row, Normal Accuracy and Average Drop columns",
+        "context": "CLIP ViT-B/32 zero-shot on geometric shapes dataset (n=1000)"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA"
+        },
+        "metric_values": {
+          "normal_accuracy": 0.98,
+          "avg_drop": 0.18
+        },
+        "source_cell": "Table 1, LoRA row, Normal Accuracy and Average Drop columns",
+        "context": "LoRA fine-tuned CLIP ViT-B/32 on geometric shapes dataset (n=1000)"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized"
+        },
+        "metric_values": {
+          "normal_accuracy": 0.97,
+          "avg_drop": 0.098
+        },
+        "source_cell": "Table 1, LoRA Optimized row, Normal Accuracy and Average Drop columns",
+        "context": "LoRA Optimized CLIP ViT-B/32 on geometric shapes dataset (n=1000)"
+      },
+      {
+        "variable_values": {
+          "method": "Baseline CLIP",
+          "adversarial_strategy": "shape_swap"
+        },
+        "metric_values": {
+          "drop": 0.27
+        },
+        "source_cell": "Table 2, shape_swap row, Baseline column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "adversarial_strategy": "shape_swap"
+        },
+        "metric_values": {
+          "drop": 0.18
+        },
+        "source_cell": "Table 2, shape_swap row, LoRA column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized",
+          "adversarial_strategy": "shape_swap"
+        },
+        "metric_values": {
+          "drop": 0.1
+        },
+        "source_cell": "Table 2, shape_swap row, Optimized column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "Baseline CLIP",
+          "adversarial_strategy": "color_swap"
+        },
+        "metric_values": {
+          "drop": 0.25
+        },
+        "source_cell": "Table 2, color_swap row, Baseline column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "adversarial_strategy": "color_swap"
+        },
+        "metric_values": {
+          "drop": 0.15
+        },
+        "source_cell": "Table 2, color_swap row, LoRA column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized",
+          "adversarial_strategy": "color_swap"
+        },
+        "metric_values": {
+          "drop": 0.08
+        },
+        "source_cell": "Table 2, color_swap row, Optimized column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "Baseline CLIP",
+          "adversarial_strategy": "position_swap"
+        },
+        "metric_values": {
+          "drop": 0.3
+        },
+        "source_cell": "Table 2, position_swap row, Baseline column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "adversarial_strategy": "position_swap"
+        },
+        "metric_values": {
+          "drop": 0.2
+        },
+        "source_cell": "Table 2, position_swap row, LoRA column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized",
+          "adversarial_strategy": "position_swap"
+        },
+        "metric_values": {
+          "drop": 0.12
+        },
+        "source_cell": "Table 2, position_swap row, Optimized column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "Baseline CLIP",
+          "adversarial_strategy": "random_text"
+        },
+        "metric_values": {
+          "drop": 0.28
+        },
+        "source_cell": "Table 2, random_text row, Baseline column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "adversarial_strategy": "random_text"
+        },
+        "metric_values": {
+          "drop": 0.19
+        },
+        "source_cell": "Table 2, random_text row, LoRA column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized",
+          "adversarial_strategy": "random_text"
+        },
+        "metric_values": {
+          "drop": 0.09
+        },
+        "source_cell": "Table 2, random_text row, Optimized column",
+        "context": "Per-strategy Drop on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "Baseline CLIP",
+          "adversarial_strategy": "Average"
+        },
+        "metric_values": {
+          "drop": 0.275
+        },
+        "source_cell": "Table 2, Average row, Baseline column",
+        "context": "Average Drop across all strategies on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA",
+          "adversarial_strategy": "Average"
+        },
+        "metric_values": {
+          "drop": 0.18
+        },
+        "source_cell": "Table 2, Average row, LoRA column",
+        "context": "Average Drop across all strategies on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA Optimized",
+          "adversarial_strategy": "Average"
+        },
+        "metric_values": {
+          "drop": 0.098
+        },
+        "source_cell": "Table 2, Average row, Optimized column",
+        "context": "Average Drop across all strategies on geometric shapes dataset"
+      },
+      {
+        "variable_values": {
+          "method": "LoRA vs Baseline"
+        },
+        "metric_values": {
+          "mean_diff": 0.095,
+          "t_statistic": 12.34,
+          "cohens_d": 0.78
+        },
+        "source_cell": "Appendix Table A-I, LoRA vs Baseline row, Mean Diff / t-stat / Cohen's d columns",
+        "context": "Paired t-test with Holm-Bonferroni correction"
+      },
+      {
+        "variable_values": {
+          "method": "Optimized vs Baseline"
+        },
+        "metric_values": {
+          "mean_diff": 0.177,
+          "t_statistic": 18.56,
+          "cohens_d": 1.18
+        },
+        "source_cell": "Appendix Table A-I, Optimized vs Baseline row, Mean Diff / t-stat / Cohen's d columns",
+        "context": "Paired t-test with Holm-Bonferroni correction"
+      },
+      {
+        "variable_values": {
+          "method": "Optimized vs LoRA"
+        },
+        "metric_values": {
+          "mean_diff": 0.082,
+          "t_statistic": 10.23,
+          "cohens_d": 0.65
+        },
+        "source_cell": "Appendix Table A-I, Optimized vs LoRA row, Mean Diff / t-stat / Cohen's d columns",
+        "context": "Paired t-test with Holm-Bonferroni correction"
+      }
+    ],
+    "context_descriptors": {
+      "method": [
+        "Baseline CLIP",
+        "LoRA",
+        "LoRA Optimized"
+      ],
+      "adversarial_strategy": [
+        "shape_swap",
+        "color_swap",
+        "position_swap",
+        "random_text"
+      ]
+    }
+  },
+  "extracted_at": "2026-04-26T22:54:53Z"
+}

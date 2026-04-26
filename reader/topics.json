@@ -1,0 +1,5 @@
+{
+  "topics": ["LoRA fine-tuning", "attention mechanisms"],
+  "papers_per_day": 2,
+  "max_candidates_to_classify": 8
+}

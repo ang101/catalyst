@@ -17,11 +17,49 @@ def esc(s):
     return html_mod.escape(str(s))
 
 
+def _build_info_panels(topics_config, recent_activity):
+    if not topics_config:
+        return ""
+    topics_li = "".join(f"<li>{esc(t)}</li>" for t in topics_config.get("topics", []))
+    ppd = topics_config.get("papers_per_day", 2)
+    maxc = topics_config.get("max_candidates_to_classify", 10)
+    activity_li = ""
+    for r in recent_activity:
+        title_short = esc(r["title"][:50])
+        activity_li += f'<li><a href="{r["id"]}.html">{title_short}</a> <span class="info-time">{r["time"]}</span></li>'
+    return f"""<div class="info-panels">
+<div class="info-panel"><h3>Configured Topics</h3><ul>{topics_li}</ul>
+<div class="info-meta">Papers per day: {ppd} &middot; Max candidates: {maxc} &middot; Next run: daily 9:00 AM ET</div></div>
+<div class="info-panel"><h3>Recent Activity</h3><ul>{activity_li}</ul></div>
+</div>"""
+
+
 def build_catalog():
     data_files = sorted(DATA_DIR.glob("*.json"))
     if not data_files:
         print("No extracted papers found in data/")
         return
+
+    # Load topics config if it exists
+    topics_path = READER_DIR / "topics.json"
+    topics_config = None
+    if topics_path.exists():
+        try:
+            topics_config = json.loads(topics_path.read_text())
+        except Exception:
+            pass
+
+    # Recent activity: last 5 by file mtime
+    recent_files = sorted(data_files, key=lambda f: f.stat().st_mtime, reverse=True)[:5]
+    recent_activity = []
+    for f in recent_files:
+        try:
+            d = json.loads(f.read_text())
+            title = d.get("extraction", {}).get("paper", {}).get("title", f.stem)
+            mtime = time.strftime("%Y-%m-%d %H:%M", time.localtime(f.stat().st_mtime))
+            recent_activity.append({"id": f.stem, "title": title, "time": mtime})
+        except Exception:
+            pass
 
     papers = []
     for f in data_files:
@@ -138,6 +176,14 @@ h1 {{ font-size: 26px; margin-bottom: 4px; }}
 .quality-bar {{ height: 4px; background: #f3f4f6; border-radius: 2px; margin: 8px 0; overflow: hidden; }}
 .quality-fill {{ height: 100%; border-radius: 2px; transition: width 0.3s; }}
 .card-footer {{ font-size: 12px; color: #6b7280; font-style: italic; }}
+.info-panels {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }}
+.info-panel {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }}
+.info-panel h3 {{ font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #374151; margin-bottom: 8px; }}
+.info-panel ul {{ list-style: none; padding: 0; font-size: 13px; }}
+.info-panel li {{ padding: 2px 0; }}
+.info-panel a {{ color: #2563eb; text-decoration: none; }}
+.info-meta {{ font-size: 11px; color: #9ca3af; margin-top: 8px; }}
+.info-time {{ font-size: 11px; color: #9ca3af; }}
 .add-form {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }}
 .add-form label {{ font-size: 13px; font-weight: 600; color: #374151; }}
 .add-form input {{ padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 200px; }}
@@ -160,6 +206,8 @@ h1 {{ font-size: 26px; margin-bottom: 4px; }}
     <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Case B: Sparse (limited data, static view)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#6b7280"></div>Case C: Theoretical (claims only)</div>
 </div>
+
+{_build_info_panels(topics_config, recent_activity)}
 
 <div class="add-form">
     <form id="addForm" onsubmit="processForm(event)">

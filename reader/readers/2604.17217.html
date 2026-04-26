@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adversarial Evaluation Framework for Cross-Modal Dependency in Vision-Language Models</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; color: #1a1a1a; line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 24px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin: 32px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+h3 { font-size: 15px; margin: 16px 0 8px; }
+a { color: #2563eb; }
+.meta { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.claims { margin: 16px 0; padding-left: 24px; }
+.claims li { margin-bottom: 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }
+.control-group { flex: 1 1 180px; min-width: 150px; }
+.control-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.dropdown, select { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+.option-hint { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+select option.no-data { color: #d1d5db; }
+.result-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }
+.result-value { font-size: 36px; font-weight: 700; margin: 8px 0; }
+.result-meta { font-size: 13px; color: #6b7280; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; vertical-align: middle; cursor: help; }
+    .badge-paper { background: #22c55e; color: #fff; }
+    .badge-interp { background: #f59e0b; color: #1a1a1a; }
+    .badge-low { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #dc2626 4px, #dc2626 8px); color: #fff; padding: 2px 10px; }
+    .badge-na { background: #9ca3af; color: #fff; }
+    .source-text { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .warning-icon { margin-right: 2px; }
+    
+.chart-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+.chart-container canvas { max-height: 400px; }
+.no-chart { text-align: center; padding: 40px; color: #9ca3af; }
+details { margin: 16px 0; }
+summary { cursor: pointer; font-weight: 600; padding: 8px; background: #f3f4f6; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+th, td { padding: 4px 8px; border: 1px solid #e5e7eb; text-align: left; }
+th { background: #f9fafb; font-weight: 600; }
+.repro-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 32px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Adversarial Evaluation Framework for Cross-Modal Dependency in Vision-Language Models</h1>
+<div class="meta">
+     (2026) &mdash;
+    <a href="https://arxiv.org/abs/" target="_blank">arXiv:</a>
+</div>
+
+<h2>What this paper claims</h2>
+<ul class="claims"><li>The LoRA Optimized configuration reduces average accuracy Drop under adversarial text perturbation from 27.5% to 9.8% (64.4% relative improvement, p&lt;0.001) compared to baseline CLIP ViT-B/32 on a geometric shapes dataset.</li><li>The LoRA Optimized model maintains 97% normal accuracy while substantially improving adversarial robustness.</li><li>The optimization achieves greater than 60% improvement across all four adversarial strategies, indicating broad reduction in text dependency rather than strategy-specific gains.</li><li>The combined Drop reduction of 17.7 percentage points exceeds the expected 8-12% sum of individual component contributions, indicating synergistic effects among optimization techniques.</li><li>Color swap adversarial attacks show the highest improvement rate (68%) while position swap attacks remain the most challenging despite 60% improvement.</li></ul>
+
+<h2>Explore the results</h2>
+<div class="controls" id="controls">
+        <div class="control-group">
+            <label>Model Configuration</label>
+            <select id="dd_method" class="dropdown" data-var="method"><option value="Baseline CLIP">Baseline CLIP</option><option value="LoRA">LoRA</option><option value="LoRA Optimized">LoRA Optimized</option><option value="LoRA vs Baseline" selected>LoRA vs Baseline</option><option value="Optimized vs Baseline">Optimized vs Baseline</option><option value="Optimized vs LoRA">Optimized vs LoRA</option></select>
+            <div class="option-hint" id="hint_method"></div>
+        </div>
+        <div class="control-group">
+            <label>Adversarial Strategy</label>
+            <select id="dd_adversarial_strategy" class="dropdown" data-var="adversarial_strategy"><option value="Average">Average</option><option value="color_swap">color_swap</option><option value="position_swap">position_swap</option><option value="random_text">random_text</option><option value="shape_swap">shape_swap</option></select>
+            <div class="option-hint" id="hint_adversarial_strategy"></div>
+        </div>
+    <div class="control-group">
+        <label>Metric</label>
+        <select id="metric_select"><option value="normal_accuracy">Normal Accuracy</option><option value="avg_drop">Average Drop</option><option value="drop" selected>Drop (Accuracy Degradation)</option><option value="mean_diff">Mean Difference in Drop</option><option value="t_statistic">t-Statistic</option><option value="cohens_d">Cohen&#x27;s d Effect Size</option></select>
+    </div></div>
+
+<div class="result-panel">
+    <div id="result-badge"></div>
+    <div class="result-value" id="result-value">—</div>
+    <div class="result-meta" id="result-meta"></div>
+</div>
+
+<h2>Parameter Sweep</h2>
+<div class="chart-container">
+    <canvas id="sweepChart"></canvas>
+    <div class="no-chart" id="noChart" style="display:none;">No sweep data for current selection</div>
+</div>
+
+<h2>Source Data</h2>
+<details>
+<summary>Show 21 extracted data points</summary>
+<table>
+<thead><tr><th>Context</th><th>Variables</th><th>Metrics</th><th>Source</th></tr></thead>
+<tbody><tr><td>CLIP ViT-B/32 zero-shot on geometric shapes dataset (n=1000)</td><td>method=Baseline CLIP</td><td>normal_accuracy=1.0, avg_drop=0.275</td><td>Table 1, Baseline CLIP row, Normal Accuracy and Average Drop columns</td></tr><tr><td>LoRA fine-tuned CLIP ViT-B/32 on geometric shapes dataset (n=1000)</td><td>method=LoRA</td><td>normal_accuracy=0.98, avg_drop=0.18</td><td>Table 1, LoRA row, Normal Accuracy and Average Drop columns</td></tr><tr><td>LoRA Optimized CLIP ViT-B/32 on geometric shapes dataset (n=1000)</td><td>method=LoRA Optimized</td><td>normal_accuracy=0.97, avg_drop=0.098</td><td>Table 1, LoRA Optimized row, Normal Accuracy and Average Drop columns</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=Baseline CLIP, adversarial_strategy=shape_swap</td><td>drop=0.27</td><td>Table 2, shape_swap row, Baseline column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA, adversarial_strategy=shape_swap</td><td>drop=0.18</td><td>Table 2, shape_swap row, LoRA column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA Optimized, adversarial_strategy=shape_swap</td><td>drop=0.1</td><td>Table 2, shape_swap row, Optimized column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=Baseline CLIP, adversarial_strategy=color_swap</td><td>drop=0.25</td><td>Table 2, color_swap row, Baseline column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA, adversarial_strategy=color_swap</td><td>drop=0.15</td><td>Table 2, color_swap row, LoRA column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA Optimized, adversarial_strategy=color_swap</td><td>drop=0.08</td><td>Table 2, color_swap row, Optimized column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=Baseline CLIP, adversarial_strategy=position_swap</td><td>drop=0.3</td><td>Table 2, position_swap row, Baseline column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA, adversarial_strategy=position_swap</td><td>drop=0.2</td><td>Table 2, position_swap row, LoRA column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA Optimized, adversarial_strategy=position_swap</td><td>drop=0.12</td><td>Table 2, position_swap row, Optimized column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=Baseline CLIP, adversarial_strategy=random_text</td><td>drop=0.28</td><td>Table 2, random_text row, Baseline column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA, adversarial_strategy=random_text</td><td>drop=0.19</td><td>Table 2, random_text row, LoRA column</td></tr><tr><td>Per-strategy Drop on geometric shapes dataset</td><td>method=LoRA Optimized, adversarial_strategy=random_text</td><td>drop=0.09</td><td>Table 2, random_text row, Optimized column</td></tr><tr><td>Average Drop across all strategies on geometric shapes dataset</td><td>method=Baseline CLIP, adversarial_strategy=Average</td><td>drop=0.275</td><td>Table 2, Average row, Baseline column</td></tr><tr><td>Average Drop across all strategies on geometric shapes dataset</td><td>method=LoRA, adversarial_strategy=Average</td><td>drop=0.18</td><td>Table 2, Average row, LoRA column</td></tr><tr><td>Average Drop across all strategies on geometric shapes dataset</td><td>method=LoRA Optimized, adversarial_strategy=Average</td><td>drop=0.098</td><td>Table 2, Average row, Optimized column</td></tr><tr><td>Paired t-test with Holm-Bonferroni correction</td><td>method=LoRA vs Baseline</td><td>mean_diff=0.095, t_statistic=12.34, cohens_d=0.78</td><td>Appendix Table A-I, LoRA vs Baseline row, Mean Diff / t-stat / Cohen&#x27;s d columns</td></tr><tr><td>Paired t-test with Holm-Bonferroni correction</td><td>method=Optimized vs Baseline</td><td>mean_diff=0.177, t_statistic=18.56, cohens_d=1.18</td><td>Appendix Table A-I, Optimized vs Baseline row, Mean Diff / t-stat / Cohen&#x27;s d columns</td></tr><tr><td>Paired t-test with Holm-Bonferroni correction</td><td>method=Optimized vs LoRA</td><td>mean_diff=0.082, t_statistic=10.23, cohens_d=0.65</td><td>Appendix Table A-I, Optimized vs LoRA row, Mean Diff / t-stat / Cohen&#x27;s d columns</td></tr></tbody>
+</table>
+</details>
+
+<div class="repro-note">
+<strong>Reproduction note:</strong> An automated reproduction of Sentence-BERT (arXiv 1908.10084) was successful using this system's eval-only strategy: 76.99 vs 77.03 paper-claimed Spearman correlation on the STS benchmark, matching within 0.04 points. The values shown in this reader come directly from the paper's reported tables, not from a reproduction run.
+</div>
+
+</div>
+
+<script>
+const DATA = {"paper": {"title": "Adversarial Evaluation Framework for Cross-Modal Dependency in Vision-Language Models", "authors": [], "year": 2026, "arxiv_id": ""}, "main_claims": ["The LoRA Optimized configuration reduces average accuracy Drop under adversarial text perturbation from 27.5% to 9.8% (64.4% relative improvement, p<0.001) compared to baseline CLIP ViT-B/32 on a geometric shapes dataset.", "The LoRA Optimized model maintains 97% normal accuracy while substantially improving adversarial robustness.", "The optimization achieves greater than 60% improvement across all four adversarial strategies, indicating broad reduction in text dependency rather than strategy-specific gains.", "The combined Drop reduction of 17.7 percentage points exceeds the expected 8-12% sum of individual component contributions, indicating synergistic effects among optimization techniques.", "Color swap adversarial attacks show the highest improvement rate (68%) while position swap attacks remain the most challenging despite 60% improvement."], "variables": [{"name": "method", "label": "Model Configuration", "type": "categorical", "values": ["Baseline CLIP", "LoRA", "LoRA Optimized"], "unit": null}, {"name": "adversarial_strategy", "label": "Adversarial Strategy", "type": "categorical", "values": ["shape_swap", "color_swap", "position_swap", "random_text"], "unit": null}], "metrics": [{"name": "normal_accuracy", "label": "Normal Accuracy", "higher_is_better": true}, {"name": "avg_drop", "label": "Average Drop", "higher_is_better": false}, {"name": "drop", "label": "Drop (Accuracy Degradation)", "higher_is_better": false}, {"name": "mean_diff", "label": "Mean Difference in Drop", "higher_is_better": false}, {"name": "t_statistic", "label": "t-Statistic", "higher_is_better": false}, {"name": "cohens_d", "label": "Cohen's d Effect Size", "higher_is_better": false}], "data_points": [{"variable_values": {"method": "Baseline CLIP"}, "metric_values": {"normal_accuracy": 1.0, "avg_drop": 0.275}, "source_cell": "Table 1, Baseline CLIP row, Normal Accuracy and Average Drop columns", "context": "CLIP ViT-B/32 zero-shot on geometric shapes dataset (n=1000)"}, {"variable_values": {"method": "LoRA"}, "metric_values": {"normal_accuracy": 0.98, "avg_drop": 0.18}, "source_cell": "Table 1, LoRA row, Normal Accuracy and Average Drop columns", "context": "LoRA fine-tuned CLIP ViT-B/32 on geometric shapes dataset (n=1000)"}, {"variable_values": {"method": "LoRA Optimized"}, "metric_values": {"normal_accuracy": 0.97, "avg_drop": 0.098}, "source_cell": "Table 1, LoRA Optimized row, Normal Accuracy and Average Drop columns", "context": "LoRA Optimized CLIP ViT-B/32 on geometric shapes dataset (n=1000)"}, {"variable_values": {"method": "Baseline CLIP", "adversarial_strategy": "shape_swap"}, "metric_values": {"drop": 0.27}, "source_cell": "Table 2, shape_swap row, Baseline column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA", "adversarial_strategy": "shape_swap"}, "metric_values": {"drop": 0.18}, "source_cell": "Table 2, shape_swap row, LoRA column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA Optimized", "adversarial_strategy": "shape_swap"}, "metric_values": {"drop": 0.1}, "source_cell": "Table 2, shape_swap row, Optimized column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "Baseline CLIP", "adversarial_strategy": "color_swap"}, "metric_values": {"drop": 0.25}, "source_cell": "Table 2, color_swap row, Baseline column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA", "adversarial_strategy": "color_swap"}, "metric_values": {"drop": 0.15}, "source_cell": "Table 2, color_swap row, LoRA column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA Optimized", "adversarial_strategy": "color_swap"}, "metric_values": {"drop": 0.08}, "source_cell": "Table 2, color_swap row, Optimized column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "Baseline CLIP", "adversarial_strategy": "position_swap"}, "metric_values": {"drop": 0.3}, "source_cell": "Table 2, position_swap row, Baseline column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA", "adversarial_strategy": "position_swap"}, "metric_values": {"drop": 0.2}, "source_cell": "Table 2, position_swap row, LoRA column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA Optimized", "adversarial_strategy": "position_swap"}, "metric_values": {"drop": 0.12}, "source_cell": "Table 2, position_swap row, Optimized column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "Baseline CLIP", "adversarial_strategy": "random_text"}, "metric_values": {"drop": 0.28}, "source_cell": "Table 2, random_text row, Baseline column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA", "adversarial_strategy": "random_text"}, "metric_values": {"drop": 0.19}, "source_cell": "Table 2, random_text row, LoRA column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "LoRA Optimized", "adversarial_strategy": "random_text"}, "metric_values": {"drop": 0.09}, "source_cell": "Table 2, random_text row, Optimized column", "context": "Per-strategy Drop on geometric shapes dataset"}, {"variable_values": {"method": "Baseline CLIP", "adversarial_strategy": "Average"}, "metric_values": {"drop": 0.275}, "source_cell": "Table 2, Average row, Baseline column", "context": "Average Drop across all strategies on geometric shapes dataset"}, {"variable_values": {"method": "LoRA", "adversarial_strategy": "Average"}, "metric_values": {"drop": 0.18}, "source_cell": "Table 2, Average row, LoRA column", "context": "Average Drop across all strategies on geometric shapes dataset"}, {"variable_values": {"method": "LoRA Optimized", "adversarial_strategy": "Average"}, "metric_values": {"drop": 0.098}, "source_cell": "Table 2, Average row, Optimized column", "context": "Average Drop across all strategies on geometric shapes dataset"}, {"variable_values": {"method": "LoRA vs Baseline"}, "metric_values": {"mean_diff": 0.095, "t_statistic": 12.34, "cohens_d": 0.78}, "source_cell": "Appendix Table A-I, LoRA vs Baseline row, Mean Diff / t-stat / Cohen's d columns", "context": "Paired t-test with Holm-Bonferroni correction"}, {"variable_values": {"method": "Optimized vs Baseline"}, "metric_values": {"mean_diff": 0.177, "t_statistic": 18.56, "cohens_d": 1.18}, "source_cell": "Appendix Table A-I, Optimized vs Baseline row, Mean Diff / t-stat / Cohen's d columns", "context": "Paired t-test with Holm-Bonferroni correction"}, {"variable_values": {"method": "Optimized vs LoRA"}, "metric_values": {"mean_diff": 0.082, "t_statistic": 10.23, "cohens_d": 0.65}, "source_cell": "Appendix Table A-I, Optimized vs LoRA row, Mean Diff / t-stat / Cohen's d columns", "context": "Paired t-test with Holm-Bonferroni correction"}], "context_descriptors": {"method": ["Baseline CLIP", "LoRA", "LoRA Optimized"], "adversarial_strategy": ["shape_swap", "color_swap", "position_swap", "random_text"]}};
+const dataPoints = DATA.data_points || [];
+const variables = DATA.variables || [];
+const metrics = DATA.metrics || [];
+
+function getCurrentSelection() {
+    const sel = {};
+    document.querySelectorAll('.dropdown').forEach(d => { sel[d.dataset.var] = d.value; });
+    document.querySelectorAll('.ctx-dropdown').forEach(d => { sel['_ctx_' + d.dataset.ctx] = d.value; });
+    sel._metric = document.getElementById('metric_select').value;
+    return sel;
+}
+
+function matchDP(dp, sel) {
+    for (const [k, v] of Object.entries(sel)) {
+        if (k.startsWith('_')) continue;
+        const dpVal = dp.variable_values[k];
+        if (dpVal === undefined) continue;
+        if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
+    }
+    for (const [k, v] of Object.entries(sel)) {
+        if (!k.startsWith('_ctx_')) continue;
+        const ctxName = k.slice(5);
+        if (dp.context) {
+            const words = v.toLowerCase().replace(/_/g, ' ').split(/\s+/);
+            const ctx = dp.context.toLowerCase();
+            if (!words.some(w => w.length > 1 && ctx.includes(w))) return false;
+        }
+    }
+    return true;
+}
+
+function getProvenance(sel) {
+    const metricName = sel._metric;
+    const exact = dataPoints.filter(dp => matchDP(dp, sel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+    if (exact.length > 0) {
+        return { type: 'PAPER', value: exact[0].metric_values[metricName], source: exact[0].source_cell || 'Paper table' };
+    }
+    // Try interpolation on numeric variables
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const curVal = Number(sel[v.name]);
+        if (isNaN(curVal)) continue;
+        const allNums = v.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+        const lower = allNums.filter(n => n < curVal).pop();
+        const upper = allNums.find(n => n > curVal);
+        if (lower === undefined || upper === undefined) continue;
+        const selL = { ...sel, [v.name]: String(lower) };
+        const selU = { ...sel, [v.name]: String(upper) };
+        const dpL = dataPoints.find(dp => matchDP(dp, selL) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpU = dataPoints.find(dp => matchDP(dp, selU) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        if (dpL && dpU) {
+            const vl = dpL.metric_values[metricName], vu = dpU.metric_values[metricName];
+            const frac = (curVal - lower) / (upper - lower);
+            return { type: 'INTERP', value: Math.round((vl + frac * (vu - vl)) * 100) / 100,
+                      source: `Interpolated between ${v.name}=${lower} (${vl}) and ${v.name}=${upper} (${vu})` };
+        }
+    }
+    return { type: 'N/A', value: null, source: 'Not characterized in paper' };
+}
+
+function makeBadgeHTML(prov) {
+    if (prov.type === 'PAPER') return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    if (prov.type === 'INTERP') return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+}
+
+// Gray out options that lead to N/A given current other selections
+function updateOptionHints() {
+    const sel = getCurrentSelection();
+    const metricName = sel._metric;
+    document.querySelectorAll('.dropdown').forEach(dd => {
+        const varName = dd.dataset.var;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, [varName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_' + varName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+    document.querySelectorAll('.ctx-dropdown').forEach(dd => {
+        const ctxName = dd.dataset.ctx;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, ['_ctx_' + ctxName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_ctx_' + ctxName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+}
+
+let chart = null;
+
+function updateChart(sel) {
+    const canvas = document.getElementById('sweepChart');
+    const noChart = document.getElementById('noChart');
+    const metricName = sel._metric;
+    // Find a numeric variable to sweep
+    let sweepVar = null;
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const nums = v.values.map(Number).filter(n => !isNaN(n));
+        if (nums.length >= 3) { sweepVar = v; break; }
+    }
+    if (!sweepVar) { canvas.style.display = 'none'; noChart.style.display = ''; return; }
+    const nums = sweepVar.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+    const chartData = [];
+    for (const val of nums) {
+        const testSel = { ...sel, [sweepVar.name]: String(val) };
+        const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
+        if (dp) chartData.push({ x: val, y: dp.metric_values[metricName] });
+    }
+    if (chartData.length < 2) {
+        canvas.style.display = 'none'; noChart.style.display = '';
+        if (chart) { chart.destroy(); chart = null; } return;
+    }
+    canvas.style.display = ''; noChart.style.display = 'none';
+    const metricLabel = (metrics.find(m => m.name === metricName) || {}).label || metricName;
+    const varLabel = sweepVar.label || sweepVar.name;
+    const currentVal = Number(sel[sweepVar.name]);
+    if (chart) chart.destroy();
+    chart = new Chart(canvas, {
+        type: 'scatter',
+        data: { datasets: [{ label: metricLabel + ' (paper)', data: chartData, backgroundColor: '#22c55e', borderColor: '#16a34a', pointRadius: 7, showLine: true, borderWidth: 2, tension: 0.1 }] },
+        options: { responsive: true, plugins: { title: { display: true, text: metricLabel + ' vs ' + varLabel } },
+            scales: { x: { type: 'logarithmic', title: { display: true, text: varLabel }, ticks: { callback: v => v } }, y: { title: { display: true, text: metricLabel } } } },
+        plugins: [{ id: 'vline', afterDraw(ch) {
+            const xs = ch.scales.x, ys = ch.scales.y;
+            if (!isNaN(currentVal)) {
+                const x = xs.getPixelForValue(currentVal);
+                if (x >= xs.left && x <= xs.right) {
+                    const c = ch.ctx; c.save(); c.beginPath(); c.moveTo(x, ys.top); c.lineTo(x, ys.bottom);
+                    c.strokeStyle = '#2563eb'; c.lineWidth = 2; c.setLineDash([6,4]); c.stroke(); c.restore();
+                }
+            }
+        } }]
+    });
+}
+
+function update() {
+    const sel = getCurrentSelection();
+    const prov = getProvenance(sel);
+    document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
+    const metricObj = metrics.find(m => m.name === sel._metric);
+    const metricLabel = metricObj ? metricObj.label : sel._metric;
+    if (prov.value !== null) {
+        document.getElementById('result-value').textContent = prov.value;
+        document.getElementById('result-meta').textContent = metricLabel;
+    } else {
+        document.getElementById('result-value').textContent = '—';
+        document.getElementById('result-meta').textContent = 'Not characterized';
+    }
+    updateOptionHints();
+    updateChart(sel);
+}
+
+document.querySelectorAll('.dropdown, .ctx-dropdown, #metric_select').forEach(el => {
+    el.addEventListener('change', update);
+});
+
+update();
+</script>
+</body>
+</html>

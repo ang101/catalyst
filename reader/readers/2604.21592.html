@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sculpt4D: High-Fidelity 4D Mesh Generation</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; color: #1a1a1a; line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 24px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin: 32px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+h3 { font-size: 15px; margin: 16px 0 8px; }
+a { color: #2563eb; }
+.meta { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.claims { margin: 16px 0; padding-left: 24px; }
+.claims li { margin-bottom: 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 16px 0; }
+.control-group { flex: 1 1 180px; min-width: 150px; }
+.control-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.dropdown, select { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+.option-hint { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+select option.no-data { color: #d1d5db; }
+.result-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center; }
+.result-value { font-size: 36px; font-weight: 700; margin: 8px 0; }
+.result-meta { font-size: 13px; color: #6b7280; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; vertical-align: middle; cursor: help; }
+    .badge-paper { background: #22c55e; color: #fff; }
+    .badge-interp { background: #f59e0b; color: #1a1a1a; }
+    .badge-low { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #dc2626 4px, #dc2626 8px); color: #fff; padding: 2px 10px; }
+    .badge-na { background: #9ca3af; color: #fff; }
+    .source-text { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .warning-icon { margin-right: 2px; }
+    
+.chart-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+.chart-container canvas { max-height: 400px; }
+.no-chart { text-align: center; padding: 40px; color: #9ca3af; }
+details { margin: 16px 0; }
+summary { cursor: pointer; font-weight: 600; padding: 8px; background: #f3f4f6; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+th, td { padding: 4px 8px; border: 1px solid #e5e7eb; text-align: left; }
+th { background: #f9fafb; font-weight: 600; }
+.repro-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 32px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Sculpt4D: High-Fidelity 4D Mesh Generation</h1>
+<div class="meta">
+     (2025) &mdash;
+    <a href="https://arxiv.org/abs/" target="_blank">arXiv:</a>
+</div>
+
+<h2>What this paper claims</h2>
+<ul class="claims"><li>Sculpt4D&#x27;s block sparse attention mechanism reduces total network computation by 56% compared to full attention without compromising 4D generation quality.</li><li>Sculpt4D achieves state-of-the-art results on 4D generation benchmarks in terms of geometric quality (Chamfer Distance, IoU, F-Score) compared to L4GM, V2M4, and GVFD.</li><li>The sparse attention mechanism&#x27;s computational advantage scales favorably with sequence length, dropping to 21.5% of full attention FLOPs at the layer level for 32-frame sequences.</li><li>Sculpt4D generalizes to sequences up to 4x the training length (64 frames) with only marginal degradation in geometric metrics.</li><li>Sculpt4D achieves substantially lower FVD than competing methods while requiring only 7 minutes of inference time.</li></ul>
+
+<h2>Explore the results</h2>
+<div class="controls" id="controls">
+        <div class="control-group">
+            <label>Generation Method</label>
+            <select id="dd_method" class="dropdown" data-var="method"><option value="GVFD">GVFD</option><option value="Hunyuan3D">Hunyuan3D</option><option value="Hunyuan3D*">Hunyuan3D*</option><option value="L4GM">L4GM</option><option value="Ours">Ours</option><option value="V2M4">V2M4</option></select>
+            <div class="option-hint" id="hint_method"></div>
+        </div>
+        <div class="control-group">
+            <label>Ablation Variant</label>
+            <select id="dd_ablation_variant" class="dropdown" data-var="ablation_variant"><option value="Fixed stride">Fixed stride</option><option value="Full attention">Full attention</option><option value="Ours">Ours</option><option value="Temporal attention">Temporal attention</option><option value="w/o attention sink">w/o attention sink</option><option value="w/o consistent sampling" selected>w/o consistent sampling</option><option value="w/o shared noise">w/o shared noise</option><option value="w/o sharp edge sampling">w/o sharp edge sampling</option></select>
+            <div class="option-hint" id="hint_ablation_variant"></div>
+        </div>
+        <div class="control-group">
+            <label>Attention Mask Variant</label>
+            <select id="dd_mask_variant" class="dropdown" data-var="mask_variant"><option value="Aggressive decay">Aggressive decay</option><option value="Conservative decay">Conservative decay</option><option value="Fixed stride">Fixed stride</option><option value="Full attention">Full attention</option><option value="Ours">Ours</option><option value="w/o attention sink">w/o attention sink</option></select>
+            <div class="option-hint" id="hint_mask_variant"></div>
+        </div>
+        <div class="control-group">
+            <label>Number of Input Frames</label>
+            <select id="dd_num_frames" class="dropdown" data-var="num_frames"><option value="16">16</option><option value="32">32</option><option value="8">8</option></select>
+            <div class="option-hint" id="hint_num_frames"></div>
+        </div>
+        <div class="control-group">
+            <label>Generation Sequence Length</label>
+            <select id="dd_gen_seq_length" class="dropdown" data-var="gen_seq_length"><option value="16">16</option><option value="32">32</option><option value="64">64</option><option value="8">8</option></select>
+            <div class="option-hint" id="hint_gen_seq_length"></div>
+        </div>
+        <div class="control-group">
+            <label>Method (Visual Quality)</label>
+            <select id="dd_vqa_method" class="dropdown" data-var="vqa_method"><option value="DreamMesh4D">DreamMesh4D</option><option value="Hunyuan3D">Hunyuan3D</option><option value="Ours">Ours</option><option value="Ours-full">Ours-full</option><option value="V2M4">V2M4</option></select>
+            <div class="option-hint" id="hint_vqa_method"></div>
+        </div>
+    <div class="control-group">
+        <label>Metric</label>
+        <select id="metric_select"><option value="cd" selected>Chamfer Distance (CD)</option><option value="iou">Intersection over Union (IoU)</option><option value="fscore">F-Score</option><option value="pflops">Total Network PFLOPs</option><option value="lpips">LPIPS</option><option value="clip">CLIP Score</option><option value="fvd">Fréchet Video Distance (FVD)</option><option value="inference_time">Inference Time</option><option value="total_flops_ratio">Total Network FLOPs Ratio vs Full Attention</option><option value="layer_flops_ratio">Sparse Attention Layer FLOPs Ratio vs Full Attention</option><option value="full_attn_pflops">Full Attention Total PFLOPs</option></select>
+    </div></div>
+
+<div class="result-panel">
+    <div id="result-badge"></div>
+    <div class="result-value" id="result-value">—</div>
+    <div class="result-meta" id="result-meta"></div>
+</div>
+
+<h2>Parameter Sweep</h2>
+<div class="chart-container">
+    <canvas id="sweepChart"></canvas>
+    <div class="no-chart" id="noChart" style="display:none;">No sweep data for current selection</div>
+</div>
+
+<h2>Source Data</h2>
+<details>
+<summary>Show 32 extracted data points</summary>
+<table>
+<thead><tr><th>Context</th><th>Variables</th><th>Metrics</th><th>Source</th></tr></thead>
+<tbody><tr><td>Per-frame 3D generation baseline on 50 Objaverse 4D test models</td><td>method=Hunyuan3D</td><td>cd=0.122, iou=0.3125, fscore=0.282</td><td>Table 1, Hunyuan3D row, CD/IoU/F-Score columns</td></tr><tr><td>Per-frame 3D generation with shared noise baseline on 50 Objaverse 4D test models</td><td>method=Hunyuan3D*</td><td>cd=0.1231, iou=0.3176, fscore=0.2883</td><td>Table 1, Hunyuan3D* row, CD/IoU/F-Score columns</td></tr><tr><td>Feed-forward 4D generation on 50 Objaverse 4D test models; IoU omitted due to Gaussian output</td><td>method=L4GM</td><td>cd=0.1655, fscore=0.2033</td><td>Table 1, L4GM row, CD/F-Score columns</td></tr><tr><td>Mesh + deform 4D generation on 50 Objaverse 4D test models</td><td>method=V2M4</td><td>cd=0.1268, iou=0.3071, fscore=0.2909</td><td>Table 1, V2M4 row, CD/IoU/F-Score columns</td></tr><tr><td>3D GS + deform 4D generation on 50 Objaverse 4D test models; IoU omitted due to Gaussian output</td><td>method=GVFD</td><td>cd=0.4235, fscore=0.0717</td><td>Table 1, GVFD row, CD/F-Score columns</td></tr><tr><td>Sculpt4D on 50 Objaverse 4D test models</td><td>method=Ours</td><td>cd=0.1052, iou=0.3381, fscore=0.3137</td><td>Table 1, Ours row, CD/IoU/F-Score columns</td></tr><tr><td>Ablation: random surface sampling per frame instead of consistent sampling</td><td>ablation_variant=w/o consistent sampling</td><td>cd=0.1128, iou=0.3375, fscore=0.338, pflops=186.3</td><td>Table 2, w/o consistent sampling row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: independent noise per frame in VAE</td><td>ablation_variant=w/o shared noise</td><td>cd=0.1051, iou=0.3396, fscore=0.3342, pflops=186.3</td><td>Table 2, w/o shared noise row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: training only on random surface points</td><td>ablation_variant=w/o sharp edge sampling</td><td>cd=0.1005, iou=0.3408, fscore=0.3369, pflops=186.3</td><td>Table 2, w/o sharp edge sampling row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: removing first-frame anchor</td><td>ablation_variant=w/o attention sink</td><td>cd=0.0986, iou=0.3442, fscore=0.3375, pflops=169.8</td><td>Table 2, w/o attention sink row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: temporal-only attention replacing spatiotemporal attention</td><td>ablation_variant=Temporal attention</td><td>cd=0.2071, iou=0.1972, fscore=0.1833, pflops=60.2</td><td>Table 2, Temporal attention row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: uniform temporal sparsity (stride=4)</td><td>ablation_variant=Fixed stride</td><td>cd=0.1124, iou=0.3298, fscore=0.3306, pflops=167.1</td><td>Table 2, Fixed stride row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Ablation: dense spatiotemporal attention (no sparsity)</td><td>ablation_variant=Full attention</td><td>cd=0.0958, iou=0.3466, fscore=0.3402, pflops=425.7</td><td>Table 2, Full attention row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Sculpt4D full model with block sparse attention</td><td>ablation_variant=Ours</td><td>cd=0.0972, iou=0.3451, fscore=0.3383, pflops=186.3</td><td>Table 2, Ours row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: no first-frame anchor</td><td>mask_variant=w/o attention sink</td><td>cd=0.0986, iou=0.3442, fscore=0.3375, pflops=169.8</td><td>Supplementary Table A2, Model A row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: constant stride=4</td><td>mask_variant=Fixed stride</td><td>cd=0.1124, iou=0.3298, fscore=0.3306, pflops=167.1</td><td>Supplementary Table A2, Model B row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: aggressive exponential decay [1,2,4,8,16,32]</td><td>mask_variant=Aggressive decay</td><td>cd=0.0991, iou=0.342, fscore=0.3365, pflops=145.0</td><td>Supplementary Table A2, Model C row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: conservative decay [1,1,2,2,4,4]</td><td>mask_variant=Conservative decay</td><td>cd=0.0968, iou=0.3454, fscore=0.3388, pflops=233.6</td><td>Supplementary Table A2, Model D row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: full dense attention</td><td>mask_variant=Full attention</td><td>cd=0.0958, iou=0.3466, fscore=0.3402, pflops=425.7</td><td>Supplementary Table A2, Model E row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Attention mask ablation: delayed exponential [1,1,2,4,8,16]</td><td>mask_variant=Ours</td><td>cd=0.0972, iou=0.3451, fscore=0.3383, pflops=186.3</td><td>Supplementary Table A2, Model F row, CD/IoU/F-Score/PFLOPs columns</td></tr><tr><td>Computational cost comparison: sparse vs full attention at 8 frames</td><td>num_frames=8</td><td>pflops=84.5, full_attn_pflops=123.2, total_flops_ratio=68.6, layer_flops_ratio=58.11</td><td>Supplementary Table A3, 8-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns</td></tr><tr><td>Computational cost comparison: sparse vs full attention at 16 frames</td><td>num_frames=16</td><td>pflops=186.3, full_attn_pflops=425.7, total_flops_ratio=43.8, layer_flops_ratio=35.2</td><td>Supplementary Table A3, 16-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns</td></tr><tr><td>Computational cost comparison: sparse vs full attention at 32 frames</td><td>num_frames=32</td><td>pflops=425.0, full_attn_pflops=1584.9, total_flops_ratio=26.8, layer_flops_ratio=21.5</td><td>Supplementary Table A3, 32-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns</td></tr><tr><td>Visual quality assessment; inference time 24 min</td><td>vqa_method=Hunyuan3D</td><td>lpips=0.131, clip=0.803, fvd=1276.2</td><td>Supplementary Table A4, Hunyuan3D row, LPIPS/CLIP/FVD columns</td></tr><tr><td>Visual quality assessment; inference time 45 min</td><td>vqa_method=DreamMesh4D</td><td>lpips=0.145, clip=0.835, fvd=914.9</td><td>Supplementary Table A4, DreamMesh4D row, LPIPS/CLIP/FVD columns</td></tr><tr><td>Visual quality assessment; inference time 45 min</td><td>vqa_method=V2M4</td><td>lpips=0.152, clip=0.827, fvd=952.0</td><td>Supplementary Table A4, V2M4 row, LPIPS/CLIP/FVD columns</td></tr><tr><td>Visual quality assessment with sparse attention; inference time 7 min</td><td>vqa_method=Ours</td><td>lpips=0.098, clip=0.916, fvd=483.1</td><td>Supplementary Table A4, Ours row, LPIPS/CLIP/FVD columns</td></tr><tr><td>Visual quality assessment with full attention; inference time 16 min</td><td>vqa_method=Ours-full</td><td>lpips=0.094, clip=0.919, fvd=477.8</td><td>Supplementary Table A4, Ours-full row, LPIPS/CLIP/FVD columns</td></tr><tr><td>Generalization to different sequence lengths; model trained on 16 frames</td><td>gen_seq_length=8</td><td>cd=0.099, iou=0.338, fscore=0.315</td><td>Supplementary Table A5, 8-frame row, CD/IoU/F-Score columns</td></tr><tr><td>Generalization to different sequence lengths; model trained on 16 frames</td><td>gen_seq_length=16</td><td>cd=0.102, iou=0.339, fscore=0.315</td><td>Supplementary Table A5, 16-frame row, CD/IoU/F-Score columns</td></tr><tr><td>Generalization to different sequence lengths; model trained on 16 frames</td><td>gen_seq_length=32</td><td>cd=0.106, iou=0.334, fscore=0.314</td><td>Supplementary Table A5, 32-frame row, CD/IoU/F-Score columns</td></tr><tr><td>Generalization to different sequence lengths; model trained on 16 frames, 4x extrapolation</td><td>gen_seq_length=64</td><td>cd=0.114, iou=0.326, fscore=0.31</td><td>Supplementary Table A5, 64-frame row, CD/IoU/F-Score columns</td></tr></tbody>
+</table>
+</details>
+
+<div class="repro-note">
+<strong>Reproduction note:</strong> An automated reproduction of Sentence-BERT (arXiv 1908.10084) was successful using this system's eval-only strategy: 76.99 vs 77.03 paper-claimed Spearman correlation on the STS benchmark, matching within 0.04 points. The values shown in this reader come directly from the paper's reported tables, not from a reproduction run.
+</div>
+
+</div>
+
+<script>
+const DATA = {"paper": {"title": "Sculpt4D: High-Fidelity 4D Mesh Generation", "authors": [], "year": 2025, "arxiv_id": ""}, "main_claims": ["Sculpt4D's block sparse attention mechanism reduces total network computation by 56% compared to full attention without compromising 4D generation quality.", "Sculpt4D achieves state-of-the-art results on 4D generation benchmarks in terms of geometric quality (Chamfer Distance, IoU, F-Score) compared to L4GM, V2M4, and GVFD.", "The sparse attention mechanism's computational advantage scales favorably with sequence length, dropping to 21.5% of full attention FLOPs at the layer level for 32-frame sequences.", "Sculpt4D generalizes to sequences up to 4x the training length (64 frames) with only marginal degradation in geometric metrics.", "Sculpt4D achieves substantially lower FVD than competing methods while requiring only 7 minutes of inference time."], "variables": [{"name": "method", "label": "Generation Method", "type": "categorical", "values": ["Hunyuan3D", "Hunyuan3D*", "L4GM", "V2M4", "GVFD", "Ours"], "unit": null}, {"name": "ablation_variant", "label": "Ablation Variant", "type": "categorical", "values": ["w/o consistent sampling", "w/o shared noise", "w/o sharp edge sampling", "w/o attention sink", "Temporal attention", "Fixed stride", "Full attention", "Ours"], "unit": null}, {"name": "mask_variant", "label": "Attention Mask Variant", "type": "categorical", "values": ["w/o attention sink", "Fixed stride", "Aggressive decay", "Conservative decay", "Full attention", "Ours"], "unit": null}, {"name": "num_frames", "label": "Number of Input Frames", "type": "discrete", "values": ["8", "16", "32"], "unit": "frames"}, {"name": "gen_seq_length", "label": "Generation Sequence Length", "type": "discrete", "values": ["8", "16", "32", "64"], "unit": "frames"}, {"name": "vqa_method", "label": "Method (Visual Quality)", "type": "categorical", "values": ["Hunyuan3D", "DreamMesh4D", "V2M4", "Ours", "Ours-full"], "unit": null}], "metrics": [{"name": "cd", "label": "Chamfer Distance (CD)", "higher_is_better": false}, {"name": "iou", "label": "Intersection over Union (IoU)", "higher_is_better": true}, {"name": "fscore", "label": "F-Score", "higher_is_better": true}, {"name": "pflops", "label": "Total Network PFLOPs", "higher_is_better": false}, {"name": "lpips", "label": "LPIPS", "higher_is_better": false}, {"name": "clip", "label": "CLIP Score", "higher_is_better": true}, {"name": "fvd", "label": "Fr\u00e9chet Video Distance (FVD)", "higher_is_better": false}, {"name": "inference_time", "label": "Inference Time", "higher_is_better": false}, {"name": "total_flops_ratio", "label": "Total Network FLOPs Ratio vs Full Attention", "higher_is_better": false}, {"name": "layer_flops_ratio", "label": "Sparse Attention Layer FLOPs Ratio vs Full Attention", "higher_is_better": false}, {"name": "full_attn_pflops", "label": "Full Attention Total PFLOPs", "higher_is_better": false}], "data_points": [{"variable_values": {"method": "Hunyuan3D"}, "metric_values": {"cd": 0.122, "iou": 0.3125, "fscore": 0.282}, "source_cell": "Table 1, Hunyuan3D row, CD/IoU/F-Score columns", "context": "Per-frame 3D generation baseline on 50 Objaverse 4D test models"}, {"variable_values": {"method": "Hunyuan3D*"}, "metric_values": {"cd": 0.1231, "iou": 0.3176, "fscore": 0.2883}, "source_cell": "Table 1, Hunyuan3D* row, CD/IoU/F-Score columns", "context": "Per-frame 3D generation with shared noise baseline on 50 Objaverse 4D test models"}, {"variable_values": {"method": "L4GM"}, "metric_values": {"cd": 0.1655, "fscore": 0.2033}, "source_cell": "Table 1, L4GM row, CD/F-Score columns", "context": "Feed-forward 4D generation on 50 Objaverse 4D test models; IoU omitted due to Gaussian output"}, {"variable_values": {"method": "V2M4"}, "metric_values": {"cd": 0.1268, "iou": 0.3071, "fscore": 0.2909}, "source_cell": "Table 1, V2M4 row, CD/IoU/F-Score columns", "context": "Mesh + deform 4D generation on 50 Objaverse 4D test models"}, {"variable_values": {"method": "GVFD"}, "metric_values": {"cd": 0.4235, "fscore": 0.0717}, "source_cell": "Table 1, GVFD row, CD/F-Score columns", "context": "3D GS + deform 4D generation on 50 Objaverse 4D test models; IoU omitted due to Gaussian output"}, {"variable_values": {"method": "Ours"}, "metric_values": {"cd": 0.1052, "iou": 0.3381, "fscore": 0.3137}, "source_cell": "Table 1, Ours row, CD/IoU/F-Score columns", "context": "Sculpt4D on 50 Objaverse 4D test models"}, {"variable_values": {"ablation_variant": "w/o consistent sampling"}, "metric_values": {"cd": 0.1128, "iou": 0.3375, "fscore": 0.338, "pflops": 186.3}, "source_cell": "Table 2, w/o consistent sampling row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: random surface sampling per frame instead of consistent sampling"}, {"variable_values": {"ablation_variant": "w/o shared noise"}, "metric_values": {"cd": 0.1051, "iou": 0.3396, "fscore": 0.3342, "pflops": 186.3}, "source_cell": "Table 2, w/o shared noise row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: independent noise per frame in VAE"}, {"variable_values": {"ablation_variant": "w/o sharp edge sampling"}, "metric_values": {"cd": 0.1005, "iou": 0.3408, "fscore": 0.3369, "pflops": 186.3}, "source_cell": "Table 2, w/o sharp edge sampling row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: training only on random surface points"}, {"variable_values": {"ablation_variant": "w/o attention sink"}, "metric_values": {"cd": 0.0986, "iou": 0.3442, "fscore": 0.3375, "pflops": 169.8}, "source_cell": "Table 2, w/o attention sink row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: removing first-frame anchor"}, {"variable_values": {"ablation_variant": "Temporal attention"}, "metric_values": {"cd": 0.2071, "iou": 0.1972, "fscore": 0.1833, "pflops": 60.2}, "source_cell": "Table 2, Temporal attention row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: temporal-only attention replacing spatiotemporal attention"}, {"variable_values": {"ablation_variant": "Fixed stride"}, "metric_values": {"cd": 0.1124, "iou": 0.3298, "fscore": 0.3306, "pflops": 167.1}, "source_cell": "Table 2, Fixed stride row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: uniform temporal sparsity (stride=4)"}, {"variable_values": {"ablation_variant": "Full attention"}, "metric_values": {"cd": 0.0958, "iou": 0.3466, "fscore": 0.3402, "pflops": 425.7}, "source_cell": "Table 2, Full attention row, CD/IoU/F-Score/PFLOPs columns", "context": "Ablation: dense spatiotemporal attention (no sparsity)"}, {"variable_values": {"ablation_variant": "Ours"}, "metric_values": {"cd": 0.0972, "iou": 0.3451, "fscore": 0.3383, "pflops": 186.3}, "source_cell": "Table 2, Ours row, CD/IoU/F-Score/PFLOPs columns", "context": "Sculpt4D full model with block sparse attention"}, {"variable_values": {"mask_variant": "w/o attention sink"}, "metric_values": {"cd": 0.0986, "iou": 0.3442, "fscore": 0.3375, "pflops": 169.8}, "source_cell": "Supplementary Table A2, Model A row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: no first-frame anchor"}, {"variable_values": {"mask_variant": "Fixed stride"}, "metric_values": {"cd": 0.1124, "iou": 0.3298, "fscore": 0.3306, "pflops": 167.1}, "source_cell": "Supplementary Table A2, Model B row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: constant stride=4"}, {"variable_values": {"mask_variant": "Aggressive decay"}, "metric_values": {"cd": 0.0991, "iou": 0.342, "fscore": 0.3365, "pflops": 145.0}, "source_cell": "Supplementary Table A2, Model C row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: aggressive exponential decay [1,2,4,8,16,32]"}, {"variable_values": {"mask_variant": "Conservative decay"}, "metric_values": {"cd": 0.0968, "iou": 0.3454, "fscore": 0.3388, "pflops": 233.6}, "source_cell": "Supplementary Table A2, Model D row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: conservative decay [1,1,2,2,4,4]"}, {"variable_values": {"mask_variant": "Full attention"}, "metric_values": {"cd": 0.0958, "iou": 0.3466, "fscore": 0.3402, "pflops": 425.7}, "source_cell": "Supplementary Table A2, Model E row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: full dense attention"}, {"variable_values": {"mask_variant": "Ours"}, "metric_values": {"cd": 0.0972, "iou": 0.3451, "fscore": 0.3383, "pflops": 186.3}, "source_cell": "Supplementary Table A2, Model F row, CD/IoU/F-Score/PFLOPs columns", "context": "Attention mask ablation: delayed exponential [1,1,2,4,8,16]"}, {"variable_values": {"num_frames": "8"}, "metric_values": {"pflops": 84.5, "full_attn_pflops": 123.2, "total_flops_ratio": 68.6, "layer_flops_ratio": 58.11}, "source_cell": "Supplementary Table A3, 8-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns", "context": "Computational cost comparison: sparse vs full attention at 8 frames"}, {"variable_values": {"num_frames": "16"}, "metric_values": {"pflops": 186.3, "full_attn_pflops": 425.7, "total_flops_ratio": 43.8, "layer_flops_ratio": 35.2}, "source_cell": "Supplementary Table A3, 16-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns", "context": "Computational cost comparison: sparse vs full attention at 16 frames"}, {"variable_values": {"num_frames": "32"}, "metric_values": {"pflops": 425.0, "full_attn_pflops": 1584.9, "total_flops_ratio": 26.8, "layer_flops_ratio": 21.5}, "source_cell": "Supplementary Table A3, 32-frame row, Ours PFLOPs/Full PFLOPs/Network ratio/Layer ratio columns", "context": "Computational cost comparison: sparse vs full attention at 32 frames"}, {"variable_values": {"vqa_method": "Hunyuan3D"}, "metric_values": {"lpips": 0.131, "clip": 0.803, "fvd": 1276.2}, "source_cell": "Supplementary Table A4, Hunyuan3D row, LPIPS/CLIP/FVD columns", "context": "Visual quality assessment; inference time 24 min"}, {"variable_values": {"vqa_method": "DreamMesh4D"}, "metric_values": {"lpips": 0.145, "clip": 0.835, "fvd": 914.9}, "source_cell": "Supplementary Table A4, DreamMesh4D row, LPIPS/CLIP/FVD columns", "context": "Visual quality assessment; inference time 45 min"}, {"variable_values": {"vqa_method": "V2M4"}, "metric_values": {"lpips": 0.152, "clip": 0.827, "fvd": 952.0}, "source_cell": "Supplementary Table A4, V2M4 row, LPIPS/CLIP/FVD columns", "context": "Visual quality assessment; inference time 45 min"}, {"variable_values": {"vqa_method": "Ours"}, "metric_values": {"lpips": 0.098, "clip": 0.916, "fvd": 483.1}, "source_cell": "Supplementary Table A4, Ours row, LPIPS/CLIP/FVD columns", "context": "Visual quality assessment with sparse attention; inference time 7 min"}, {"variable_values": {"vqa_method": "Ours-full"}, "metric_values": {"lpips": 0.094, "clip": 0.919, "fvd": 477.8}, "source_cell": "Supplementary Table A4, Ours-full row, LPIPS/CLIP/FVD columns", "context": "Visual quality assessment with full attention; inference time 16 min"}, {"variable_values": {"gen_seq_length": "8"}, "metric_values": {"cd": 0.099, "iou": 0.338, "fscore": 0.315}, "source_cell": "Supplementary Table A5, 8-frame row, CD/IoU/F-Score columns", "context": "Generalization to different sequence lengths; model trained on 16 frames"}, {"variable_values": {"gen_seq_length": "16"}, "metric_values": {"cd": 0.102, "iou": 0.339, "fscore": 0.315}, "source_cell": "Supplementary Table A5, 16-frame row, CD/IoU/F-Score columns", "context": "Generalization to different sequence lengths; model trained on 16 frames"}, {"variable_values": {"gen_seq_length": "32"}, "metric_values": {"cd": 0.106, "iou": 0.334, "fscore": 0.314}, "source_cell": "Supplementary Table A5, 32-frame row, CD/IoU/F-Score columns", "context": "Generalization to different sequence lengths; model trained on 16 frames"}, {"variable_values": {"gen_seq_length": "64"}, "metric_values": {"cd": 0.114, "iou": 0.326, "fscore": 0.31}, "source_cell": "Supplementary Table A5, 64-frame row, CD/IoU/F-Score columns", "context": "Generalization to different sequence lengths; model trained on 16 frames, 4x extrapolation"}], "context_descriptors": {"method": ["Hunyuan3D", "Hunyuan3D*", "L4GM", "V2M4", "GVFD", "Ours"], "ablation_variant": ["w/o consistent sampling", "w/o shared noise", "w/o sharp edge sampling", "w/o attention sink", "Temporal attention", "Fixed stride", "Full attention", "Ours"], "mask_variant": ["w/o attention sink", "Fixed stride", "Aggressive decay", "Conservative decay", "Full attention", "Ours"], "num_frames": ["8", "16", "32"], "gen_seq_length": ["8", "16", "32", "64"], "vqa_method": ["Hunyuan3D", "DreamMesh4D", "V2M4", "Ours", "Ours-full"]}};
+const dataPoints = DATA.data_points || [];
+const variables = DATA.variables || [];
+const metrics = DATA.metrics || [];
+
+function getCurrentSelection() {
+    const sel = {};
+    document.querySelectorAll('.dropdown').forEach(d => { sel[d.dataset.var] = d.value; });
+    document.querySelectorAll('.ctx-dropdown').forEach(d => { sel['_ctx_' + d.dataset.ctx] = d.value; });
+    sel._metric = document.getElementById('metric_select').value;
+    return sel;
+}
+
+function matchDP(dp, sel) {
+    for (const [k, v] of Object.entries(sel)) {
+        if (k.startsWith('_')) continue;
+        const dpVal = dp.variable_values[k];
+        if (dpVal === undefined) continue;
+        if (String(dpVal) !== String(v) && Number(dpVal) !== Number(v)) return false;
+    }
+    for (const [k, v] of Object.entries(sel)) {
+        if (!k.startsWith('_ctx_')) continue;
+        const ctxName = k.slice(5);
+        if (dp.context) {
+            const words = v.toLowerCase().replace(/_/g, ' ').split(/\s+/);
+            const ctx = dp.context.toLowerCase();
+            if (!words.some(w => w.length > 1 && ctx.includes(w))) return false;
+        }
+    }
+    return true;
+}
+
+function getProvenance(sel) {
+    const metricName = sel._metric;
+    const exact = dataPoints.filter(dp => matchDP(dp, sel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+    if (exact.length > 0) {
+        return { type: 'PAPER', value: exact[0].metric_values[metricName], source: exact[0].source_cell || 'Paper table' };
+    }
+    // Try interpolation on numeric variables
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const curVal = Number(sel[v.name]);
+        if (isNaN(curVal)) continue;
+        const allNums = v.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+        const lower = allNums.filter(n => n < curVal).pop();
+        const upper = allNums.find(n => n > curVal);
+        if (lower === undefined || upper === undefined) continue;
+        const selL = { ...sel, [v.name]: String(lower) };
+        const selU = { ...sel, [v.name]: String(upper) };
+        const dpL = dataPoints.find(dp => matchDP(dp, selL) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        const dpU = dataPoints.find(dp => matchDP(dp, selU) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+        if (dpL && dpU) {
+            const vl = dpL.metric_values[metricName], vu = dpU.metric_values[metricName];
+            const frac = (curVal - lower) / (upper - lower);
+            return { type: 'INTERP', value: Math.round((vl + frac * (vu - vl)) * 100) / 100,
+                      source: `Interpolated between ${v.name}=${lower} (${vl}) and ${v.name}=${upper} (${vu})` };
+        }
+    }
+    return { type: 'N/A', value: null, source: 'Not characterized in paper' };
+}
+
+function makeBadgeHTML(prov) {
+    if (prov.type === 'PAPER') return '<span class="badge badge-paper" title="Reported directly in the paper">PAPER</span><div class="source-text">' + prov.source + '</div>';
+    if (prov.type === 'INTERP') return '<span class="badge badge-interp" title="Linear interpolation between two paper-reported points">INTERP</span><div class="source-text">' + prov.source + '</div>';
+    return '<span class="badge badge-na" title="System couldn\'t determine a value">N/A</span><div class="source-text">Not characterized in paper</div>';
+}
+
+// Gray out options that lead to N/A given current other selections
+function updateOptionHints() {
+    const sel = getCurrentSelection();
+    const metricName = sel._metric;
+    document.querySelectorAll('.dropdown').forEach(dd => {
+        const varName = dd.dataset.var;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, [varName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_' + varName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+    document.querySelectorAll('.ctx-dropdown').forEach(dd => {
+        const ctxName = dd.dataset.ctx;
+        let withData = 0;
+        Array.from(dd.options).forEach(opt => {
+            const testSel = { ...sel, ['_ctx_' + ctxName]: opt.value };
+            const has = dataPoints.some(dp => matchDP(dp, testSel) && dp.metric_values && dp.metric_values[metricName] !== undefined);
+            opt.style.color = has ? '' : '#c0c0c0';
+            if (has) withData++;
+        });
+        const hint = document.getElementById('hint_ctx_' + ctxName);
+        if (hint) hint.textContent = withData + ' of ' + dd.options.length + ' options have paper data';
+    });
+}
+
+let chart = null;
+
+function updateChart(sel) {
+    const canvas = document.getElementById('sweepChart');
+    const noChart = document.getElementById('noChart');
+    const metricName = sel._metric;
+    // Find a numeric variable to sweep
+    let sweepVar = null;
+    for (const v of variables) {
+        if (v.type !== 'discrete') continue;
+        const nums = v.values.map(Number).filter(n => !isNaN(n));
+        if (nums.length >= 3) { sweepVar = v; break; }
+    }
+    if (!sweepVar) { canvas.style.display = 'none'; noChart.style.display = ''; return; }
+    const nums = sweepVar.values.map(Number).filter(n => !isNaN(n)).sort((a,b) => a-b);
+    const chartData = [];
+    for (const val of nums) {
+        const testSel = { ...sel, [sweepVar.name]: String(val) };
+        const dp = dataPoints.find(d => matchDP(d, testSel) && d.metric_values && d.metric_values[metricName] !== undefined);
+        if (dp) chartData.push({ x: val, y: dp.metric_values[metricName] });
+    }
+    if (chartData.length < 2) {
+        canvas.style.display = 'none'; noChart.style.display = '';
+        if (chart) { chart.destroy(); chart = null; } return;
+    }
+    canvas.style.display = ''; noChart.style.display = 'none';
+    const metricLabel = (metrics.find(m => m.name === metricName) || {}).label || metricName;
+    const varLabel = sweepVar.label || sweepVar.name;
+    const currentVal = Number(sel[sweepVar.name]);
+    if (chart) chart.destroy();
+    chart = new Chart(canvas, {
+        type: 'scatter',
+        data: { datasets: [{ label: metricLabel + ' (paper)', data: chartData, backgroundColor: '#22c55e', borderColor: '#16a34a', pointRadius: 7, showLine: true, borderWidth: 2, tension: 0.1 }] },
+        options: { responsive: true, plugins: { title: { display: true, text: metricLabel + ' vs ' + varLabel } },
+            scales: { x: { type: 'logarithmic', title: { display: true, text: varLabel }, ticks: { callback: v => v } }, y: { title: { display: true, text: metricLabel } } } },
+        plugins: [{ id: 'vline', afterDraw(ch) {
+            const xs = ch.scales.x, ys = ch.scales.y;
+            if (!isNaN(currentVal)) {
+                const x = xs.getPixelForValue(currentVal);
+                if (x >= xs.left && x <= xs.right) {
+                    const c = ch.ctx; c.save(); c.beginPath(); c.moveTo(x, ys.top); c.lineTo(x, ys.bottom);
+                    c.strokeStyle = '#2563eb'; c.lineWidth = 2; c.setLineDash([6,4]); c.stroke(); c.restore();
+                }
+            }
+        } }]
+    });
+}
+
+function update() {
+    const sel = getCurrentSelection();
+    const prov = getProvenance(sel);
+    document.getElementById('result-badge').innerHTML = makeBadgeHTML(prov);
+    const metricObj = metrics.find(m => m.name === sel._metric);
+    const metricLabel = metricObj ? metricObj.label : sel._metric;
+    if (prov.value !== null) {
+        document.getElementById('result-value').textContent = prov.value;
+        document.getElementById('result-meta').textContent = metricLabel;
+    } else {
+        document.getElementById('result-value').textContent = '—';
+        document.getElementById('result-meta').textContent = 'Not characterized';
+    }
+    updateOptionHints();
+    updateChart(sel);
+}
+
+document.querySelectorAll('.dropdown, .ctx-dropdown, #metric_select').forEach(el => {
+    el.addEventListener('change', update);
+});
+
+update();
+</script>
+</body>
+</html>
