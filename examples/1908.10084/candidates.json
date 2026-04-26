@@ -1,0 +1,38 @@
+[
+  {
+    "url": "https://github.com/ukplab/sentence-transformers",
+    "confidence": 0.95,
+    "source": "paper_text",
+    "is_official": true
+  },
+  {
+    "url": "https://github.com/hanxiao/bert-as-service",
+    "confidence": 0.95,
+    "source": "paper_text",
+    "is_official": true
+  },
+  {
+    "url": "https://github.com/facebookresearch/infersent",
+    "confidence": 0.95,
+    "source": "paper_text",
+    "is_official": true
+  },
+  {
+    "url": "https://github.com/abdouaziz/sbert",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  },
+  {
+    "url": "https://github.com/convenio-camara-dos-deputados/portuguese-sbert",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  },
+  {
+    "url": "https://github.com/chang-zy/sbert_reproduce",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  }
+]

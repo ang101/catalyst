@@ -1,0 +1,107 @@
+{
+  "paper_id": "1908.10084",
+  "strategy": "evaluation",
+  "repo_analysis": {
+    "train_script": "examples/sentence_transformer/training/nli/training_nli_v3.py",
+    "config_system": "sentence-transformers library API (Python kwargs, not CLI argparse)",
+    "model_definition": "sentence_transformers/sentence_transformer/model.py::SentenceTransformer",
+    "data_loader": "HuggingFace datasets (load_dataset('sentence-transformers/stsb'))",
+    "eval_script": "examples/sentence_transformer/evaluation/evaluation_stsbenchmark.py",
+    "framework": "pytorch",
+    "python_version": ">=3.10",
+    "key_dependencies": [
+      "sentence-transformers>=3.0",
+      "torch>=1.11.0",
+      "transformers>=4.41.0",
+      "datasets>=2.0.0",
+      "scipy>=1.0.0",
+      "scikit-learn>=0.22.0",
+      "numpy>=1.20.0"
+    ]
+  },
+  "checkpoint_path": "sentence-transformers/bert-base-nli-mean-tokens",
+  "checkpoint_download_command": "python3 -c \"from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/bert-base-nli-mean-tokens')\"",
+  "eval_script": "papers/1908.10084/run_eval.py",
+  "eval_args": {
+    "model_name": "sentence-transformers/bert-base-nli-mean-tokens",
+    "datasets": ["sentence-transformers/stsb"],
+    "split": "test",
+    "batch_size": 16,
+    "similarity": "cosine"
+  },
+  "eval_constraints": {
+    "num_examples": "full (1379 pairs for STSb test; non-generative exception applies — per-example cost is sub-second)",
+    "decoding_method": "none (embedding model, not generative)",
+    "max_output_tokens": 0,
+    "estimated_wall_clock_minutes": 8,
+    "feasible_on_cpu": true
+  },
+  "faithful": {
+    "description": "Full reproduction of Table 1 SBERT-NLI-base row: evaluate on all 7 STS datasets (STS12-16, STSb, SICK-R) with cosine similarity",
+    "eval_command": "python3 papers/1908.10084/run_eval.py --model sentence-transformers/bert-base-nli-mean-tokens --datasets STS12 STS13 STS14 STS15 STS16 STSb SICK-R --batch_size 16",
+    "datasets_evaluated": ["STS12", "STS13", "STS14", "STS15", "STS16", "STSbenchmark", "SICK-R"],
+    "estimated_time": "10-15 minutes on CPU",
+    "hardware_required": "CPU with 4GB RAM (BERT-base ~440MB in FP32)",
+    "feasible_on_cpu": true,
+    "notes": "All 7 datasets are small (few hundred to ~1500 pairs each). Total ~8000 pairs. Fully feasible on CPU."
+  },
+  "scaled": {
+    "description": "Evaluate SBERT-NLI-base on STSb test set only (1,379 pairs) — the primary benchmark dataset",
+    "eval_command": "python3 papers/1908.10084/run_eval.py --model sentence-transformers/bert-base-nli-mean-tokens --datasets STSb --batch_size 16",
+    "scaling_cuts_applied": [
+      {
+        "parameter": "datasets_evaluated",
+        "original": "7 datasets (STS12-16, STSb, SICK-R)",
+        "scaled": "1 dataset (STSb test only)",
+        "rationale": "STSb is the most widely-used STS benchmark and the paper reports per-dataset scores — STSb alone is sufficient to verify the checkpoint produces correct embeddings",
+        "claims_preserved": ["SBERT-NLI-base achieves 77.03 Spearman on STSb test"],
+        "claims_compromised": ["Average across all 7 STS datasets (74.89) cannot be computed from STSb alone"]
+      }
+    ],
+    "estimated_time": "3-5 minutes on CPU",
+    "estimated_memory": "2GB"
+  },
+  "smoke_config": {
+    "eval_command": "python3 -c \"from sentence_transformers import SentenceTransformer; m = SentenceTransformer('sentence-transformers/bert-base-nli-mean-tokens'); e = m.encode(['hello world', 'test sentence']); print('Embedding shape:', e.shape); print('SMOKE TEST PASSED')\"",
+    "timeout_seconds": 120,
+    "success_criteria": "exit code 0 and 'Embedding shape: (2, 768)' printed to stdout"
+  },
+  "metrics_to_capture": [
+    {
+      "name": "spearman_cosine_stsb",
+      "description": "Spearman correlation (cosine similarity) on STSb test set",
+      "log_pattern": "Cosine-Similarity:\\s+Pearson:\\s+([0-9.]+)\\s+Spearman:\\s+([0-9.]+)",
+      "capture_group": 2,
+      "expected_value": 0.7703,
+      "tolerance": 0.02,
+      "higher_is_better": true,
+      "paper_reference": "Table 1, SBERT-NLI-base, STSb column: 77.03 (x100)"
+    },
+    {
+      "name": "pearson_cosine_stsb",
+      "description": "Pearson correlation (cosine similarity) on STSb test set",
+      "log_pattern": "Cosine-Similarity:\\s+Pearson:\\s+([0-9.]+)",
+      "capture_group": 1,
+      "expected_behavior": "Should be close to spearman_cosine",
+      "higher_is_better": true
+    }
+  ],
+  "expected_output_patterns": [
+    {
+      "pattern": "EmbeddingSimilarityEvaluator: Evaluating the model on the",
+      "description": "Evaluator start message",
+      "required": true
+    },
+    {
+      "pattern": "Cosine-Similarity:\\s+Pearson:\\s+[0-9.]+\\s+Spearman:\\s+[0-9.]+",
+      "description": "Cosine similarity metrics output",
+      "required": true
+    }
+  ],
+  "patches_needed": [],
+  "warnings": [
+    "The checkpoint 'sentence-transformers/bert-base-nli-mean-tokens' is a legacy model from the original SBERT paper. The HuggingFace model hub page may show deprecation notices pointing to newer models, but this is the exact checkpoint needed for reproduction.",
+    "STS12-16 datasets require separate download via the 'mteb' or custom loading — the sentence-transformers/stsb dataset on HuggingFace only covers STSbenchmark. The eval script must handle loading each dataset appropriately.",
+    "The paper reports Spearman correlation x100 (e.g., 77.03). The library outputs raw correlation (e.g., 0.7703). The eval script should handle this conversion for comparison."
+  ]
+}

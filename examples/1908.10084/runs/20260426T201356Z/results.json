@@ -1,0 +1,37 @@
+{
+  "strategy": "evaluation",
+  "model": "sentence-transformers/bert-base-nli-mean-tokens",
+  "eval_wall_clock_minutes": 24,
+  "datasets_completed": 6,
+  "datasets_total": 7,
+  "metrics": {
+    "STS12": {
+      "spearman": 0.7097,
+      "pearson": 0.7997
+    },
+    "STS13": {
+      "spearman": 0.7653,
+      "pearson": 0.7346
+    },
+    "STS14": {
+      "spearman": 0.7319,
+      "pearson": 0.728
+    },
+    "STS15": {
+      "spearman": 0.7909,
+      "pearson": 0.7744
+    },
+    "STS16": {
+      "spearman": 0.743,
+      "pearson": 0.7061
+    },
+    "STSb": {
+      "spearman": 0.7699,
+      "pearson": 0.7414
+    },
+    "SICK-R": null
+  },
+  "average_spearman_6datasets": 0.7518,
+  "status": "partial_success",
+  "note": "6/7 datasets completed. SICK-R eval was in progress when claude_code timeout (1800s) was reached."
+}

@@ -37,17 +37,35 @@ You are creating an execution plan to reproduce an ML paper's results. You have 
 Before any repo analysis or scaling decisions, select a reproduction strategy based on `requirements_json.released_artifacts` and the nature of the paper's main claim.
 
 ### Strategy A — Evaluation-only
+
 **Use when:** `released_artifacts.checkpoints` contains at least one checkpoint with `supports_main_claim: true`, AND the paper's main claim is about model performance at inference (accuracy, BLEU, perplexity, success rate, etc.).
 
 **What this produces:** Load the released checkpoint, run the paper's eval script (or equivalent), compare produced metrics to the paper's claimed values. No training at all.
 
-**Compute cost:** Typically 1-2 orders of magnitude less than training. A 350M model takes ~5 minutes to evaluate on CPU vs. hours to train.
+**HARD CONSTRAINTS for CPU evaluation:**
+
+These are non-negotiable. If you cannot fit your eval within these constraints, choose Strategy C (from-scratch) at toy scale instead, or mark the paper infeasible.
+
+1. `eval.num_examples`: MAXIMUM 50. Default 25. Even if the paper evaluates on the full test set, evaluate on at most 50 examples for the scaled track. The faithful track can specify the full set, but it must be marked `feasible_on_cpu: false`.
+
+2. `eval.decoding_method`: MUST be `"greedy"` for the scaled track. Beam search of any width is forbidden in the scaled track on CPU — beam search multiplies inference cost by O(beam_width). The faithful track may specify beam search, but again only if marked `feasible_on_cpu: false`.
+
+3. `eval.max_output_tokens`: MAXIMUM 32 for the scaled track. Default 16. Long generations multiply per-example time linearly.
+
+4. `eval.estimated_wall_clock_minutes`: MUST be calculated and included in plan.json. Estimate as: `num_examples * (model_params_M / 50) * max_output_tokens / 30` where `model_params_M` is the model size in millions. If estimate > 30 minutes, reduce `num_examples` until it fits. If even at `num_examples=10` the estimate exceeds 30 min, the model is too large for CPU evaluation — mark infeasible.
+
+5. plan.json MUST include an `"eval_constraints"` object explicitly listing all five values above. The execution layer will reject plans that omit these.
+
+**Exception for non-generative eval:** If the eval task does not involve text generation (e.g., embedding similarity, classification, regression), constraints 2 and 3 do not apply. Constraint 1 still applies unless per-example cost is sub-second (embeddings, cosine similarity), in which case up to the full test set is permitted. Constraint 4 still applies — calculate and include the estimate.
+
+The scaled track produces metrics with a sample-size caveat. The report should explicitly say "metric on N=X examples, not N=Y as in the paper. Directional comparison only." Honest scoping is required.
 
 **plan.json must include:**
 - `"strategy": "evaluation"`
 - `eval_script`: path to the evaluation entry point
 - `eval_args`: command-line arguments to run evaluation with the checkpoint
 - `checkpoint_path`: path to the released checkpoint (or download command)
+- `eval_constraints`: object with `num_examples`, `decoding_method`, `max_output_tokens`, `estimated_wall_clock_minutes`, `feasible_on_cpu`
 - `metrics_to_capture`: same as other strategies
 - No `train_script`, `train_args`, or `scaled_config` needed.
 

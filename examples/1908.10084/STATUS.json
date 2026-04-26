@@ -1,0 +1,82 @@
+{
+  "paper_id": "1908.10084",
+  "phases": [
+    {
+      "phase": "acquire",
+      "timestamp": "2026-04-26T20:06:57Z",
+      "outcome": "success",
+      "artifacts": [
+        "metadata.json",
+        "source.pdf",
+        "source/"
+      ],
+      "error": null
+    },
+    {
+      "phase": "extract",
+      "timestamp": "2026-04-26T20:07:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "paper.md"
+      ],
+      "error": null
+    },
+    {
+      "phase": "extract",
+      "timestamp": "2026-04-26T20:08:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "requirements.json"
+      ],
+      "error": null
+    },
+    {
+      "phase": "scout",
+      "timestamp": "2026-04-26T20:09:06Z",
+      "outcome": "success",
+      "artifacts": [
+        "candidates.json",
+        "repo/"
+      ],
+      "error": null
+    },
+    {
+      "phase": "plan",
+      "timestamp": "2026-04-26T20:15:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "plan.json",
+        "scaling_rationale.md",
+        "run_eval.py"
+      ],
+      "error": null,
+      "notes": "Strategy A (evaluation-only) selected. Pre-trained SBERT-NLI-base checkpoint available on HuggingFace. Non-generative eval permits full test set on CPU. No patches needed."
+    },
+    {
+      "phase": "execute",
+      "timestamp": "2026-04-26T20:15:00Z",
+      "outcome": "partial_success",
+      "artifacts": [
+        "runs/20260426T201356Z/results.json",
+        "runs/20260426T201356Z/output.log"
+      ],
+      "error": "claude_code timeout at 1800s. 6/7 STS datasets completed. SICK-R in progress when killed.",
+      "metrics": {
+        "STSb_spearman": 0.7699,
+        "paper_claimed_STSb": 0.7703,
+        "delta": -0.0004,
+        "datasets_completed": "6/7"
+      }
+    },
+    {
+      "phase": "report",
+      "timestamp": "2026-04-26T20:44:22.767205+00:00",
+      "outcome": "success",
+      "artifacts": [
+        "summary.md",
+        "results.json"
+      ],
+      "error": null
+    }
+  ]
+}
