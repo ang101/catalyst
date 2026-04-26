@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zeroclaw.dev/schemas/paper-repro/requirements.schema.json",
+  "title": "Paper Reproduction Requirements",
+  "description": "Structured requirements extracted from an ML/AI research paper, used to plan and execute a faithful or scaled reproduction.",
+  "type": "object",
+  "required": [
+    "paper_id",
+    "method_name",
+    "core_claim",
+    "datasets",
+    "model",
+    "training",
+    "metrics",
+    "compute_feasibility_note"
+  ],
+  "properties": {
+    "paper_id": {
+      "type": "string",
+      "description": "Unique identifier for the paper, typically an arXiv ID (e.g. '2301.12345') or DOI."
+    },
+    "method_name": {
+      "type": "string",
+      "description": "Name of the method, model, or system proposed in the paper (e.g. 'FlashAttention-2', 'DPO', 'Mamba')."
+    },
+    "core_claim": {
+      "type": "string",
+      "description": "The main empirical claim the paper argues it demonstrates. Must be a single falsifiable statement. Example: 'DPO matches or exceeds PPO-based RLHF on summarization quality while being simpler to implement and 2x faster to train.'"
+    },
+    "datasets": {
+      "type": "array",
+      "minItems": 1,
+      "description": "All datasets used in the paper's experiments, including pretraining data, fine-tuning data, and evaluation benchmarks.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Dataset name as referred to in the paper (e.g. 'OpenWebText', 'TL;DR', 'MMLU')."
+          },
+          "size": {
+            "type": ["string", "null"],
+            "description": "Dataset size as stated in the paper (e.g. '9B tokens', '120k examples', '14M images'). Null if not stated.",
+            "default": null
+          },
+          "source": {
+            "type": ["string", "null"],
+            "description": "URL or description of where to obtain the dataset (e.g. 'https://huggingface.co/datasets/openwebtext', 'available upon request from authors'). Null if not stated.",
+            "default": null
+          },
+          "preprocessing": {
+            "type": ["string", "null"],
+            "description": "Preprocessing steps described in the paper (e.g. 'BPE tokenization with GPT-2 tokenizer, max sequence length 1024, deduplication via MinHash'). Null if not described.",
+            "default": null
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": ["architecture"],
+      "description": "Model architecture and sizing details.",
+      "properties": {
+        "architecture": {
+          "type": "string",
+          "description": "Architecture name and key structural details (e.g. 'Transformer decoder-only, 12 layers, 12 heads, 768 hidden dim, pre-norm with LayerNorm, GELU activation')."
+        },
+        "parameters": {
+          "type": ["string", "null"],
+          "description": "Total parameter count as stated (e.g. '125M', '1.3B'). Null if not stated.",
+          "default": null
+        },
+        "key_hyperparameters": {
+          "type": "object",
+          "description": "Named hyperparameters that define the model structure. Keys are parameter names, values are their settings. Include ALL stated values: n_layers, n_heads, d_model, d_ff, dropout, activation, normalization, positional_encoding, vocab_size, max_seq_len, tie_embeddings, etc.",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "null"]
+          },
+          "default": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "training": {
+      "type": "object",
+      "description": "Training configuration. Every field defaults to null when not stated in the paper. Do not guess values.",
+      "properties": {
+        "optimizer": {
+          "type": ["string", "null"],
+          "description": "Optimizer name and any non-default settings (e.g. 'AdamW with beta1=0.9, beta2=0.95, eps=1e-8').",
+          "default": null
+        },
+        "learning_rate": {
+          "type": ["number", "null"],
+          "description": "Peak learning rate as a float (e.g. 0.0003 for 3e-4).",
+          "default": null
+        },
+        "lr_schedule": {
+          "type": ["string", "null"],
+          "description": "Learning rate schedule details (e.g. 'cosine decay to 1e-5 over full training, with 2000 step linear warmup').",
+          "default": null
+        },
+        "weight_decay": {
+          "type": ["number", "null"],
+          "description": "Weight decay coefficient.",
+          "default": null
+        },
+        "batch_size": {
+          "type": ["integer", "null"],
+          "description": "Effective batch size (accounting for gradient accumulation and data parallelism). If the paper gives per-GPU batch size, multiply out.",
+          "default": null
+        },
+        "gradient_accumulation_steps": {
+          "type": ["integer", "null"],
+          "description": "Number of gradient accumulation steps if stated.",
+          "default": null
+        },
+        "epochs_or_steps": {
+          "type": ["string", "null"],
+          "description": "Training duration as stated (e.g. '3 epochs', '100k steps', '300B tokens').",
+          "default": null
+        },
+        "warmup": {
+          "type": ["string", "null"],
+          "description": "Warmup configuration (e.g. '2000 steps linear warmup', '1% of total steps').",
+          "default": null
+        },
+        "dropout": {
+          "type": ["number", "null"],
+          "description": "Dropout rate if stated.",
+          "default": null
+        },
+        "gradient_clipping": {
+          "type": ["number", "null"],
+          "description": "Max gradient norm for clipping (e.g. 1.0).",
+          "default": null
+        },
+        "data_augmentation": {
+          "type": ["string", "null"],
+          "description": "Any data augmentation techniques described (e.g. 'random cropping to 224x224, horizontal flip, color jitter').",
+          "default": null
+        },
+        "mixed_precision": {
+          "type": ["string", "null"],
+          "description": "Mixed precision strategy (e.g. 'bf16 with fp32 master weights', 'fp16 with loss scaling').",
+          "default": null
+        },
+        "hardware": {
+          "type": ["string", "null"],
+          "description": "Hardware the authors used (e.g. '8x A100 80GB with NVLink', '64 TPUv4 chips').",
+          "default": null
+        },
+        "estimated_gpu_hours": {
+          "type": ["string", "null"],
+          "description": "Estimated total GPU/TPU hours if stated or directly calculable (e.g. '256 A100-hours'). Do not estimate if not clearly inferable.",
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "description": "All quantitative results claimed in the paper that could be reproduced.",
+      "items": {
+        "type": "object",
+        "required": ["name", "dataset", "higher_is_better"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Metric name exactly as used in the paper (e.g. 'perplexity', 'BLEU-4', 'top-1 accuracy', 'win rate')."
+          },
+          "claimed_value": {
+            "type": ["number", "string", "null"],
+            "description": "The specific numerical value claimed. Use a number when possible (e.g. 29.1). Use a string for ranges or qualitative claims (e.g. '>90%', '~3x speedup'). Null if not directly stated as a number.",
+            "default": null
+          },
+          "dataset": {
+            "type": "string",
+            "description": "Which dataset or split this metric was measured on (e.g. 'WikiText-103 test', 'MMLU 5-shot', 'ImageNet val')."
+          },
+          "higher_is_better": {
+            "type": "boolean",
+            "description": "True if higher values indicate better performance (accuracy, BLEU). False if lower is better (perplexity, loss, FID)."
+          },
+          "table_or_figure": {
+            "type": ["string", "null"],
+            "description": "Where in the paper this value appears (e.g. 'Table 2 row 3', 'Figure 4 blue line at x=100k').",
+            "default": null
+          },
+          "conditions": {
+            "type": ["string", "null"],
+            "description": "Any conditions for this measurement (e.g. 'zero-shot', '5-shot', 'with retrieval augmentation', 'ensemble of 5').",
+            "default": null
+          },
+          "is_main_claim": {
+            "type": "boolean",
+            "description": "True ONLY for the 1-5 metrics most prominently claimed in the paper's abstract or introduction. These are the results the paper's core argument rests on. All other metrics (ablations, supplementary experiments, baselines) are false.",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "ablations": {
+      "type": "array",
+      "description": "Ablation studies reported in the paper. These help determine which components are critical vs. optional.",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "variables"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Short name for the ablation (e.g. 'attention_type_ablation', 'lr_sensitivity')."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this ablation tests (e.g. 'Compares flash attention vs. standard attention vs. linear attention, showing flash attention gives 2x speedup with no quality loss')."
+          },
+          "variables": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The variables being ablated (e.g. ['attention_type'] or ['learning_rate', 'batch_size'])."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "released_artifacts": {
+      "type": "object",
+      "description": "Pre-trained checkpoints, datasets, and evaluation scripts released by the authors. Critical for determining reproduction strategy — evaluation-only is 1-2 orders of magnitude cheaper than training.",
+      "properties": {
+        "checkpoints": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["name", "what_it_is", "supports_main_claim"],
+            "properties": {
+              "name": { "type": "string", "description": "Checkpoint name or filename" },
+              "url": { "type": ["string", "null"], "description": "Download URL (HuggingFace, S3, etc.)", "default": null },
+              "size_mb": { "type": ["integer", "null"], "description": "Approximate size in MB", "default": null },
+              "what_it_is": { "type": "string", "description": "What this checkpoint contains, e.g. 'trained LoRA adapter for GPT-2 Medium on E2E NLG'" },
+              "supports_main_claim": { "type": "boolean", "description": "True if evaluating this checkpoint directly tests one of the is_main_claim metrics" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "datasets": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": ["string", "null"], "default": null },
+              "size_mb": { "type": ["integer", "null"], "default": null },
+              "splits_available": { "type": "array", "items": { "type": "string" }, "default": [] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "eval_scripts": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["path_in_repo", "purpose"],
+            "properties": {
+              "path_in_repo": { "type": "string", "description": "Path relative to repo root" },
+              "purpose": { "type": "string", "description": "What this script evaluates" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false,
+      "default": { "checkpoints": [], "datasets": [], "eval_scripts": [] }
+    },
+    "code_url": {
+      "type": ["string", "null"],
+      "description": "URL to the official code repository if found in the paper, footnotes, abstract, or metadata. Null if none found.",
+      "default": null
+    },
+    "reproducibility_notes": {
+      "type": ["string", "null"],
+      "description": "Any statements the authors make about reproducibility (e.g. 'Code and checkpoints at github.com/...', 'See Appendix F for full hyperparameters', 'Random seeds: 0, 1, 2'). Null if none.",
+      "default": null
+    },
+    "compute_feasibility_note": {
+      "type": "string",
+      "description": "1-2 sentences. Identify the cheapest reproduction strategy that tests the paper's main claim. If a released checkpoint exists for the main-claim experiment, evaluation-only is typically CPU-feasible regardless of model size. State this strategy and rough memory/time estimate. Only mark a paper infeasible if even evaluation-only requires GPU/multi-machine resources."
+    }
+  },
+  "additionalProperties": false
+}

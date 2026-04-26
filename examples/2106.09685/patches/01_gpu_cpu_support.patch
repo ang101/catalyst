@@ -1,0 +1,35 @@
+--- a/examples/NLG/src/gpu.py
++++ b/examples/NLG/src/gpu.py
+@@ -18,6 +18,7 @@
+
+ def add_gpu_params(parser: argparse.ArgumentParser):
+     parser.add_argument("--platform", default='k8s', type=str, help='platform cloud')
++    parser.add_argument("--cpu", action='store_true', help='run on CPU without distributed')
+     parser.add_argument("--local_rank", default=0, type=int, help='local rank')
+     parser.add_argument("--rank", default=0, type=int, help='rank')
+     parser.add_argument("--device", default=0, type=int, help='device')
+@@ -55,6 +56,16 @@
+ def parse_gpu(args):
+     torch.manual_seed(args.random_seed)
+
++    if args.cpu or not torch.cuda.is_available():
++        args.device = torch.device('cpu')
++        args.rank = 0
++        args.local_rank = 0
++        args.world_size = 1
++        args.dist = None
++        args.platform = 'cpu'
++        print('Running on CPU (no distributed)')
++        return
++
+     if args.platform == 'local':
+         dist.init_process_group(backend='nccl')
+         local_rank = torch.distributed.get_rank()
+@@ -121,4 +132,6 @@
+
+ def cleanup(args):
+-    if args.platform == 'k8s' or args.platform == 'philly':
++    if args.platform == 'cpu':
++        pass
++    elif args.platform == 'k8s' or args.platform == 'philly':
+         args.dist.destroy_process_group()

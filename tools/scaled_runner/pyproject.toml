@@ -1,0 +1,11 @@
+[project]
+name = "scaled-runner"
+version = "0.1.0"
+description = "MCP tool server for running paper reproduction experiments at scale"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp",
+]
+
+[project.scripts]
+scaled-runner = "server:main"

@@ -1,0 +1,17 @@
+[project]
+name = "arxiv-fetch"
+version = "0.1.0"
+description = "MCP tool server for fetching and cataloging arXiv papers"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp",
+    "requests",
+    "defusedxml",
+]
+
+[project.scripts]
+arxiv-fetch = "server:mcp.run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

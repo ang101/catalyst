@@ -1,0 +1,76 @@
+--- a/examples/NLG/src/gpt2_beam.py
++++ b/examples/NLG/src/gpt2_beam.py
+@@ -349,7 +349,12 @@
+     parse_gpu(args)
+     print_args(args)
+
+-    if args.rank == 0:
++    # Determine if running on CPU (no distributed)
++    is_cpu = not torch.cuda.is_available() or getattr(args, 'cpu', False)
++    is_distributed = not is_cpu and args.world_size > 1
++
++    if args.rank == 0 or is_cpu:
+         args.logging = create_exp_dir(args.work_dir)
+
+     valid_data = FT_Dataset(
+@@ -356,11 +361,18 @@
+     valid_data = FT_Dataset(
+         args.data, args.batch_size, args.seq_len, args.eval_len,
+     )
+-    valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_data)
+-    valid_loader = DataLoader(
+-        valid_data, batch_size=args.batch_size, num_workers=0, shuffle=False,
+-        pin_memory=False, drop_last=False, sampler=valid_sampler
+-    )
++    if is_distributed:
++        valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_data)
++        valid_loader = DataLoader(
++            valid_data, batch_size=args.batch_size, num_workers=0, shuffle=False,
++            pin_memory=False, drop_last=False, sampler=valid_sampler
++        )
++    else:
++        valid_loader = DataLoader(
++            valid_data, batch_size=args.batch_size, num_workers=0, shuffle=False,
++            pin_memory=False, drop_last=False
++        )
+
+     if args.model_card == 'gpt2.sm':
+         config = GPT2Config(
+@@ -383,14 +395,19 @@
+         print('loading model pretrained weight.')
+         cp = torch.load(args.init_checkpoint, map_location=torch.device('cpu'))
+         lm_net.load_weight(cp)
+-    lm_net = lm_net.cuda()
++
++    if is_cpu:
++        lm_net = lm_net  # already on CPU
++    else:
++        lm_net = lm_net.cuda()
+
+     print('model sampling ...')
+     beam(lm_net, valid_loader, args)
+-    distributed_sync(args)
+-    print('cleanup dist ...')
+-    cleanup(args)
++    if is_distributed:
++        distributed_sync(args)
++        print('cleanup dist ...')
++        cleanup(args)
+
+
+ ## Also patch the beam() function's distributed_gather/distributed_sync calls:
+@@ -318,13 +330,19 @@
+
+             with torch.no_grad():
+-                _id = distributed_gather(args, _id)
+-                output = distributed_gather(args, best_sequence)
+-                #score = distributed_gather(args, score)
+-                distributed_sync(args)
++                if is_distributed:
++                    _id = distributed_gather(args, _id)
++                    output = distributed_gather(args, best_sequence)
++                    distributed_sync(args)
++                else:
++                    _id = _id.unsqueeze(0)
++                    output = best_sequence.unsqueeze(0)
+

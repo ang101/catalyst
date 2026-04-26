@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+env/
+venv/
+
+# Paper artifacts (large/transient)
+papers/*/repo/
+papers/*/env/
+papers/*/source/
+papers/*/source.pdf
+papers/*/paper.md
+papers/*/runs/*/output.log
+*.pdf
+*.tar.gz
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# ZeroClaw config (contains API keys)
+config.toml
+.secret_key
+
+# OS/IDE
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Secrets
+.env
+*.key
+credentials.json

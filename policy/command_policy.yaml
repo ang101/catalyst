@@ -1,0 +1,119 @@
+# =============================================================================
+# Command Policy for paper-repro SOP
+# =============================================================================
+#
+# This policy governs what commands the paper_repro SOP is allowed to execute
+# autonomously. It follows a default-deny model: anything not explicitly listed
+# in auto_approve is blocked unless manually approved by the operator.
+#
+# Scope variables:
+#   {paper_id} -- resolved at runtime to the current paper's identifier
+#                  (e.g., "2106.09685")
+#
+# =============================================================================
+
+version: "1.0"
+
+# -----------------------------------------------------------------------------
+# Auto-approved commands
+# -----------------------------------------------------------------------------
+# These commands run without human confirmation. Each entry specifies the
+# command, the directory scope it may operate in, and any constraints.
+
+auto_approve:
+
+  # -- Git clone: only shallow clones from GitHub, only into the paper's repo dir
+  - command: "git clone"
+    constraints:
+      - url_pattern: "https://github.com/*"
+      - args: ["--depth", "1"]
+    scope: "papers/{paper_id}/repo"
+
+  # -- Virtual environment creation: only in the paper's env directory
+  - command: "uv venv"
+    scope: "papers/{paper_id}/env"
+
+  # -- Package installation: only from PyPI, only into the paper's venv
+  - command: "uv pip install"
+    scope: "papers/{paper_id}/env"
+    constraints:
+      - source: ["pypi.org", "files.pythonhosted.org"]
+
+  # -- Python execution: must be sandboxed and must use the paper's venv
+  - command: "python"
+    scope: "papers/{paper_id}/"
+    constraints:
+      - must_run_in_sandbox: true   # Requires bwrap or equivalent isolation
+      - venv_only: true             # Must use the paper's virtual environment
+
+  # -- Patch application: only within the paper's cloned repository
+  - command: "git apply"
+    scope: "papers/{paper_id}/repo"
+
+# -----------------------------------------------------------------------------
+# Denied commands
+# -----------------------------------------------------------------------------
+# These commands are unconditionally blocked regardless of scope or arguments.
+
+deny:
+
+  # -- Privilege escalation
+  - command: "sudo"
+
+  # -- Destructive filesystem operations outside paper scope
+  - command: "rm -rf"
+    scope_outside: "papers/{paper_id}/"
+
+  # -- Permission changes (not needed and potentially dangerous)
+  - command: "chmod"
+
+  # -- Ownership changes (not needed and potentially dangerous)
+  - command: "chown"
+
+  # -- Path traversal attempts (e.g., papers/../../etc/passwd)
+  - pattern: "*/../../*"
+
+  # -- Any file writes outside the paper's directory tree
+  - write_outside: "papers/{paper_id}/"
+
+# -----------------------------------------------------------------------------
+# Network allowlist
+# -----------------------------------------------------------------------------
+# Only these domains may be contacted. All other outbound connections are
+# blocked. This prevents data exfiltration and limits supply-chain attack
+# surface.
+
+network_allowlist:
+  # Paper sources
+  - "arxiv.org"                    # Paper metadata and abstracts
+  - "export.arxiv.org"             # PDF and source downloads
+
+  # Code repositories
+  - "github.com"                   # Repository hosting
+  - "raw.githubusercontent.com"    # Raw file access from GitHub
+
+  # Model and dataset hosting
+  - "huggingface.co"               # Model cards and repos
+  - "cdn-lfs.huggingface.co"       # Large file storage for models/datasets
+
+  # Package management
+  - "pypi.org"                     # Python package index
+  - "files.pythonhosted.org"       # Python package downloads
+
+  # Paper discovery and metadata
+  - "paperswithcode.com"           # Code-paper linking
+  - "api.semanticscholar.org"      # Academic search API
+
+# Block all domains not in the allowlist above
+network_deny_all_others: true
+
+# -----------------------------------------------------------------------------
+# Resource limits
+# -----------------------------------------------------------------------------
+# Hard limits on compute resources to prevent runaway processes.
+
+resource_limits:
+  max_memory_mb: 8192              # 8 GB RAM ceiling
+  max_cpu_time_secs: 7200          # 2 hours CPU time (matches wall-clock budget)
+  max_disk_mb: 10240               # 10 GB disk usage per paper
+  max_processes: 50                # Max concurrent processes (prevents fork bombs)

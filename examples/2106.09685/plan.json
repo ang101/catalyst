@@ -1,0 +1,189 @@
+{
+  "paper_id": "2106.09685",
+  "strategy": "evaluation",
+  "strategy_rationale": "released_artifacts.checkpoints contains 'GPT-2 LoRA checkpoint' with supports_main_claim=true. This checkpoint provides trained LoRA adapter weights for GPT-2 Medium on E2E NLG Challenge, which directly supports the main claim (BLEU 70.4 on E2E). Per Phase 0 Strategy A: load released checkpoint, run eval, compare metrics. No training needed.",
+  "repo_analysis": {
+    "train_script": "examples/NLG/src/gpt2_ft.py",
+    "config_system": "argparse",
+    "model_definition": "examples/NLG/src/model.py::GPT2LMModel",
+    "data_loader": "examples/NLG/src/data_utils.py::FT_Dataset",
+    "eval_script": "examples/NLG/src/gpt2_beam.py",
+    "decode_script": "examples/NLG/src/gpt2_decode.py",
+    "metrics_script": "examples/NLG/eval/e2e/measure_scores.py",
+    "framework": "pytorch",
+    "python_version": ">=3.8",
+    "key_dependencies": [
+      "torch>=1.7",
+      "loralib",
+      "spacy",
+      "progress",
+      "nltk"
+    ]
+  },
+  "checkpoint_path": {
+    "lora_adapter": {
+      "url": "https://github.com/microsoft/LoRA/releases/download/GPT-2/gpt2_md_lora_e2e.pt",
+      "size_mb": 1.5,
+      "local_path": "checkpoints/gpt2_md_lora_e2e.pt"
+    },
+    "pretrained_base": {
+      "url": "https://s3.amazonaws.com/models.huggingface.co/bert/gpt2-medium-pytorch_model.bin",
+      "size_mb": 1400,
+      "local_path": "pretrained_checkpoints/gpt2-medium-pytorch_model.bin"
+    }
+  },
+  "eval_pipeline": {
+    "step_0_setup": {
+      "description": "Install dependencies and download checkpoints",
+      "commands": [
+        "pip install loralib torch transformers spacy nltk progress",
+        "cd examples/NLG && bash download_pretrained_checkpoints.sh",
+        "mkdir -p checkpoints && wget -O checkpoints/gpt2_md_lora_e2e.pt https://github.com/microsoft/LoRA/releases/download/GPT-2/gpt2_md_lora_e2e.pt",
+        "cd examples/NLG && bash create_datasets.sh",
+        "cd examples/NLG/eval && bash download_evalscript.sh"
+      ]
+    },
+    "step_1_apply_patches": {
+      "description": "Apply CPU-compatibility patches to gpu.py and gpt2_beam.py",
+      "commands": [
+        "cd repo && git apply ../patches/01_gpu_cpu_support.patch",
+        "cd repo && git apply ../patches/02_beam_cpu_support.patch"
+      ],
+      "alternative": "Manual edits described in patches_needed section"
+    },
+    "step_2_beam_search": {
+      "description": "Run beam search decoding with released LoRA checkpoint on E2E test set",
+      "command": "cd examples/NLG && python src/gpt2_beam.py --cpu --data ./data/e2e/test.jsonl --batch_size 1 --seq_len 512 --eval_len 64 --model_card gpt2.md --init_checkpoint ./checkpoints/gpt2_md_lora_e2e.pt --lora_dim 4 --lora_alpha 32 --beam 10 --length_penalty 0.8 --no_repeat_ngram_size 4 --repetition_penalty 1.0 --eos_token_id 628 --work_dir ./output/e2e_eval --output_file predict.b10p08r4.jsonl",
+      "estimated_time_cpu": "20-40 minutes (GPT-2 Medium 354M params, beam=10, ~4600 test examples)",
+      "estimated_memory": "3-4 GB"
+    },
+    "step_3_decode": {
+      "description": "Decode beam search output to text",
+      "command": "cd examples/NLG && python src/gpt2_decode.py --vocab ./vocab --sample_file ./output/e2e_eval/predict.b10p08r4.jsonl --input_file ./data/e2e/test_formatted.jsonl --output_ref_file ./output/e2e_eval/e2e_ref.txt --output_pred_file ./output/e2e_eval/e2e_pred.txt"
+    },
+    "step_4_evaluate": {
+      "description": "Compute BLEU, NIST, METEOR, ROUGE-L, CIDEr on E2E test set",
+      "command": "cd examples/NLG && python eval/e2e/measure_scores.py ./output/e2e_eval/e2e_ref.txt ./output/e2e_eval/e2e_pred.txt -p"
+    }
+  },
+  "eval_args": {
+    "--cpu": "flag to run on CPU without distributed",
+    "--data": "./data/e2e/test.jsonl",
+    "--batch_size": "1",
+    "--seq_len": "512",
+    "--eval_len": "64",
+    "--model_card": "gpt2.md",
+    "--init_checkpoint": "./checkpoints/gpt2_md_lora_e2e.pt",
+    "--lora_dim": "4",
+    "--lora_alpha": "32",
+    "--beam": "10",
+    "--length_penalty": "0.8",
+    "--no_repeat_ngram_size": "4",
+    "--repetition_penalty": "1.0",
+    "--eos_token_id": "628"
+  },
+  "hyperparameter_map": {
+    "lora_r": {
+      "repo_param": "--lora_dim",
+      "paper_value": 4,
+      "how_to_set": "--lora_dim 4"
+    },
+    "lora_alpha": {
+      "repo_param": "--lora_alpha",
+      "paper_value": 32,
+      "how_to_set": "--lora_alpha 32"
+    },
+    "model_size": {
+      "repo_param": "--model_card",
+      "paper_value": "GPT-2 Medium (354.92M)",
+      "how_to_set": "--model_card gpt2.md"
+    },
+    "beam_size": {
+      "repo_param": "--beam",
+      "paper_value": 10,
+      "how_to_set": "--beam 10"
+    },
+    "length_penalty": {
+      "repo_param": "--length_penalty",
+      "paper_value": 0.8,
+      "how_to_set": "--length_penalty 0.8"
+    },
+    "seq_len": {
+      "repo_param": "--seq_len",
+      "paper_value": 512,
+      "how_to_set": "--seq_len 512"
+    }
+  },
+  "metrics_to_capture": [
+    {
+      "name": "BLEU",
+      "expected_value": 70.4,
+      "tolerance": 0.5,
+      "higher_is_better": true,
+      "is_main_claim": true,
+      "source": "Table 3 row 'GPT-2 M (LoRA)'"
+    },
+    {
+      "name": "NIST",
+      "expected_value": 8.85,
+      "tolerance": 0.1,
+      "higher_is_better": true,
+      "is_main_claim": false
+    },
+    {
+      "name": "METEOR",
+      "expected_value": 46.8,
+      "tolerance": 0.5,
+      "higher_is_better": true,
+      "is_main_claim": false
+    },
+    {
+      "name": "ROUGE-L",
+      "expected_value": 71.8,
+      "tolerance": 0.5,
+      "higher_is_better": true,
+      "is_main_claim": false
+    },
+    {
+      "name": "CIDEr",
+      "expected_value": 2.53,
+      "tolerance": 0.05,
+      "higher_is_better": true,
+      "is_main_claim": false
+    }
+  ],
+  "expected_output_patterns": [
+    {
+      "pattern": "saving prediction file",
+      "description": "Beam search completion marker from gpt2_beam.py",
+      "required": true
+    },
+    {
+      "pattern": "BLEU|NIST|METEOR|ROUGE_L|CIDEr",
+      "description": "E2E evaluation metrics in measure_scores.py output",
+      "required": true
+    }
+  ],
+  "patches_needed": [
+    {
+      "file": "examples/NLG/src/gpu.py",
+      "description": "Add --cpu flag and CPU-only code path that skips distributed init, sets device=cpu, world_size=1",
+      "reason": "All platform options in parse_gpu() assume CUDA availability and call dist.init_process_group with nccl backend",
+      "affects_numerics": false,
+      "patch_file": "patches/01_gpu_cpu_support.patch"
+    },
+    {
+      "file": "examples/NLG/src/gpt2_beam.py",
+      "description": "Replace lm_net.cuda() with conditional; skip DistributedSampler and distributed_gather/sync when on CPU; use standard DataLoader without sampler",
+      "reason": "Line 386 hardcodes .cuda(), line 359 requires DistributedSampler, lines 320-323 call distributed_gather/sync unconditionally",
+      "affects_numerics": false,
+      "patch_file": "patches/02_beam_cpu_support.patch"
+    }
+  ],
+  "warnings": [
+    "E2E eval script (eval/e2e/measure_scores.py) must be downloaded via eval/download_evalscript.sh before step 4",
+    "The pretrained GPT-2 Medium base checkpoint (~1.4GB) must be downloaded before the LoRA adapter can be loaded, since the adapter weights are applied on top of the base model",
+    "Beam search with beam=10 on CPU for ~4600 test examples will take 20-40 minutes; reduce --beam to 5 for faster but slightly different results",
+    "The checkpoint file gpt2_md_lora_e2e.pt contains only LoRA adapter weights; the load_weight() method in model.py handles merging with the base model"
+  ]
+}

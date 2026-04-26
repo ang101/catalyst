@@ -1,0 +1,18 @@
+[project]
+name = "pdf-extract"
+version = "0.1.0"
+description = "MCP tool server for extracting paper PDFs into structured markdown"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp",
+    "marker-pdf",
+    "pymupdf4llm",
+    "pymupdf",
+]
+
+[project.scripts]
+pdf-extract = "server:mcp.run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

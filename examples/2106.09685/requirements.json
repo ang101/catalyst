@@ -1,0 +1,303 @@
+{
+  "paper_id": "2106.09685",
+  "method_name": "LoRA",
+  "core_claim": "LoRA, which freezes pre-trained weights and injects trainable low-rank decomposition matrices, performs on-par or better than full fine-tuning on RoBERTa, DeBERTa, GPT-2, and GPT-3 while reducing trainable parameters by up to 10,000x and GPU memory by 3x, with no additional inference latency.",
+  "datasets": [
+    {
+      "name": "GLUE Benchmark",
+      "size": null,
+      "source": "https://gluebenchmark.com/",
+      "preprocessing": "Sequence length 128 for RoBERTa adapter comparison setup, 512 for RoBERTa base LoRA, 256 for DeBERTa XXL. Includes MNLI, SST-2, MRPC, CoLA, QNLI, QQP, RTE, STS-B."
+    },
+    {
+      "name": "E2E NLG Challenge",
+      "size": "~42,000 training, 4,600 validation, 4,600 test examples",
+      "source": null,
+      "preprocessing": "Restaurant domain data-to-text. Each sample consists of slot-value pairs and natural language reference text. Released under Creative Commons BY-NC-SA 4.0."
+    },
+    {
+      "name": "WebNLG",
+      "size": "~22K examples",
+      "source": null,
+      "preprocessing": "Input represented as SUBJECT | PROPERTY | OBJECT triples. 14 categories, 9 seen during training, 5 unseen. Evaluation on Seen (S), Unseen (U), and All (A)."
+    },
+    {
+      "name": "DART",
+      "size": "~82K examples",
+      "source": null,
+      "preprocessing": "Input structured as ENTITY | RELATION | ENTITY triples. Open-domain data-to-text. Released under MIT license."
+    },
+    {
+      "name": "WikiSQL",
+      "size": "56,355 training / 8,421 validation examples",
+      "source": null,
+      "preprocessing": "Context encoded as {table schema, query}, target as {SQL}. Sequence length 384 for GPT-3. Released under BSD 3-Clause License."
+    },
+    {
+      "name": "SAMSum",
+      "size": "14,732 training / 819 test examples",
+      "source": null,
+      "preprocessing": "Staged chat conversations with abstractive summaries. Context is newline-concatenated utterances. Sequence length 2048 for GPT-3. Released under Creative Commons BY-NC-ND 4.0."
+    },
+    {
+      "name": "MNLI",
+      "size": null,
+      "source": null,
+      "preprocessing": "Natural language inference. Sequence length 768 for GPT-3."
+    }
+  ],
+  "model": {
+    "architecture": "LoRA applied to pre-trained Transformer models (RoBERTa base/large, DeBERTa XXL, GPT-2 Medium/Large, GPT-3 175B). LoRA injects trainable rank decomposition matrices B*A in parallel to frozen weight matrices W_q and W_v in self-attention. A initialized with random Gaussian, B initialized to zero. Output scaled by alpha/r.",
+    "parameters": "354.92M (GPT-2 Medium, primary NLG experiment)",
+    "key_hyperparameters": {
+      "lora_r": 4,
+      "lora_alpha": 32,
+      "lora_target_modules": "W_q, W_v",
+      "trainable_parameters": "0.35M (GPT-2 Medium with r=4)"
+    }
+  },
+  "training": {
+    "optimizer": "AdamW",
+    "learning_rate": 0.0002,
+    "lr_schedule": "Linear decay with 500 warmup steps",
+    "weight_decay": 0.01,
+    "batch_size": 8,
+    "gradient_accumulation_steps": null,
+    "epochs_or_steps": "5 epochs",
+    "warmup": "500 steps",
+    "dropout": 0.1,
+    "gradient_clipping": null,
+    "data_augmentation": null,
+    "mixed_precision": null,
+    "hardware": "NVIDIA Tesla V100",
+    "estimated_gpu_hours": null
+  },
+  "metrics": [
+    {
+      "name": "BLEU",
+      "claimed_value": 70.4,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 M (LoRA)'",
+      "conditions": "GPT-2 Medium, LoRA r=4 on W_q and W_v, 0.35M trainable parameters",
+      "is_main_claim": true
+    },
+    {
+      "name": "NIST",
+      "claimed_value": 8.85,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 M (LoRA)'",
+      "conditions": "GPT-2 Medium, LoRA r=4 on W_q and W_v, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "MET",
+      "claimed_value": 46.8,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 M (LoRA)'",
+      "conditions": "GPT-2 Medium, LoRA r=4 on W_q and W_v, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "ROUGE-L",
+      "claimed_value": 71.8,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 M (LoRA)'",
+      "conditions": "GPT-2 Medium, LoRA r=4 on W_q and W_v, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "CIDEr",
+      "claimed_value": 2.53,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 M (LoRA)'",
+      "conditions": "GPT-2 Medium, LoRA r=4 on W_q and W_v, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "BLEU",
+      "claimed_value": 70.4,
+      "dataset": "E2E NLG Challenge test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 3 row 'GPT-2 L (LoRA)'",
+      "conditions": "GPT-2 Large, LoRA, 0.77M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "Avg. GLUE score",
+      "claimed_value": 87.2,
+      "dataset": "GLUE dev",
+      "higher_is_better": true,
+      "table_or_figure": "Table 2 row 'RoB_base (LoRA)'",
+      "conditions": "RoBERTa base, LoRA r=8 on W_q and W_v, 0.3M trainable parameters",
+      "is_main_claim": true
+    },
+    {
+      "name": "Avg. GLUE score",
+      "claimed_value": 89.0,
+      "dataset": "GLUE dev",
+      "higher_is_better": true,
+      "table_or_figure": "Table 2 row 'RoB_large (LoRA)'",
+      "conditions": "RoBERTa large, LoRA r=8 on W_q and W_v, 0.8M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "Avg. GLUE score",
+      "claimed_value": 91.3,
+      "dataset": "GLUE dev",
+      "higher_is_better": true,
+      "table_or_figure": "Table 2 row 'DeB_XXL (LoRA)'",
+      "conditions": "DeBERTa XXL, LoRA r=8 on W_q and W_v, 4.7M trainable parameters",
+      "is_main_claim": true
+    },
+    {
+      "name": "Accuracy",
+      "claimed_value": 73.4,
+      "dataset": "WikiSQL val",
+      "higher_is_better": true,
+      "table_or_figure": "Table 4 row 'GPT-3 (LoRA)' 4.7M",
+      "conditions": "GPT-3 175B, LoRA r_v=2, 4.7M trainable parameters",
+      "is_main_claim": true
+    },
+    {
+      "name": "Accuracy",
+      "claimed_value": 91.7,
+      "dataset": "MNLI-m val",
+      "higher_is_better": true,
+      "table_or_figure": "Table 4 row 'GPT-3 (LoRA)' 4.7M",
+      "conditions": "GPT-3 175B, LoRA r_v=2, 4.7M trainable parameters",
+      "is_main_claim": true
+    },
+    {
+      "name": "ROUGE-1/ROUGE-2/ROUGE-L",
+      "claimed_value": "53.8/29.8/45.9",
+      "dataset": "SAMSum test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 4 row 'GPT-3 (LoRA)' 4.7M",
+      "conditions": "GPT-3 175B, LoRA, 4.7M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "Accuracy",
+      "claimed_value": 74.0,
+      "dataset": "WikiSQL val",
+      "higher_is_better": true,
+      "table_or_figure": "Table 4 row 'GPT-3 (LoRA)' 37.7M",
+      "conditions": "GPT-3 175B, LoRA r_q=r_v=8, 37.7M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "BLEU",
+      "claimed_value": 47.1,
+      "dataset": "DART test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 14 row 'LoRA' GPT-2 Medium",
+      "conditions": "GPT-2 Medium, LoRA, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "BLEU (All)",
+      "claimed_value": 55.3,
+      "dataset": "WebNLG test",
+      "higher_is_better": true,
+      "table_or_figure": "Table 15 row 'LoRA' GPT-2 Medium",
+      "conditions": "GPT-2 Medium, LoRA, 0.35M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "MNLI accuracy",
+      "claimed_value": 87.5,
+      "dataset": "MNLI-m dev",
+      "higher_is_better": true,
+      "table_or_figure": "Table 2 row 'RoB_base (LoRA)'",
+      "conditions": "RoBERTa base, LoRA, 0.3M trainable parameters",
+      "is_main_claim": false
+    },
+    {
+      "name": "SST-2 accuracy",
+      "claimed_value": 95.1,
+      "dataset": "SST-2 dev",
+      "higher_is_better": true,
+      "table_or_figure": "Table 2 row 'RoB_base (LoRA)'",
+      "conditions": "RoBERTa base, LoRA, 0.3M trainable parameters",
+      "is_main_claim": false
+    }
+  ],
+  "ablations": [
+    {
+      "name": "weight_type_selection",
+      "description": "Compares applying LoRA to different subsets of attention weight matrices (W_q, W_k, W_v, W_o and combinations) on GPT-3 175B. Adapting both W_q and W_v yields the best result with r=4; putting all parameters into a single matrix type (e.g., W_q only) performs significantly worse.",
+      "variables": ["weight_matrix_type"]
+    },
+    {
+      "name": "rank_r_effect",
+      "description": "Tests LoRA rank r from 1 to 64 on GPT-3 175B for WikiSQL and MultiNLI. LoRA performs competitively even with very small r (r=1 or r=2), suggesting the update matrix has very low intrinsic rank. Performance does not improve monotonically with higher r.",
+      "variables": ["rank_r"]
+    },
+    {
+      "name": "rank_r_effect_gpt2",
+      "description": "Tests LoRA rank r from 1 to 1024 on GPT-2 Medium for E2E NLG Challenge. Optimal rank is between 4 and 16 depending on metric. Very high ranks do not improve performance.",
+      "variables": ["rank_r"]
+    },
+    {
+      "name": "lora_plus_prefix_tuning",
+      "description": "Combines LoRA with prefix-embedding tuning (LoRA+PE) and prefix-layer tuning (LoRA+PL) on GPT-3. LoRA+PE significantly outperforms both methods alone on WikiSQL, showing orthogonality. LoRA+PL performs slightly worse than LoRA alone due to learning rate sensitivity.",
+      "variables": ["adaptation_method_combination"]
+    },
+    {
+      "name": "low_data_regime",
+      "description": "Tests adaptation methods on MNLI with 100, 1k, 10k, and full training examples. LoRA achieves 63.8% on MNLI-100 vs 60.2% for fine-tuning and 37.6% for PrefixEmbed. Prefix-based approaches are not suitable for low-data tasks on GPT-3.",
+      "variables": ["training_data_size"]
+    }
+  ],
+  "released_artifacts": {
+    "checkpoints": [
+      {
+        "name": "RoBERTa base LoRA checkpoint",
+        "url": "https://github.com/microsoft/LoRA",
+        "size_mb": null,
+        "what_it_is": "Trained LoRA adapter weights for RoBERTa base on GLUE tasks",
+        "supports_main_claim": true
+      },
+      {
+        "name": "RoBERTa large LoRA checkpoint",
+        "url": "https://github.com/microsoft/LoRA",
+        "size_mb": null,
+        "what_it_is": "Trained LoRA adapter weights for RoBERTa large on GLUE tasks",
+        "supports_main_claim": false
+      },
+      {
+        "name": "DeBERTa XXL LoRA checkpoint",
+        "url": "https://github.com/microsoft/LoRA",
+        "size_mb": null,
+        "what_it_is": "Trained LoRA adapter weights for DeBERTa XXL on GLUE tasks",
+        "supports_main_claim": true
+      },
+      {
+        "name": "GPT-2 LoRA checkpoint",
+        "url": "https://github.com/microsoft/LoRA",
+        "size_mb": null,
+        "what_it_is": "Trained LoRA adapter weights for GPT-2 on E2E NLG Challenge, DART, and WebNLG",
+        "supports_main_claim": true
+      }
+    ],
+    "datasets": [],
+    "eval_scripts": [
+      {
+        "path_in_repo": "examples/NLG/gpt2_beam.py",
+        "purpose": "Beam search decoding and evaluation for GPT-2 LoRA on NLG tasks (E2E, DART, WebNLG)"
+      },
+      {
+        "path_in_repo": "examples/NLG/eval_script.py",
+        "purpose": "Evaluation metrics computation for NLG tasks"
+      }
+    ]
+  },
+  "code_url": "https://github.com/microsoft/LoRA",
+  "reproducibility_notes": "Authors release a PyTorch package (loralib) for integrating LoRA, plus implementations and model checkpoints for RoBERTa, DeBERTa, and GPT-2 at https://github.com/microsoft/LoRA. The repo contains examples/NLG/ with training and evaluation scripts, and a download script for pretrained checkpoints. All experiments use NVIDIA Tesla V100 GPUs. Results for RoBERTa and DeBERTa report median over 5 random seeds; GPT-2 reports mean over 3 random seeds. GPT-3 experiments report typical standard deviation over random seeds.",
+  "compute_feasibility_note": "Released checkpoints for GPT-2 Medium LoRA on E2E NLG support a main claim (BLEU 70.4) and can be evaluated on a single GPU or even CPU in minutes, since the base model is only ~350M parameters (~1.4GB in FP32) and LoRA adds negligible overhead. For RoBERTa/DeBERTa GLUE claims, released checkpoints also enable eval-only reproduction. Training from scratch is also feasible on a single V100 GPU within hours for GPT-2 experiments."
+}

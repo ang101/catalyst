@@ -1,0 +1,266 @@
+# =============================================================================
+# SOP: paper_repro
+# Autonomous reproduction of ML/AI research papers
+# =============================================================================
+
+[sop]
+name = "paper_repro"
+version = "0.1.0"
+description = "Autonomous reproduction of ML/AI research papers"
+execution_mode = "auto"  # Full autonomy after initial input
+
+# -----------------------------------------------------------------------------
+# Input
+# -----------------------------------------------------------------------------
+[sop.input]
+identifier = { type = "string", description = "arXiv ID, URL, DOI, or paper title", required = true }
+
+# -----------------------------------------------------------------------------
+# Defaults
+# -----------------------------------------------------------------------------
+[sop.defaults]
+wall_clock_budget_secs = 7200        # 2 hours total wall-clock limit
+smoke_timeout_secs = 120             # 2 minutes for smoke tests
+max_debug_retries = 3                # Max retries in debug loop
+debug_loop_budget_secs = 1800        # 30 minutes total for debug loop
+papers_dir = "~/.zeroclaw/workspace/paper-repro/papers"
+
+# =============================================================================
+# Phase 1: Preflight
+# =============================================================================
+[[sop.phases]]
+name = "preflight"
+description = "Verify all prerequisites: uv, bwrap, marker models, workspace writability"
+checkpoint = true
+resume_check = "status.json:preflight"
+
+[sop.phases.checks]
+uv_binary = { command = "which uv", on_fail = "abort", message = "uv is required but not found. Install via: curl -LsSf https://astral.sh/uv/install.sh | sh" }
+bwrap_binary = { command = "which bwrap", on_fail = "warn", message = "bwrap not found — sandbox mode degraded; execution will proceed without filesystem isolation" }
+marker_models = { command = "python -c \"import marker; marker.parse_test()\"", on_fail = "warn", message = "marker models not downloaded — PDF extraction may fall back to basic text extraction" }
+papers_dir_writable = { command = "test -w \"${papers_dir}\" || mkdir -p \"${papers_dir}\"", on_fail = "abort", message = "Cannot write to papers directory" }
+
+[sop.phases.outputs]
+status_entry = "preflight"
+writes = ["STATUS.json"]
+
+# =============================================================================
+# Phase 2: Acquire
+# =============================================================================
+[[sop.phases]]
+name = "acquire"
+description = "Fetch paper PDF, LaTeX source, and metadata from arXiv or other sources"
+tool = "arxiv_fetch"
+checkpoint = true
+resume_check = "status.json:acquire"
+
+[sop.phases.tool_config]
+input_field = "identifier"
+outputs = ["paper.pdf", "source.tar.gz", "metadata.json"]
+target_dir = "papers/{paper_id}/"
+
+[sop.phases.on_failure]
+action = "abort"
+message = "Failed to acquire paper. Verify the identifier is valid and the paper is accessible."
+
+# =============================================================================
+# Phase 3: Extract
+# =============================================================================
+[[sop.phases]]
+name = "extract"
+description = "Extract paper to markdown, then LLM extracts structured requirements"
+tools = ["pdf_extract"]
+prompts = ["extract_requirements.md"]
+checkpoint = true
+resume_check = "status.json:extract"
+
+[sop.phases.steps]
+
+  [sop.phases.steps.pdf_to_markdown]
+  tool = "pdf_extract"
+  input = "papers/{paper_id}/paper.pdf"
+  output = "papers/{paper_id}/paper.md"
+
+  [sop.phases.steps.extract_requirements]
+  type = "llm_call"
+  prompt = "extract_requirements.md"
+  context_files = ["papers/{paper_id}/paper.md", "papers/{paper_id}/metadata.json"]
+  output = "papers/{paper_id}/requirements.json"
+  validation_schema = "requirements.schema.json"
+
+[sop.phases.on_failure]
+action = "abort"
+message = "Failed to extract paper content or requirements. Check that the PDF is valid."
+
+# =============================================================================
+# Phase 4: Scout
+# =============================================================================
+[[sop.phases]]
+name = "scout"
+description = "Find official code repository and clone it"
+tool = "repo_scout"
+checkpoint = true
+resume_check = "status.json:scout"
+
+[sop.phases.tool_config]
+input_files = ["papers/{paper_id}/metadata.json", "papers/{paper_id}/requirements.json"]
+min_confidence = 0.3
+
+[sop.phases.steps]
+
+  [sop.phases.steps.find_repo]
+  tool = "repo_scout"
+  output = "papers/{paper_id}/candidates.json"
+
+  [sop.phases.steps.evaluate_candidates]
+  type = "check"
+  condition = "top_candidate.confidence > 0.3"
+  on_fail = "stop"
+  message = "No repository found with sufficient confidence. This system requires an existing code repository."
+
+  [sop.phases.steps.clone_repo]
+  type = "command"
+  command = "git clone --depth 1 {top_candidate.url} papers/{paper_id}/repo/"
+  sandbox = true
+
+[sop.phases.on_failure]
+action = "stop"
+message = "No repository found. This system requires an existing code repository."
+
+# =============================================================================
+# Phase 5: Plan
+# =============================================================================
+[[sop.phases]]
+name = "plan"
+description = "LLM generates execution plan with scaled and faithful tracks"
+prompts = ["plan_reproduction.md"]
+checkpoint = true
+resume_check = "status.json:plan"
+
+[sop.phases.steps]
+
+  [sop.phases.steps.read_repo_structure]
+  type = "command"
+  command = "find papers/{paper_id}/repo/ -type f"
+  output = "papers/{paper_id}/repo_structure.txt"
+
+  [sop.phases.steps.read_repo_readme]
+  type = "read"
+  path = "papers/{paper_id}/repo/README.md"
+  fallback = "papers/{paper_id}/repo/README.rst"
+  optional = true
+
+  [sop.phases.steps.read_repo_configs]
+  type = "glob_read"
+  patterns = [
+    "papers/{paper_id}/repo/*.yaml",
+    "papers/{paper_id}/repo/*.yml",
+    "papers/{paper_id}/repo/*.toml",
+    "papers/{paper_id}/repo/*.cfg",
+    "papers/{paper_id}/repo/setup.py",
+    "papers/{paper_id}/repo/pyproject.toml",
+    "papers/{paper_id}/repo/requirements*.txt",
+  ]
+
+  [sop.phases.steps.generate_plan]
+  type = "llm_call"
+  prompt = "plan_reproduction.md"
+  context_files = [
+    "papers/{paper_id}/requirements.json",
+    "papers/{paper_id}/repo_structure.txt",
+    "papers/{paper_id}/repo/README.md",
+  ]
+  output = "papers/{paper_id}/plan.json"
+
+  [sop.phases.steps.write_scaling_rationale]
+  type = "llm_output"
+  output = "papers/{paper_id}/scaling_rationale.md"
+
+  [sop.phases.steps.generate_patches]
+  type = "conditional"
+  condition = "plan.patches_needed == true"
+  action = "generate_patch_files"
+  output_dir = "papers/{paper_id}/patches/"
+
+[sop.phases.on_failure]
+action = "abort"
+message = "Failed to generate execution plan."
+
+# =============================================================================
+# Phase 6: Execute
+# =============================================================================
+[[sop.phases]]
+name = "execute"
+description = "Run scaled experiment with debug loop on failure"
+tool = "scaled_runner"
+prompts = ["debug_loop.md"]
+checkpoint = true
+resume_check = "status.json:execute"
+max_retries = 3
+retry_budget_secs = 1800
+
+[sop.phases.steps]
+
+  [sop.phases.steps.run_scaled]
+  tool = "scaled_runner"
+  input = "papers/{paper_id}/plan.json"
+  sandbox = true
+  timeout_secs = 7200
+
+[sop.phases.debug_loop]
+enabled = true
+max_retries = 3
+budget_secs = 1800
+prompt = "debug_loop.md"
+context_includes = ["error_log", "source_files", "all_previous_patches"]
+action = "apply_patch_and_retry"
+on_final_failure = "include_all_patches_in_report"
+
+[sop.phases.on_timeout]
+action = "proceed_to_report"
+status = "timeout"
+message = "Execution timed out. Proceeding to report with partial results."
+
+[sop.phases.on_failure]
+action = "proceed_to_report"
+status = "failed"
+message = "Execution failed after exhausting debug retries."
+
+# =============================================================================
+# Phase 7: Report
+# =============================================================================
+[[sop.phases]]
+name = "report"
+description = "Generate reproduction report with summary, variables, and runbook"
+prompts = ["write_report.md"]
+checkpoint = true
+resume_check = "status.json:report"
+
+[sop.phases.steps]
+
+  [sop.phases.steps.generate_report]
+  type = "llm_call"
+  prompt = "write_report.md"
+  context_files = [
+    "papers/{paper_id}/requirements.json",
+    "papers/{paper_id}/plan.json",
+    "papers/{paper_id}/scaling_rationale.md",
+    "papers/{paper_id}/STATUS.json",
+  ]
+
+  [sop.phases.steps.write_summary]
+  type = "llm_output"
+  output = "papers/{paper_id}/summary.md"
+
+  [sop.phases.steps.write_variables]
+  type = "llm_output"
+  output = "papers/{paper_id}/variables.md"
+
+  [sop.phases.steps.write_runbook]
+  type = "llm_output"
+  output = "papers/{paper_id}/runbook.md"
+
+  [sop.phases.steps.finalize_status]
+  type = "write"
+  target = "papers/{paper_id}/STATUS.json"
+  content = "final_status_update"

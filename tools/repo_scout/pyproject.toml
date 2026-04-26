@@ -1,0 +1,16 @@
+[project]
+name = "repo-scout"
+version = "0.1.0"
+description = "MCP tool server for finding GitHub repos that implement a paper"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp",
+    "requests",
+]
+
+[project.scripts]
+repo-scout = "server:mcp.run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

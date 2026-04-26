@@ -1,0 +1,83 @@
+{
+  "paper_id": "2106.09685",
+  "phases": [
+    {
+      "phase": "acquire",
+      "timestamp": "2026-04-26T19:13:02Z",
+      "outcome": "success",
+      "artifacts": [
+        "metadata.json",
+        "source.pdf",
+        "source/"
+      ],
+      "error": null
+    },
+    {
+      "phase": "extract",
+      "timestamp": "2026-04-26T19:13:04Z",
+      "outcome": "success",
+      "artifacts": [
+        "paper.md"
+      ],
+      "error": null
+    },
+    {
+      "phase": "extract",
+      "timestamp": "2026-04-26T19:15:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "requirements.json"
+      ],
+      "error": null
+    },
+    {
+      "phase": "scout",
+      "timestamp": "2026-04-26T19:19:36Z",
+      "outcome": "success",
+      "artifacts": [
+        "candidates.json"
+      ],
+      "error": null
+    },
+    {
+      "phase": "scout",
+      "timestamp": "2026-04-26T19:45:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "candidates.json",
+        "repo/"
+      ],
+      "error": null
+    },
+    {
+      "phase": "plan",
+      "timestamp": "2026-04-26T20:15:00Z",
+      "outcome": "success",
+      "artifacts": [
+        "plan.json",
+        "scaling_rationale.md",
+        "patches/01_gpu_cpu_support.patch",
+        "patches/02_beam_cpu_support.patch"
+      ],
+      "strategy": "evaluation",
+      "strategy_reason": "Released GPT-2 LoRA checkpoint (gpt2_md_lora_e2e.pt) supports main claim (BLEU 70.4 on E2E). Phase 0 Strategy A selected: eval-only, no training.",
+      "error": null
+    },
+    {
+      "phase": "execute",
+      "timestamp": "2026-04-26T19:57:16.559163+00:00",
+      "outcome": "failed",
+      "artifacts": [],
+      "error": "Beam search (beam=10) over 4693 E2E test examples on CPU estimated 40-80 hours. Killed after ~30 minutes. Strategy A eval plan did not budget CPU inference wall-clock time."
+    },
+    {
+      "phase": "report",
+      "timestamp": "2026-04-26T19:57:16.559227+00:00",
+      "outcome": "success",
+      "artifacts": [
+        "summary.md"
+      ],
+      "error": null
+    }
+  ]
+}

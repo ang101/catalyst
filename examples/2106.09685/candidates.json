@@ -1,0 +1,32 @@
+[
+  {
+    "url": "https://github.com/microsoft/lora",
+    "confidence": 0.95,
+    "source": "paper_text",
+    "is_official": true
+  },
+  {
+    "url": "https://github.com/hkproj/pytorch-lora",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  },
+  {
+    "url": "https://github.com/fshnkarimi/fine-tuning-an-llm-using-lora",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  },
+  {
+    "url": "https://github.com/eltociear/qa-lora",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  },
+  {
+    "url": "https://github.com/25benjaminli/sam2lora",
+    "confidence": 0.3,
+    "source": "github_search",
+    "is_official": false
+  }
+]
