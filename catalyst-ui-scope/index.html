@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalyst — ML Paper Replication</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-head">
+      <h2>Catalyst</h2>
+      <p>ML paper reproduction · ZeroClaw</p>
+    </div>
+    <div class="sb-body">
+      <input type="text" id="purl" style="display:none" />
+      <div class="paper-sel" id="paper-sel">
+        No paper selected — load an example or specify in chat
+      </div>
+      <div class="paper-links" id="paper-links" style="display:none">
+        <a class="paper-link" id="paper-link-arxiv" href="#" target="_blank" rel="noopener">arXiv ↗</a>
+        <a class="paper-link" id="paper-link-pdf" href="#" target="_blank" rel="noopener">PDF ↗</a>
+      </div>
+      <div class="pex-label">Load example</div>
+      <div class="pexamples">
+        <div class="pex-card" id="pex-1908.10084" onclick="loadExample('1908.10084')">
+          <div class="pex-card-main">
+            <span class="pex-card-title">Sentence-BERT</span>
+            <span class="pex-badge ps">partial</span>
+          </div>
+          <div class="pex-card-sub">1908.10084 · eval-only · CPU</div>
+        </div>
+        <div class="pex-card" id="pex-2106.09685" onclick="loadExample('2106.09685')">
+          <div class="pex-card-main">
+            <span class="pex-card-title">LoRA</span>
+            <span class="pex-badge fail">failed</span>
+          </div>
+          <div class="pex-card-sub">2106.09685 · eval-only · GPU required</div>
+        </div>
+      </div>
+      <div class="fl">
+        <label>Output folder</label>
+        <input type="text" id="outdir" value="~/papers/" placeholder="~/papers/2106.09685/" />
+      </div>
+      <div class="hw-box">
+        <div class="hw-box-title">Your machine</div>
+        <div class="hw-grid">
+          <div class="hf">
+            <label>GPU</label>
+            <select id="ugpu">
+              <option>None (CPU only)</option>
+              <option>RTX 3060 (12GB)</option>
+              <option>RTX 3090 (24GB)</option>
+              <option>RTX 4090 (24GB)</option>
+              <option>A100 (40GB)</option>
+              <option>M2 / M3 unified</option>
+            </select>
+          </div>
+          <div class="hf">
+            <label>RAM</label>
+            <select id="uram">
+              <option>8 GB</option><option>16 GB</option>
+              <option selected>32 GB</option><option>64 GB</option><option>128 GB</option>
+            </select>
+          </div>
+          <div class="hf">
+            <label>CPU cores</label>
+            <select id="ucpu">
+              <option>4</option><option>8</option>
+              <option selected>16</option><option>32</option>
+            </select>
+          </div>
+          <div class="hf">
+            <label>Disk free</label>
+            <select id="udisk">
+              <option>50 GB</option><option>100 GB</option>
+              <option selected>500 GB</option><option>1 TB+</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="fl">
+        <label>Reproduction approach</label>
+        <div class="strat-row">
+          <span class="sp on" onclick="setSP(this,'A')">Use checkpoint</span>
+          <span class="sp" onclick="setSP(this,'B')">Fine-tune</span>
+          <span class="sp" onclick="setSP(this,'C')">Full retrain</span>
+        </div>
+        <div class="strat-desc" id="strat-desc">Load the authors' released model and run evaluation — no training needed.</div>
+      </div>
+    </div>
+    <div class="run-area">
+      <button class="run-btn" id="rbtn" onclick="analyzeFeasibility()">Analyze feasibility ↗</button>
+      <button class="run-btn run-rep hidden" id="repbtn" onclick="startReplication()">Run replication ↗</button>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main">
+    <div class="tabs">
+      <div class="tab on" onclick="showTab('chat')">Chat</div>
+      <div class="tab" onclick="showTab('overview')">Overview</div>
+      <div class="tab" onclick="showTab('run')">Live run</div>
+      <div class="tab" onclick="showTab('hardware')">Hardware</div>
+      <div class="tab" onclick="showTab('tasks')">Tasks</div>
+      <div class="tab" onclick="showTab('feasibility')">Feasibility</div>
+      <div class="tab" onclick="showTab('results')">Results</div>
+      <div class="tab" onclick="showTab('related')">Related</div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="panel" id="panel-overview">
+      <div id="ov-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>Enter a paper above and click run</p>
+      </div>
+      <div id="ov-content" class="hidden">
+        <div class="sec">Feasibility summary</div>
+        <div id="ov-alert"></div>
+        <div class="stat-row" id="ov-stats"></div>
+        <div class="sec" style="margin-top:16px">Replication veracity</div>
+        <div id="ov-veracity"></div>
+        <div class="sec" style="margin-top:16px">Phase pipeline</div>
+        <div id="ov-phases"></div>
+      </div>
+    </div>
+
+    <!-- LIVE RUN -->
+    <div class="panel" id="panel-run">
+      <div id="run-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5,3 19,12 5,21"/></svg>
+        <p>Press run to start the experiment</p>
+      </div>
+      <div id="run-content" class="hidden">
+        <div class="sec">Agent log</div>
+        <div class="log" id="agent-log"></div>
+        <div class="sec" style="margin-top:16px">Phase status</div>
+        <div id="phase-list"></div>
+        <div id="run-prog-wrap" class="hidden" style="margin-top:16px">
+          <div class="sec">Training progress</div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="chartTraining" role="img" aria-label="Training loss over steps comparing paper curve vs reproduced curve">Training loss over steps.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HARDWARE -->
+    <div class="panel" id="panel-hardware">
+      <div id="hw-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <p>Hardware comparison loads after run</p>
+      </div>
+      <div id="hw-content" class="hidden">
+        <div class="sec">Spec comparison</div>
+        <div class="cmp" id="hw-cmp"></div>
+        <div class="sec" style="margin-top:16px">Compute gap</div>
+        <div class="legend-row">
+          <span><span class="dot" style="background:#378ADD"></span>Paper reported</span>
+          <span><span class="dot" style="background:#1D9E75"></span>Your machine</span>
+        </div>
+        <div class="chart-wrap" style="height:240px">
+          <canvas id="chartHW" role="img" aria-label="Radar chart comparing compute capability between paper hardware and your machine">Compute gap radar chart.</canvas>
+        </div>
+        <div class="sec" style="margin-top:16px">Gap analysis</div>
+        <div id="hw-gaps"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="panel" id="panel-tasks">
+      <div id="tasks-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        <p>Task breakdown loads after run</p>
+      </div>
+      <div id="tasks-content" class="hidden">
+        <div class="sec">Replication tasks</div>
+        <div class="chart-wrap" style="height:200px;margin-bottom:14px">
+          <canvas id="chartTasks" role="img" aria-label="Horizontal bar chart showing local feasibility percentage for each replication task">Task feasibility chart.</canvas>
+        </div>
+        <div class="tl" id="task-list"></div>
+      </div>
+    </div>
+
+    <!-- FEASIBILITY -->
+    <div class="panel" id="panel-feasibility">
+      <div id="feas-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>Run analysis to see what's feasible with your current specs</p>
+      </div>
+      <div id="feas-content" class="hidden">
+        <div class="sec">What this reproduction does</div>
+        <div id="feas-concept" class="feas-concept"></div>
+        <div class="sec">Requirements for exact replication</div>
+        <div id="feas-req-grid" class="feas-req-grid"></div>
+        <div class="sec">Your spec vs paper</div>
+        <div id="feas-spec"></div>
+        <div class="feas-cols">
+          <div class="feas-col">
+            <div class="sec feas-ok-hd">Can replicate</div>
+            <div id="feas-ok"></div>
+          </div>
+          <div class="feas-col">
+            <div class="sec feas-bad-hd">Cannot replicate</div>
+            <div id="feas-bad"></div>
+          </div>
+        </div>
+        <div class="sec" style="margin-top:16px">Limitations &amp; alternatives</div>
+        <div id="feas-limits"></div>
+        <div id="feas-cloud-wrap" style="margin-top:4px">
+          <div class="sec" style="margin-top:16px">Cloud options <span id="feas-cloud-note" style="font-weight:400;color:var(--text-secondary)">— if you can't run locally</span></div>
+          <div class="chart-wrap" style="height:210px">
+            <canvas id="chartCloud" role="img" aria-label="Bubble chart showing cloud provider options by cost and experiment coverage percentage">Cloud cost vs coverage bubble chart.</canvas>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px" id="cloud-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="panel" id="panel-results">
+      <div id="res-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <p>Run replication to see what was reproduced, what wasn't, and why</p>
+      </div>
+      <div id="res-content" class="hidden">
+        <div id="res-alert"></div>
+        <div class="legend-row">
+          <span><span class="dot" style="background:#378ADD"></span>Paper reported</span>
+          <span><span class="dot" style="background:#1D9E75"></span>Reproduced</span>
+          <span><span class="dot" style="background:#E24B4A"></span>Not reproduced</span>
+        </div>
+        <div class="chart-wrap" style="height:240px">
+          <canvas id="chartMetrics" role="img" aria-label="Grouped bar chart comparing paper-reported metrics versus reproduced metrics">Metric comparison chart.</canvas>
+        </div>
+        <div class="res-outcomes">
+          <div class="res-col">
+            <div class="sec res-sec-ok">Reproduced</div>
+            <div id="res-ok"></div>
+          </div>
+          <div class="res-col">
+            <div class="sec res-sec-bad">Not reproduced</div>
+            <div id="res-bad"></div>
+          </div>
+        </div>
+        <div class="sec" style="margin-top:16px">Limitations</div>
+        <div id="disc-causes"></div>
+      </div>
+    </div>
+
+    <!-- RELATED PAPERS -->
+    <div class="panel" id="panel-related">
+      <div id="rel-idle" class="idle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <p>Analyze a paper to find related work via Semantic Scholar</p>
+      </div>
+      <div id="rel-content" class="hidden">
+        <div class="sec">Related papers <span style="font-weight:400;color:var(--text-secondary)">· Semantic Scholar</span></div>
+        <div id="related-list"></div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="panel on" id="panel-chat" style="padding:0">
+      <div class="chat-area">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="bub a">
+            <div class="atag">Catalyst agent</div>
+            Submit a paper to begin, or ask about replication, hardware, or scientific validity.
+          </div>
+        </div>
+        <div class="cin">
+          <button class="cattach" onclick="attachChatPDF()" title="Attach PDF">⊕ PDF</button>
+          <input type="file" id="chat-file" accept=".pdf" style="display:none" onchange="handleChatPDF(this)" />
+          <input type="text" id="cin" placeholder="Ask about gaps, discrepancies, scaling… or paste an arXiv ID" onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="csend" onclick="sendChat()">Send ↗</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script src="assets/app.js"></script>
+</body>
+</html>
